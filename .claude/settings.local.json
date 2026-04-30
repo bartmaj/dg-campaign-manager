@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git init *)"
+      "Bash(git init *)",
+      "Bash(git commit *)",
+      "Read(//private/tmp/**)",
+      "Bash(rm -rf dg-scaffold)",
+      "Bash(pnpm create *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm dlx *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm build *)",
+      "Bash(git add *)"
     ]
   }
 }

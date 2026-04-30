@@ -3,7 +3,7 @@ id: 001
 title: Bootstrap the project scaffold
 milestone: M1
 unit: M1 — Foundation
-status: not-started
+status: done
 labels: [scaffold, ops, testing]
 req-ids: [REQ-N08, REQ-N09, REQ-N11]
 ---

@@ -1,6 +1,6 @@
 # M1 — Foundation
 
-**Status:** Not Started
+**Status:** In Progress (1/8 done)
 **Target:** Weekends W1–W2
 **Effort:** ~2.0 PWE
 
@@ -20,7 +20,7 @@ None (foundational unit).
 
 ## Issues
 
-- [ ] [#001 Bootstrap the project scaffold](../issues/001-bootstrap-the-project-scaffold.md)
+- [x] [#001 Bootstrap the project scaffold](../issues/001-bootstrap-the-project-scaffold.md)
 - [ ] [#002 Wire Vercel deploy pipeline](../issues/002-wire-vercel-deploy-pipeline.md)
 - [ ] [#003 Provision Turso and set up Drizzle](../issues/003-provision-turso-and-set-up-drizzle.md)
 - [ ] [#004 Define the typed entity model](../issues/004-define-the-typed-entity-model.md)
