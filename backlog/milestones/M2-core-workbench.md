@@ -1,6 +1,6 @@
 # M2 — Core Workbench
 
-**Status:** In Progress (2/14 done)
+**Status:** In Progress (3/14 done)
 **Target:** Weekends W3–W5
 **Effort:** ~2.5 PWE
 
@@ -23,7 +23,7 @@ M1 (entity schemas, Drizzle plumbing, character form).
 
 - [x] [#009 Implement the polymorphic typed-edge table](../issues/009-implement-the-polymorphic-typed-edge-table.md)
 - [x] [#010 Implement the Clue entity with provenance and edges](../issues/010-implement-the-clue-entity-with-provenance-and-ed.md)
-- [ ] [#011 Implement Bonds as a first-class entity with damage history](../issues/011-implement-bonds-as-a-first-class-entity-with-da.md)
+- [x] [#011 Implement Bonds as a first-class entity with damage history](../issues/011-implement-bonds-as-a-first-class-entity-with-da.md)
 - [ ] [#012 Implement Sanity tracking with breaking-point detection](../issues/012-implement-sanity-tracking-with-breaking-point-d.md)
 - [ ] [#013 Implement Sessions with hybrid in-game / real-world timeline](../issues/013-implement-sessions-with-hybrid-in-game-real-wor.md)
 - [ ] [#014 Implement bulk Markdown scenario import](../issues/014-implement-bulk-markdown-scenario-import.md)

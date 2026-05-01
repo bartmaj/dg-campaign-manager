@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 import type { NpcStatus } from '../../../domain/npc'
+import { useIncomingBonds } from '../../hooks/useBonds'
 import { useNpc } from '../../hooks/useNpcs'
 
 const STATUS_COLOR: Record<NpcStatus, string> = {
@@ -31,6 +32,7 @@ function StatusChip({ status }: { status: NpcStatus }) {
 function NpcDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: npc, isLoading, error } = useNpc(id)
+  const { data: incomingBonds = [] } = useIncomingBonds('npc', id)
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>
@@ -101,6 +103,19 @@ function NpcDetailPage() {
       <p>
         <em>Relationships — surfaced in M2.2A via polymorphic edges.</em>
       </p>
+
+      <h2>Bonds with this character</h2>
+      {incomingBonds.length === 0 ? (
+        <p>—</p>
+      ) : (
+        <ul>
+          {incomingBonds.map((b) => (
+            <li key={b.id}>
+              <Link to={`/pcs/${b.pcId}`}>{b.pcId}</Link>: {b.name} ({b.currentScore}/{b.maxScore})
+            </li>
+          ))}
+        </ul>
+      )}
 
       <h2>Current goal</h2>
       <p>{npc.currentGoal ?? '—'}</p>

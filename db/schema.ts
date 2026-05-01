@@ -224,15 +224,42 @@ export const sessions = sqliteTable('sessions', {
   updatedAt: updatedAt(),
 })
 
+// `bonds` (#011): the existing `score` column is treated as `currentScore`
+// (kept under its original column name to avoid a destructive rename
+// migration). `maxScore` is added alongside; targetType/targetId capture the
+// bonded character (NPC or another PC). Damage history lives in
+// `bond_damage_events` below.
 export const bonds = sqliteTable('bonds', {
   id: id(),
   pcId: text('pc_id')
     .notNull()
     .references(() => pcs.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  score: integer('score').notNull().default(0),
+  // currentScore — kept as DB column `score` to preserve existing rows.
+  currentScore: integer('score').notNull().default(0),
+  maxScore: integer('max_score').notNull().default(0),
+  // 'npc' | 'pc'. Validated in domain/bonds.ts.
+  targetType: text('target_type').notNull().default('npc'),
+  targetId: text('target_id').notNull().default(''),
+  description: text('description'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
+})
+
+export const bondDamageEvents = sqliteTable('bond_damage_events', {
+  id: id(),
+  bondId: text('bond_id')
+    .notNull()
+    .references(() => bonds.id, { onDelete: 'cascade' }),
+  // Negative for damage, positive for repair.
+  delta: integer('delta').notNull(),
+  reason: text('reason'),
+  // Loose reference (no FK constraint) to keep apply-damage resilient when
+  // the session row is ambiguous or absent.
+  sessionId: text('session_id'),
+  appliedAt: integer('applied_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
 })
 
 // ─── Polymorphic edges (ADR-002) ────────────────────────────────────────────
@@ -284,6 +311,8 @@ export type Session = typeof sessions.$inferSelect
 export type NewSession = typeof sessions.$inferInsert
 export type Bond = typeof bonds.$inferSelect
 export type NewBond = typeof bonds.$inferInsert
+export type BondDamageEvent = typeof bondDamageEvents.$inferSelect
+export type NewBondDamageEvent = typeof bondDamageEvents.$inferInsert
 export type Edge = typeof edges.$inferSelect
 export type NewEdge = typeof edges.$inferInsert
 export type Meta = typeof meta.$inferSelect

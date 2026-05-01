@@ -43,6 +43,13 @@
       "when": 1777600289163,
       "tag": "0005_unknown_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1777600639248,
+      "tag": "0006_sticky_menace",
+      "breakpoints": true
     }
   ]
 }
