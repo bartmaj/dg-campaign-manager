@@ -223,7 +223,14 @@ export const sessions = sqliteTable('sessions', {
     .references(() => campaigns.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
+  // ─── Session timeline (#013) ────────────────────────────────────────────
+  // Hybrid timeline per REQ-010: real-world (IRL) date plus an in-game
+  // date range. `inGameDate` is the start; `inGameDateEnd` is the optional
+  // end (a session may span multiple in-game days). Both are ISO date
+  // strings (YYYY-MM-DD). `realWorldDate` is nullable so sessions can be
+  // planned without an IRL date.
   inGameDate: text('in_game_date'),
+  inGameDateEnd: text('in_game_date_end'),
   realWorldDate: integer('real_world_date', { mode: 'timestamp' }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

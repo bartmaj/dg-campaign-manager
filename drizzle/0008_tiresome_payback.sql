@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` ADD `in_game_date_end` text;

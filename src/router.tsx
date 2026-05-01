@@ -21,6 +21,9 @@ import NpcListPage from './pages/npcs/NpcListPage'
 import NewPcPage from './pages/pcs/NewPcPage'
 import PcDetailPage from './pages/pcs/PcDetailPage'
 import PcListPage from './pages/pcs/PcListPage'
+import NewSessionPage from './pages/sessions/NewSessionPage'
+import SessionDetailPage from './pages/sessions/SessionDetailPage'
+import SessionListPage from './pages/sessions/SessionListPage'
 
 const entityRoutes = ENTITIES.flatMap((entity) => {
   if (entity.key === 'pcs') {
@@ -63,6 +66,13 @@ const entityRoutes = ENTITIES.flatMap((entity) => {
       { path: 'items', element: <ItemListPage /> },
       { path: 'items/new', element: <NewItemPage /> },
       { path: 'items/:id', element: <ItemDetailPage /> },
+    ]
+  }
+  if (entity.key === 'sessions') {
+    return [
+      { path: 'sessions', element: <SessionListPage /> },
+      { path: 'sessions/new', element: <NewSessionPage /> },
+      { path: 'sessions/:id', element: <SessionDetailPage /> },
     ]
   }
   return [
