@@ -3,8 +3,10 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { BondRow, BondWithEvents } from '../../api/bonds'
+import type { SanChangeEvent } from '../../api/sanity'
 import { bondKeys } from '../../hooks/useBonds'
 import { pcKeys } from '../../hooks/usePcs'
+import { sanityKeys } from '../../hooks/useSanity'
 import type { PcRow } from '../../api/pcs'
 import PcDetailPage from './PcDetailPage'
 
@@ -33,6 +35,7 @@ function makePc(overrides: Partial<PcRow> = {}): PcRow {
     sanityCurrent: 50,
     sanityDisorders: [],
     breakingPoints: [],
+    adaptedTo: [],
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
@@ -60,6 +63,7 @@ function renderPage(opts: {
   bonds?: BondRow[]
   bondDetail?: BondWithEvents
   incomingBonds?: BondRow[]
+  sanEvents?: SanChangeEvent[]
 }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   if (opts.pc) qc.setQueryData(pcKeys.detail(PC_ID), opts.pc)
@@ -68,6 +72,7 @@ function renderPage(opts: {
   if (opts.bondDetail) {
     qc.setQueryData(bondKeys.detail(opts.bondDetail.bond.id), opts.bondDetail)
   }
+  qc.setQueryData(sanityKeys.events(PC_ID), opts.sanEvents ?? [])
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[`/pcs/${PC_ID}`]}>
@@ -118,5 +123,46 @@ describe('PcDetailPage', () => {
     expect(screen.getByRole('heading', { name: /bonds with this character/i })).toBeInTheDocument()
     expect(screen.getByText(/My buddy/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'pc-other' })).toHaveAttribute('href', '/pcs/pc-other')
+  })
+
+  it('renders the Sanity section with current/max value and progress bar', () => {
+    renderPage({
+      pc: makePc({ sanityCurrent: 45, sanMax: 65, breakingPoints: [52, 39, 26, 13] }),
+    })
+    expect(screen.getByRole('heading', { name: /^sanity$/i })).toBeInTheDocument()
+    expect(screen.getByText(/45 \/ 65/)).toBeInTheDocument()
+    const bar = screen.getByRole('progressbar', { name: /sanity/i })
+    expect(bar).toHaveAttribute('aria-valuenow', '45')
+    expect(bar).toHaveAttribute('aria-valuemax', '65')
+  })
+
+  it('renders the breaking-points list and apply-change form', () => {
+    renderPage({
+      pc: makePc({ sanityCurrent: 50, sanMax: 65, breakingPoints: [52, 39, 26, 13] }),
+    })
+    expect(screen.getByText('52')).toBeInTheDocument()
+    expect(screen.getByText('39')).toBeInTheDocument()
+    expect(screen.getByLabelText(/^source$/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^loss$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^gain$/i })).toBeInTheDocument()
+  })
+
+  it('renders a crossed-threshold badge on a seeded SAN event', () => {
+    renderPage({
+      pc: makePc({ sanityCurrent: 38, sanMax: 65, breakingPoints: [52, 39, 26, 13] }),
+      sanEvents: [
+        {
+          id: 'sce-1',
+          pcId: PC_ID,
+          delta: -12,
+          source: 'saw the deep one',
+          sessionId: null,
+          crossedThresholds: [39],
+          appliedAt: '2026-04-01T00:00:00Z',
+        },
+      ],
+    })
+    expect(screen.getByText(/saw the deep one/)).toBeInTheDocument()
+    expect(screen.getByText(/crossed 39/)).toBeInTheDocument()
   })
 })

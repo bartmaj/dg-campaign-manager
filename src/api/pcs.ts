@@ -26,7 +26,8 @@ export type PcRow = {
   backstoryHooks: string | null
   sanityCurrent: number | null
   sanityDisorders: string[] | null
-  breakingPoints: string[] | null
+  breakingPoints: number[] | null
+  adaptedTo: string[] | null
   createdAt: string
   updatedAt: string
 }

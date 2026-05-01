@@ -106,10 +106,15 @@ export const pcs = sqliteTable('pcs', {
   // Motivations as JSON: string[].
   motivations: text('motivations', { mode: 'json' }).$type<string[]>(),
   backstoryHooks: text('backstory_hooks'),
-  // SAN block stubs — full mechanics in M2 (#011/#012).
+  // SAN block (#012). `breakingPoints` is a list of integer SAN thresholds
+  // the PC crosses on the way down (e.g. POW × 4, × 3, × 2, POW). Type
+  // changed from string[] to number[] in #012 — JSON storage is unchanged
+  // (text), so existing empty rows are unaffected.
   sanityCurrent: integer('sanity_current'),
   sanityDisorders: text('sanity_disorders', { mode: 'json' }).$type<string[]>(),
-  breakingPoints: text('breaking_points', { mode: 'json' }).$type<string[]>(),
+  breakingPoints: text('breaking_points', { mode: 'json' }).$type<number[]>(),
+  // Things the PC has become inured to (e.g. "violence", "the unnatural").
+  adaptedTo: text('adapted_to', { mode: 'json' }).$type<string[]>(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })
@@ -246,6 +251,27 @@ export const bonds = sqliteTable('bonds', {
   updatedAt: updatedAt(),
 })
 
+// `san_change_events` (#012): per-PC log of SAN losses and gains. The API
+// computes `crossedThresholds` from the PC's breakingPoints list at apply
+// time and persists the result so reads are O(1).
+export const sanChangeEvents = sqliteTable('san_change_events', {
+  id: id(),
+  pcId: text('pc_id')
+    .notNull()
+    .references(() => pcs.id, { onDelete: 'cascade' }),
+  // Negative for SAN loss, positive for SAN gain.
+  delta: integer('delta').notNull(),
+  // What caused the change ("saw the deep one", "therapy session"). Required.
+  source: text('source').notNull(),
+  // Loose reference (no FK) for resilience.
+  sessionId: text('session_id'),
+  // Thresholds crossed by this single change, computed by the API.
+  crossedThresholds: text('crossed_thresholds', { mode: 'json' }).$type<number[]>(),
+  appliedAt: integer('applied_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
 export const bondDamageEvents = sqliteTable('bond_damage_events', {
   id: id(),
   bondId: text('bond_id')
@@ -313,6 +339,8 @@ export type Bond = typeof bonds.$inferSelect
 export type NewBond = typeof bonds.$inferInsert
 export type BondDamageEvent = typeof bondDamageEvents.$inferSelect
 export type NewBondDamageEvent = typeof bondDamageEvents.$inferInsert
+export type SanChangeEvent = typeof sanChangeEvents.$inferSelect
+export type NewSanChangeEvent = typeof sanChangeEvents.$inferInsert
 export type Edge = typeof edges.$inferSelect
 export type NewEdge = typeof edges.$inferInsert
 export type Meta = typeof meta.$inferSelect

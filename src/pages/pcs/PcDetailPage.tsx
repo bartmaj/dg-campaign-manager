@@ -1,12 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import type { BondTargetType } from '../../../domain/bonds'
 import type { BondRow } from '../../api/bonds'
+import type { PcRow } from '../../api/pcs'
+import type { SanChangeEvent } from '../../api/sanity'
 import { useApplyBondDamage } from '../../hooks/useApplyBondDamage'
+import { useApplySanityChange } from '../../hooks/useApplySanityChange'
 import { useBond, useBondsForPc, useIncomingBonds } from '../../hooks/useBonds'
 import { useCreateBond } from '../../hooks/useCreateBond'
 import { useDeleteBond } from '../../hooks/useDeleteBond'
+import { usePatchPcSanityLists } from '../../hooks/usePatchPcSanityLists'
 import { usePc } from '../../hooks/usePcs'
+import { useSanEvents } from '../../hooks/useSanity'
 
 function BondRowView({ bond }: { bond: BondRow }) {
   const { data, isLoading } = useBond(bond.id)
@@ -235,6 +240,347 @@ function AddBondForm({ pcId }: { pcId: string }) {
   )
 }
 
+function SanityBar({ current, max }: { current: number; max: number }) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0
+  // Color shifts from green → amber → red as SAN drops.
+  const color = pct >= 60 ? '#3a7d44' : pct >= 30 ? '#c89a3a' : '#9a2a2a'
+  return (
+    <div
+      role="progressbar"
+      aria-label="Sanity"
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-valuenow={current}
+      style={{
+        width: '100%',
+        maxWidth: '24rem',
+        height: '0.75rem',
+        backgroundColor: '#eee',
+        border: '1px solid #ccc',
+        borderRadius: '2px',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          width: `${pct}%`,
+          height: '100%',
+          backgroundColor: color,
+          transition: 'width 0.2s ease',
+        }}
+      />
+    </div>
+  )
+}
+
+function SanityListEditor({
+  pc,
+  field,
+  label,
+  parse,
+  format,
+}: {
+  pc: PcRow
+  field: 'breakingPoints' | 'sanityDisorders' | 'adaptedTo'
+  label: string
+  parse: (raw: string) => string[] | number[]
+  format: (values: string[] | number[]) => string
+}) {
+  const patch = usePatchPcSanityLists()
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState('')
+  const [err, setErr] = useState<string | null>(null)
+
+  const values = (pc[field] ?? []) as string[] | number[]
+
+  function start() {
+    setText(format(values))
+    setErr(null)
+    setEditing(true)
+  }
+
+  async function save() {
+    setErr(null)
+    try {
+      const parsed = parse(text)
+      await patch.mutateAsync({ pcId: pc.id, patch: { [field]: parsed } })
+      setEditing(false)
+    } catch (e) {
+      setErr((e as Error).message)
+    }
+  }
+
+  return (
+    <div style={{ marginBottom: '0.75rem' }}>
+      <strong>{label}:</strong>{' '}
+      {!editing && (
+        <>
+          {values.length === 0 ? (
+            <em>none</em>
+          ) : (
+            <ul style={{ display: 'inline', paddingLeft: '1.25rem', margin: 0 }}>
+              {values.map((v, i) => (
+                <li key={`${field}-${i}`} style={{ display: 'list-item' }}>
+                  {String(v)}
+                </li>
+              ))}
+            </ul>
+          )}
+          <button
+            type="button"
+            onClick={start}
+            style={{ marginLeft: '0.5rem' }}
+            aria-label={`Edit ${label}`}
+          >
+            ✎
+          </button>
+        </>
+      )}
+      {editing && (
+        <span>
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="comma-separated"
+            aria-label={`${label} (comma-separated)`}
+            style={{ width: '20rem' }}
+          />
+          <button type="button" onClick={() => void save()} disabled={patch.isPending}>
+            Save
+          </button>
+          <button type="button" onClick={() => setEditing(false)}>
+            Cancel
+          </button>
+          {err && <span style={{ color: 'crimson' }}> {err}</span>}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function SanEventRow({ ev }: { ev: SanChangeEvent }) {
+  const crossed = ev.crossedThresholds ?? []
+  return (
+    <li>
+      <strong>{ev.delta > 0 ? `+${ev.delta}` : ev.delta}</strong> — {ev.source}
+      {ev.sessionId ? ` · session ${ev.sessionId}` : ''}
+      {' · '}
+      <em>{new Date(ev.appliedAt).toLocaleString()}</em>
+      {crossed.length > 0 && (
+        <span
+          style={{
+            marginLeft: '0.5rem',
+            padding: '0 0.4rem',
+            backgroundColor: '#fff3cd',
+            border: '1px solid #f0c36d',
+            borderRadius: '2px',
+            fontSize: '0.8em',
+          }}
+        >
+          crossed {crossed.join(', ')}
+        </span>
+      )}
+    </li>
+  )
+}
+
+function SanitySection({ pc }: { pc: PcRow }) {
+  const apply = useApplySanityChange()
+  const { data: events = [] } = useSanEvents(pc.id)
+  const [magnitude, setMagnitude] = useState('')
+  const [source, setSource] = useState('')
+  const [sessionId, setSessionId] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [flash, setFlash] = useState<number[] | null>(null)
+  const [showAll, setShowAll] = useState(false)
+
+  // Auto-dismiss the breaking-point flash after 6s. Mounting the timer in
+  // an effect keeps cleanup correct on rapid re-flashes.
+  useEffect(() => {
+    if (!flash || flash.length === 0) return
+    const t = window.setTimeout(() => setFlash(null), 6000)
+    return () => window.clearTimeout(t)
+  }, [flash])
+
+  const current = pc.sanityCurrent ?? pc.sanMax
+  const breakingPoints = pc.breakingPoints ?? []
+  const visibleEvents = showAll ? events : events.slice(0, 5)
+
+  async function onSubmit(e: React.FormEvent, sign: 1 | -1) {
+    e.preventDefault()
+    setFormError(null)
+    const m = Number.parseInt(magnitude, 10)
+    if (!Number.isFinite(m) || m <= 0) {
+      setFormError('Enter a positive integer.')
+      return
+    }
+    if (source.trim() === '') {
+      setFormError('Source is required.')
+      return
+    }
+    try {
+      const result = await apply.mutateAsync({
+        pcId: pc.id,
+        input: {
+          delta: sign * m,
+          source: source.trim(),
+          sessionId: sessionId.trim() === '' ? null : sessionId.trim(),
+        },
+      })
+      setMagnitude('')
+      setSource('')
+      setSessionId('')
+      if (result.crossedThresholds.length > 0) {
+        setFlash(result.crossedThresholds)
+      }
+    } catch (err) {
+      setFormError((err as Error).message)
+    }
+  }
+
+  return (
+    <section>
+      <h2>Sanity</h2>
+      <p style={{ marginBottom: '0.25rem' }}>
+        <strong>
+          {current} / {pc.sanMax}
+        </strong>
+      </p>
+      <SanityBar current={current} max={pc.sanMax} />
+
+      {flash && flash.length > 0 && (
+        <div
+          role="alert"
+          style={{
+            marginTop: '0.75rem',
+            padding: '0.75rem',
+            backgroundColor: '#fff3cd',
+            border: '1px solid #f0c36d',
+            borderRadius: '3px',
+          }}
+        >
+          <strong>Breaking-point crossed: {flash.join(', ')}.</strong> Consider recording a disorder
+          or adapted-to.
+          <button
+            type="button"
+            onClick={() => setFlash(null)}
+            style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: '0.75rem' }}>
+        <SanityListEditor
+          pc={pc}
+          field="breakingPoints"
+          label="Breaking points"
+          parse={(raw) =>
+            raw
+              .split(',')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+              .map((s) => {
+                const n = Number.parseInt(s, 10)
+                if (!Number.isFinite(n)) throw new Error(`"${s}" is not an integer`)
+                return n
+              })
+          }
+          format={(vs) => (vs as number[]).join(', ')}
+        />
+        <SanityListEditor
+          pc={pc}
+          field="sanityDisorders"
+          label="Disorders"
+          parse={(raw) =>
+            raw
+              .split(',')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          }
+          format={(vs) => (vs as string[]).join(', ')}
+        />
+        <SanityListEditor
+          pc={pc}
+          field="adaptedTo"
+          label="Adapted to"
+          parse={(raw) =>
+            raw
+              .split(',')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          }
+          format={(vs) => (vs as string[]).join(', ')}
+        />
+      </div>
+
+      <h3>Apply SAN change</h3>
+      <form
+        onSubmit={(e) => void onSubmit(e, -1)}
+        style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
+      >
+        <input
+          type="number"
+          min="1"
+          step="1"
+          value={magnitude}
+          onChange={(e) => setMagnitude(e.target.value)}
+          placeholder="amount"
+          aria-label="SAN amount"
+          style={{ width: '6rem' }}
+        />
+        <input
+          type="text"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          placeholder="source (required)"
+          aria-label="Source"
+        />
+        <input
+          type="text"
+          value={sessionId}
+          onChange={(e) => setSessionId(e.target.value)}
+          placeholder="session id (optional)"
+          aria-label="Session ID"
+        />
+        <button type="submit" disabled={apply.isPending}>
+          Loss
+        </button>
+        <button type="button" disabled={apply.isPending} onClick={(e) => void onSubmit(e, 1)}>
+          Gain
+        </button>
+      </form>
+      {formError && <p style={{ color: 'crimson' }}>{formError}</p>}
+      {breakingPoints.length === 0 && (
+        <p>
+          <em>No breaking points configured. Add some above to enable threshold detection.</em>
+        </p>
+      )}
+
+      <h3>SAN history</h3>
+      {events.length === 0 ? (
+        <p>—</p>
+      ) : (
+        <>
+          <ul>
+            {visibleEvents.map((ev) => (
+              <SanEventRow key={ev.id} ev={ev} />
+            ))}
+          </ul>
+          {events.length > 5 && (
+            <button type="button" onClick={() => setShowAll((s) => !s)}>
+              {showAll ? 'Show last 5' : `Show all ${events.length}`}
+            </button>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
 function PcDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: pc, isLoading, error } = usePc(id)
@@ -337,10 +683,7 @@ function PcDetailPage() {
         </ul>
       )}
 
-      <h2>Sanity (M2)</h2>
-      <p>
-        <em>SAN block — current: {pc.sanityCurrent ?? pc.sanMax}. Full mechanics in #012.</em>
-      </p>
+      <SanitySection pc={pc} />
     </section>
   )
 }
