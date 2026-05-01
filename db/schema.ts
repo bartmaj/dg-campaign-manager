@@ -86,6 +86,30 @@ export const pcs = sqliteTable('pcs', {
   }),
   name: text('name').notNull(),
   description: text('description'),
+  // ─── DG RAW fields (#005) ───────────────────────────────────────────────
+  profession: text('profession'),
+  // Base statistics (1–18 at character creation; validated in domain/pc.ts).
+  str: integer('str').notNull().default(10),
+  con: integer('con').notNull().default(10),
+  dex: integer('dex').notNull().default(10),
+  intelligence: integer('intelligence').notNull().default(10),
+  pow: integer('pow').notNull().default(10),
+  cha: integer('cha').notNull().default(10),
+  // Derived attributes — recomputed by the API on every write via
+  // domain/pc.ts#deriveAttributes. Stored for query convenience.
+  hp: integer('hp').notNull().default(0),
+  wp: integer('wp').notNull().default(0),
+  bp: integer('bp').notNull().default(0),
+  sanMax: integer('san_max').notNull().default(0),
+  // Skills as JSON: Array<{ name: string; rating: number }>.
+  skills: text('skills', { mode: 'json' }).$type<Array<{ name: string; rating: number }>>(),
+  // Motivations as JSON: string[].
+  motivations: text('motivations', { mode: 'json' }).$type<string[]>(),
+  backstoryHooks: text('backstory_hooks'),
+  // SAN block stubs — full mechanics in M2 (#011/#012).
+  sanityCurrent: integer('sanity_current'),
+  sanityDisorders: text('sanity_disorders', { mode: 'json' }).$type<string[]>(),
+  breakingPoints: text('breaking_points', { mode: 'json' }).$type<string[]>(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })

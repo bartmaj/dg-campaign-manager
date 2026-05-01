@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["db", "scripts", "drizzle.config.ts"]
+  "include": ["db", "scripts", "domain", "api", "drizzle.config.ts"]
 }

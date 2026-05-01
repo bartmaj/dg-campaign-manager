@@ -22,7 +22,10 @@
       "Bash(vercel env *)",
       "Bash(VERCEL_NON_INTERACTIVE=0 printf \"libsql://dg-campaign-manager-bartmaj.aws-us-east-1.turso.io\\\\ny\\\\n\")",
       "Bash(/opt/homebrew/bin/vercel env *)",
-      "Bash(pnpm format *)"
+      "Bash(pnpm format *)",
+      "Bash(pnpm db:generate)",
+      "Bash(unset TURSO_DATABASE_URL TURSO_AUTH_TOKEN)",
+      "Bash(env -u TURSO_DATABASE_URL -u TURSO_AUTH_TOKEN node -e ' *)"
     ]
   }
 }
