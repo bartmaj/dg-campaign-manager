@@ -122,6 +122,31 @@ export const npcs = sqliteTable('npcs', {
   name: text('name').notNull(),
   description: text('description'),
   factionId: text('faction_id'),
+  // ─── NPC fields (#006) ──────────────────────────────────────────────────
+  profession: text('profession'),
+  // Base stats — nullable since simplified NPCs only carry HP/WP. When
+  // present, validated 1–18 by domain/npc.ts via pcStatsSchema.
+  str: integer('str'),
+  con: integer('con'),
+  dex: integer('dex'),
+  intelligence: integer('intelligence'),
+  pow: integer('pow'),
+  cha: integer('cha'),
+  // HP/WP — derived from full stats via domain/pc.ts#deriveAttributes when
+  // a full block is supplied; written through directly for simplified NPCs.
+  hp: integer('hp'),
+  wp: integer('wp'),
+  // RP hooks — the four continuity dimensions surface these on the
+  // detail page.
+  mannerisms: text('mannerisms'),
+  voice: text('voice'),
+  secrets: text('secrets'),
+  // Status: 'alive' | 'dead' | 'missing' | 'turned'. Enforced in the
+  // domain layer (Zod) — SQLite has no native enum.
+  status: text('status').notNull().default('alive'),
+  // Location reference; FK wiring lands with Locations in #008.
+  locationId: text('location_id'),
+  currentGoal: text('current_goal'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })
