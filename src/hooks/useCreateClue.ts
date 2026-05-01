@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ClueInput } from '../../domain/clue'
 import { createClue, type ClueRow } from '../api/clues'
 import { clueKeys } from './useClues'
+import { searchIndexQueryKey } from './useSearchIndex'
 
 export function useCreateClue() {
   const qc = useQueryClient()
@@ -10,6 +11,7 @@ export function useCreateClue() {
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: clueKeys.list() })
       qc.setQueryData(clueKeys.detail(row.id), row)
+      qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
   })
 }

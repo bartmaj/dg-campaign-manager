@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router'
+import { CmdKPalette } from './CmdK/CmdKPalette'
 import { ENTITIES } from '../entities'
 
 function Layout() {
@@ -24,6 +25,7 @@ function Layout() {
       <main>
         <Outlet />
       </main>
+      <CmdKPalette />
     </div>
   )
 }

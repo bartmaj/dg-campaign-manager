@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ItemInput } from '../../domain/item'
 import { createItem, type ItemRow } from '../api/items'
 import { itemKeys } from './useItems'
+import { searchIndexQueryKey } from './useSearchIndex'
 
 export function useCreateItem() {
   const qc = useQueryClient()
@@ -10,6 +11,7 @@ export function useCreateItem() {
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: itemKeys.list() })
       qc.setQueryData(itemKeys.detail(row.id), row)
+      qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
   })
 }

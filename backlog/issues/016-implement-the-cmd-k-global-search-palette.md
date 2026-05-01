@@ -3,7 +3,7 @@ id: 016
 title: Implement the Cmd-K global search palette
 milestone: M2
 unit: M2 — Core Workbench
-status: not-started
+status: done
 labels: [search, ui, performance]
 req-ids: [REQ-013, REQ-N01]
 ---
@@ -32,6 +32,18 @@ And the index refreshes after every successful create or update mutation
 ## Implementation Notes
 
 Per ADR-003, server exposes `/api/search/index`; SPA holds the index in memory and runs in-memory fuzzy match.
+
+**Delivered**:
+- `api/search/index.ts` — GET endpoint. One parallel fan-out per entity table, then a parallel batch of `WHERE id IN (…)` lookups for FK-derived subtitles (NPC.faction, Item.owner+location, Scene.scenario, Clue.originScenario, Bond.pc+target). Stable `(type, name)` ordering. `Cache-Control: no-store`.
+- `domain/searchMatch.ts` — pure-TS fuzzy matcher (subsequence + substring tiers, prefix/word-prefix bonus, contiguity bonus, gap penalty, stable secondary sort). Returns `matchedRanges` for `<mark>` highlighting. Perf budget: ~5–15 ms / 1k items locally — comfortable margin under the 1s AC.
+- `src/hooks/useSearchIndex.ts` — `useSearchIndex()` + exported `searchIndexQueryKey`; `staleTime: 30s`. Every existing mutation hook (15 of them: useCreate*, useDelete*, useApply*, usePatch*) now invalidates the search index in onSuccess.
+- `src/components/CmdK/CmdKPalette.tsx` (+ `useCmdKShortcut.tsx`, `entityRoutes.ts`, `cmdk.css`) — modal palette mounted in `Layout.tsx`. Cmd-K / Ctrl-K toggle (skips when focus is in another editable element). 3-char minimum hint. Type chip + name (with `<mark>` highlights) + subtitle. ArrowUp/Down to navigate, Enter to select, Esc to close. Routes to the entity's detail page (bonds redirect to `/pcs` since there's no /bonds/:id).
+- Tests: 194 → 210 (+16). 10 in `domain/searchMatch.test.ts` (incl. perf assertion: 1k items × 3-char query < 200ms), 5 in `CmdKPalette.test.tsx`, 1 layout smoke.
+
+**Open follow-ups**:
+- Bond detail navigation: thread `pcId` onto bond `SearchIndexItem` so bonds route to `/pcs/{pcId}` instead of `/pcs`.
+- Pre-lowercase index names once on load (currently per-match) — easy speedup at 5k+ entities.
+- Optional `ETag` on the search-index response if first-load latency becomes noticeable.
 
 ## Dependencies
 

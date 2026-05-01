@@ -3,6 +3,7 @@ import type { SanChangeInput } from '../../domain/sanity'
 import { applySanityChange, type SanChangeResult } from '../api/sanity'
 import { pcKeys } from './usePcs'
 import { sanityKeys } from './useSanity'
+import { searchIndexQueryKey } from './useSearchIndex'
 
 type Args = { pcId: string; input: SanChangeInput }
 
@@ -17,6 +18,7 @@ export function useApplySanityChange() {
     onSuccess: ({ pc }) => {
       qc.invalidateQueries({ queryKey: pcKeys.detail(pc.id) })
       qc.invalidateQueries({ queryKey: sanityKeys.events(pc.id) })
+      qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
   })
 }

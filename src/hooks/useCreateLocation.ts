@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { LocationInput } from '../../domain/location'
 import { createLocation, type LocationRow } from '../api/locations'
 import { locationKeys } from './useLocations'
+import { searchIndexQueryKey } from './useSearchIndex'
 
 export function useCreateLocation() {
   const qc = useQueryClient()
@@ -10,6 +11,7 @@ export function useCreateLocation() {
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: locationKeys.list() })
       qc.setQueryData(locationKeys.detail(row.id), row)
+      qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
   })
 }

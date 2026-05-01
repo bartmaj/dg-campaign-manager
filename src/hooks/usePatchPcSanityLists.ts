@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { patchPcSanityLists, type PcSanityListsPatch } from '../api/sanity'
 import type { PcRow } from '../api/pcs'
 import { pcKeys } from './usePcs'
+import { searchIndexQueryKey } from './useSearchIndex'
 
 type Args = { pcId: string; patch: PcSanityListsPatch }
 
@@ -16,6 +17,7 @@ export function usePatchPcSanityLists() {
     mutationFn: ({ pcId, patch }) => patchPcSanityLists(pcId, patch),
     onSuccess: (pc) => {
       qc.invalidateQueries({ queryKey: pcKeys.detail(pc.id) })
+      qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
   })
 }

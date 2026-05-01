@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { BondDamageInput } from '../../domain/bonds'
 import { applyBondDamage, type BondDamageEvent, type BondRow } from '../api/bonds'
 import { bondKeys } from './useBonds'
+import { searchIndexQueryKey } from './useSearchIndex'
 
 type Args = { bondId: string; input: BondDamageInput }
 
@@ -14,6 +15,7 @@ export function useApplyBondDamage() {
       // that includes this bond — pcId filter and reverse-target filter.
       qc.invalidateQueries({ queryKey: bondKeys.detail(bond.id) })
       qc.invalidateQueries({ queryKey: bondKeys.lists() })
+      qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
   })
 }
