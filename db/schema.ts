@@ -171,6 +171,8 @@ export const items = sqliteTable('items', {
   description: text('description'),
   ownerNpcId: text('owner_npc_id'),
   locationId: text('location_id'),
+  // Free-form notes about past ownership / provenance (#008).
+  history: text('history'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })
@@ -182,6 +184,9 @@ export const factions = sqliteTable('factions', {
   }),
   name: text('name').notNull(),
   description: text('description'),
+  // Free-form notes on the faction's current goals / objectives (#008).
+  // Full status timeline lands in #020.
+  agenda: text('agenda'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })

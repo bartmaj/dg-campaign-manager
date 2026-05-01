@@ -3,7 +3,7 @@ id: 008
 title: Implement Faction, Location (baseline), and Item editors
 milestone: M1
 unit: M1 — Foundation
-status: not-started
+status: done
 labels: [data-model, ui]
 req-ids: [REQ-024, REQ-025, REQ-026]
 ---
@@ -35,6 +35,21 @@ Then the Item is persisted with its baseline fields
 ## Implementation Notes
 
 Full Faction status timeline + member surfacing and full Location reverse-ref panels arrive in M2.2A.
+
+**Delivered**:
+- `domain/faction.ts`, `domain/location.ts`, `domain/item.ts` — Zod input schemas only (no business logic).
+- Schema additions (migration `drizzle/0004_chief_raza.sql`): `factions.agenda`, `items.history`. Locations needed no schema change.
+- API endpoints in `api/factions/`, `api/locations/`, `api/items/` mirroring the PC/NPC pattern (GET list desc, POST create, GET by id).
+- Frontend: typed wrappers in `src/api/`, hooks in `src/hooks/`, list/new/detail pages in `src/pages/{factions,locations,items}/` replacing `EntityStubPage` for these three.
+- Item detail links `ownerNpcId` → `/npcs/:id` and `locationId` → `/locations/:id` as raw IDs (no related-entity fetch yet — that's M2.2A).
+- Tests: 40 → 52 (+12). Three small domain tests per entity + one form smoke per entity.
+
+**Open follow-ups**:
+- M2.2A polymorphic-edge surfacing: faction member panel, location contents (NPCs/items at this location).
+- #020 faction status timeline + member surfacing.
+- #019 location reverse-ref panels (full surfacing of clues/NPCs/items/sessions tied to a location).
+- Picker UX for `ownerNpcId` / `locationId` / `parentLocationId` — currently raw text inputs.
+- No edit/delete flows yet.
 
 ## Dependencies
 

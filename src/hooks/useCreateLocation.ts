@@ -1,0 +1,15 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { LocationInput } from '../../domain/location'
+import { createLocation, type LocationRow } from '../api/locations'
+import { locationKeys } from './useLocations'
+
+export function useCreateLocation() {
+  const qc = useQueryClient()
+  return useMutation<LocationRow, Error, LocationInput>({
+    mutationFn: createLocation,
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: locationKeys.list() })
+      qc.setQueryData(locationKeys.detail(row.id), row)
+    },
+  })
+}
