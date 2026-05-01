@@ -3,7 +3,7 @@ id: 009
 title: Implement the polymorphic typed-edge table
 milestone: M2
 unit: M2 — Core Workbench
-status: not-started
+status: done
 labels: [data-model, domain]
 req-ids: [REQ-003, REQ-015]
 ---
@@ -34,6 +34,20 @@ Then the Clue appears in an "Implicating clues" section automatically
 ## Implementation Notes
 
 Per ADR-002, polymorphic over per-pair junction tables. Reverse-ref API surfaces incoming edges per detail page.
+
+**Delivered**:
+- Schema already in place from #004.
+- `domain/edges.ts`: `EDGE_RULES` allowlist (15 canonical triples spanning clue/npc/pc/item/faction/session source-target combinations), `EdgeKind` union, helpers (`isValidEdge`, `getEdgeRule`, `kindsForSource`), `edgeInputSchema` with Zod `.refine()` enforcing the allowlist.
+- API: `api/edges/index.ts` (POST validates via schema with 400 on failure; GET filters by any combination of sourceType/sourceId/targetType/targetId/kind, returns `[]` if no filters), `api/edges/[id].ts` (GET, DELETE).
+- Frontend: `src/api/edges.ts` typed wrappers, `src/hooks/useEdges.ts` (`edgeKeys`, `useEdges`, `useEdge`, `useIncomingEdges`, `useOutgoingEdges`), `useCreateEdge`, `useDeleteEdge` mutations.
+- First reverse-ref demonstration: `FactionDetailPage` shows an "Implicating clues" section using `useIncomingEdges('faction', factionId)` filtered to `sourceType === 'clue' && kind === 'implicates'`. Empty state renders an em-dash; populated state lists each clue with a link to `/clues/:sourceId`.
+- Tests: 52 → 70 (+18). Domain coverage of allowlist (canonical, wrong-type rejection, unknown-kind rejection), `kindsForSource`, Zod schema validation. UI test seeds the QueryClient cache directly to assert populated/empty/filter behavior on `FactionDetailPage`.
+
+**Open follow-ups (mostly for #018)**:
+- Edge-creation/edit/delete UI on entity pages.
+- Hydrating linked-entity display names (currently raw IDs in the section).
+- Equivalent reverse-ref sections on other detail pages: NpcDetailPage "Mentioned by clues", LocationDetailPage "Occupants", etc.
+- Edge delivery state for clues (`delivered_in`) — proper mechanics in #025.
 
 ## Dependencies
 
