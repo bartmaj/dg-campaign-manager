@@ -1,6 +1,6 @@
 # M1 — Foundation
 
-**Status:** In Progress (6/8 done)
+**Status:** In Progress (7/8 done)
 **Target:** Weekends W1–W2
 **Effort:** ~2.0 PWE
 
@@ -26,7 +26,7 @@ None (foundational unit).
 - [x] [#004 Define the typed entity model](../issues/004-define-the-typed-entity-model.md)
 - [x] [#005 Implement the DG RAW PC schema](../issues/005-implement-the-dg-raw-pc-schema.md)
 - [x] [#006 Implement the NPC schema](../issues/006-implement-the-npc-schema.md)
-- [ ] [#007 Build the shared character form with skill-package presets](../issues/007-build-the-shared-character-form-with-skill-pack.md)
+- [x] [#007 Build the shared character form with skill-package presets](../issues/007-build-the-shared-character-form-with-skill-pack.md)
 - [ ] [#008 Implement Faction, Location (baseline), and Item editors](../issues/008-implement-faction-location-baseline-and-item-edit.md)
 
 ## Definition of Done
