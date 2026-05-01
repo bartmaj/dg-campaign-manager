@@ -1,5 +1,8 @@
 import { createBrowserRouter } from 'react-router'
 import Layout from './components/Layout'
+import ClueDetailPage from './pages/clues/ClueDetailPage'
+import ClueListPage from './pages/clues/ClueListPage'
+import NewCluePage from './pages/clues/NewCluePage'
 import { ENTITIES } from './entities'
 import EntityStubPage from './pages/EntityStubPage'
 import FactionDetailPage from './pages/factions/FactionDetailPage'
@@ -46,6 +49,13 @@ const entityRoutes = ENTITIES.flatMap((entity) => {
       { path: 'locations', element: <LocationListPage /> },
       { path: 'locations/new', element: <NewLocationPage /> },
       { path: 'locations/:id', element: <LocationDetailPage /> },
+    ]
+  }
+  if (entity.key === 'clues') {
+    return [
+      { path: 'clues', element: <ClueListPage /> },
+      { path: 'clues/new', element: <NewCluePage /> },
+      { path: 'clues/:id', element: <ClueDetailPage /> },
     ]
   }
   if (entity.key === 'items') {

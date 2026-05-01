@@ -1,0 +1,1 @@
+ALTER TABLE `clues` ADD `origin_scenario_id` text REFERENCES scenarios(id);

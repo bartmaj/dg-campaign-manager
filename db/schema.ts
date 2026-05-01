@@ -158,6 +158,14 @@ export const clues = sqliteTable('clues', {
   }),
   name: text('name').notNull(),
   description: text('description'),
+  // ─── Clue provenance (#010) ─────────────────────────────────────────────
+  // Origin scenario — nullable; the GM may capture freeform clues that
+  // aren't tied to a published scenario. Outgoing typed relationships
+  // (mentions/implicates/points_to/delivered_in/prerequisite_of) live in
+  // the polymorphic `edges` table per ADR-002.
+  originScenarioId: text('origin_scenario_id').references(() => scenarios.id, {
+    onDelete: 'set null',
+  }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })
