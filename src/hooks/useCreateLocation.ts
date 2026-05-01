@@ -9,7 +9,7 @@ export function useCreateLocation() {
   return useMutation<LocationRow, Error, LocationInput>({
     mutationFn: createLocation,
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: locationKeys.list() })
+      qc.invalidateQueries({ queryKey: locationKeys.lists() })
       qc.setQueryData(locationKeys.detail(row.id), row)
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },

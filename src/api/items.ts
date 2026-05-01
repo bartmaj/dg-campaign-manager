@@ -15,6 +15,12 @@ export type ItemRow = {
   updatedAt: string
 }
 
+export type ItemFilter = {
+  locationId?: string
+  ownerNpcId?: string
+  q?: string
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
@@ -27,8 +33,17 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export function listItems(): Promise<ItemRow[]> {
-  return fetchJson<ItemRow[]>('/api/items')
+function buildItemUrl(filter: ItemFilter): string {
+  const params = new URLSearchParams()
+  if (filter.locationId) params.set('locationId', filter.locationId)
+  if (filter.ownerNpcId) params.set('ownerNpcId', filter.ownerNpcId)
+  if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  const qs = params.toString()
+  return qs.length > 0 ? `/api/items?${qs}` : '/api/items'
+}
+
+export function listItems(filter: ItemFilter = {}): Promise<ItemRow[]> {
+  return fetchJson<ItemRow[]>(buildItemUrl(filter))
 }
 
 export function getItem(id: string): Promise<ItemRow> {

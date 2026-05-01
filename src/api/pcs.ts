@@ -44,8 +44,19 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export function listPcs(): Promise<PcRow[]> {
-  return fetchJson<PcRow[]>('/api/pcs')
+export type PcFilter = {
+  q?: string
+}
+
+function buildPcUrl(filter: PcFilter): string {
+  const params = new URLSearchParams()
+  if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  const qs = params.toString()
+  return qs.length > 0 ? `/api/pcs?${qs}` : '/api/pcs'
+}
+
+export function listPcs(filter: PcFilter = {}): Promise<PcRow[]> {
+  return fetchJson<PcRow[]>(buildPcUrl(filter))
 }
 
 export function getPc(id: string): Promise<PcRow> {

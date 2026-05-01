@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { getNpc, listNpcs, type NpcRow } from '../api/npcs'
+import { getNpc, listNpcs, type NpcFilter, type NpcRow } from '../api/npcs'
 
 export const npcKeys = {
   all: ['npcs'] as const,
-  list: () => [...npcKeys.all, 'list'] as const,
+  lists: () => [...npcKeys.all, 'list'] as const,
+  list: (filter?: NpcFilter) => [...npcKeys.lists(), filter ?? {}] as const,
   detail: (id: string) => [...npcKeys.all, 'detail', id] as const,
 }
 
-export function useNpcs() {
+export function useNpcs(filter?: NpcFilter) {
   return useQuery<NpcRow[]>({
-    queryKey: npcKeys.list(),
-    queryFn: listNpcs,
+    queryKey: npcKeys.list(filter),
+    queryFn: () => listNpcs(filter ?? {}),
   })
 }
 

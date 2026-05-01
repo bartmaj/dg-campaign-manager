@@ -1,17 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
-import { getSession, listSessions, type SessionOrderBy, type SessionRow } from '../api/sessions'
+import {
+  getSession,
+  listSessions,
+  type SessionFilter,
+  type SessionOrderBy,
+  type SessionRow,
+} from '../api/sessions'
 
 export const sessionKeys = {
   all: ['sessions'] as const,
   lists: () => [...sessionKeys.all, 'list'] as const,
-  list: (orderBy: SessionOrderBy) => [...sessionKeys.lists(), orderBy] as const,
+  list: (orderBy: SessionOrderBy, filter?: SessionFilter) =>
+    [...sessionKeys.lists(), orderBy, filter ?? {}] as const,
   detail: (id: string) => [...sessionKeys.all, 'detail', id] as const,
 }
 
-export function useSessions(orderBy: SessionOrderBy = 'realWorld') {
+export function useSessions(orderBy: SessionOrderBy = 'realWorld', filter?: SessionFilter) {
   return useQuery<SessionRow[]>({
-    queryKey: sessionKeys.list(orderBy),
-    queryFn: () => listSessions(orderBy),
+    queryKey: sessionKeys.list(orderBy, filter),
+    queryFn: () => listSessions(orderBy, filter ?? {}),
   })
 }
 

@@ -1,14 +1,30 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { locationInputSchema } from '../../domain/location'
 import { serializeEntity } from '../../domain/mdExport'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
 
-export async function locationsList(_req: VercelRequest, res: VercelResponse) {
+function singleParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export async function locationsList(req: VercelRequest, res: VercelResponse) {
+  const parentLocationId = singleParam(req.query.parentLocationId as string | string[] | undefined)
+  const q = singleParam(req.query.q as string | string[] | undefined)
+
+  const conditions: SQL[] = []
+  if (parentLocationId) {
+    conditions.push(eq(schema.locations.parentLocationId, parentLocationId))
+  }
+  if (q && q.trim().length > 0) conditions.push(like(schema.locations.name, `%${q.trim()}%`))
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined
   const rows = await db
     .select()
     .from(schema.locations)
+    .where(where)
     .orderBy(desc(schema.locations.updatedAt))
     .limit(200)
   return res.status(200).json(rows)

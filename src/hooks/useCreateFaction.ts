@@ -9,7 +9,7 @@ export function useCreateFaction() {
   return useMutation<FactionRow, Error, FactionInput>({
     mutationFn: createFaction,
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: factionKeys.list() })
+      qc.invalidateQueries({ queryKey: factionKeys.lists() })
       qc.setQueryData(factionKeys.detail(row.id), row)
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },

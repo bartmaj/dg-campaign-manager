@@ -1,12 +1,30 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { clueInputSchema } from '../../domain/clue'
 import { serializeEntity } from '../../domain/mdExport'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
 
-export async function cluesList(_req: VercelRequest, res: VercelResponse) {
-  const rows = await db.select().from(schema.clues).orderBy(desc(schema.clues.updatedAt)).limit(200)
+function singleParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export async function cluesList(req: VercelRequest, res: VercelResponse) {
+  const originScenarioId = singleParam(req.query.originScenarioId as string | string[] | undefined)
+  const q = singleParam(req.query.q as string | string[] | undefined)
+
+  const conditions: SQL[] = []
+  if (originScenarioId) conditions.push(eq(schema.clues.originScenarioId, originScenarioId))
+  if (q && q.trim().length > 0) conditions.push(like(schema.clues.name, `%${q.trim()}%`))
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+  const rows = await db
+    .select()
+    .from(schema.clues)
+    .where(where)
+    .orderBy(desc(schema.clues.updatedAt))
+    .limit(200)
   return res.status(200).json(rows)
 }
 

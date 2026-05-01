@@ -1,17 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { getScenario, listScenarios, type ScenarioRow } from '../api/scenarios'
+import { getScenario, listScenarios, type ScenarioFilter, type ScenarioRow } from '../api/scenarios'
 
 export const scenarioKeys = {
   all: ['scenarios'] as const,
   lists: () => [...scenarioKeys.all, 'list'] as const,
-  list: () => [...scenarioKeys.lists()] as const,
+  list: (filter?: ScenarioFilter) => [...scenarioKeys.lists(), filter ?? {}] as const,
   detail: (id: string) => [...scenarioKeys.all, 'detail', id] as const,
 }
 
-export function useScenarios() {
+export function useScenarios(filter?: ScenarioFilter) {
   return useQuery<ScenarioRow[]>({
-    queryKey: scenarioKeys.list(),
-    queryFn: listScenarios,
+    queryKey: scenarioKeys.list(filter),
+    queryFn: () => listScenarios(filter ?? {}),
   })
 }
 

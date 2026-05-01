@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { getPc, listPcs, type PcRow } from '../api/pcs'
+import { getPc, listPcs, type PcFilter, type PcRow } from '../api/pcs'
 
 export const pcKeys = {
   all: ['pcs'] as const,
-  list: () => [...pcKeys.all, 'list'] as const,
+  lists: () => [...pcKeys.all, 'list'] as const,
+  list: (filter?: PcFilter) => [...pcKeys.lists(), filter ?? {}] as const,
   detail: (id: string) => [...pcKeys.all, 'detail', id] as const,
 }
 
-export function usePcs() {
+export function usePcs(filter?: PcFilter) {
   return useQuery<PcRow[]>({
-    queryKey: pcKeys.list(),
-    queryFn: listPcs,
+    queryKey: pcKeys.list(filter),
+    queryFn: () => listPcs(filter ?? {}),
   })
 }
 

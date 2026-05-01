@@ -9,7 +9,7 @@ export function useCreateClue() {
   return useMutation<ClueRow, Error, ClueInput>({
     mutationFn: createClue,
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: clueKeys.list() })
+      qc.invalidateQueries({ queryKey: clueKeys.lists() })
       qc.setQueryData(clueKeys.detail(row.id), row)
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },

@@ -13,6 +13,11 @@ export type ClueRow = {
   updatedAt: string
 }
 
+export type ClueFilter = {
+  originScenarioId?: string
+  q?: string
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
@@ -25,8 +30,16 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export function listClues(): Promise<ClueRow[]> {
-  return fetchJson<ClueRow[]>('/api/clues')
+function buildClueUrl(filter: ClueFilter): string {
+  const params = new URLSearchParams()
+  if (filter.originScenarioId) params.set('originScenarioId', filter.originScenarioId)
+  if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  const qs = params.toString()
+  return qs.length > 0 ? `/api/clues?${qs}` : '/api/clues'
+}
+
+export function listClues(filter: ClueFilter = {}): Promise<ClueRow[]> {
+  return fetchJson<ClueRow[]>(buildClueUrl(filter))
 }
 
 export function getClue(id: string): Promise<ClueRow> {

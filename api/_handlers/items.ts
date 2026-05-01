@@ -1,12 +1,32 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { itemInputSchema } from '../../domain/item'
 import { serializeEntity } from '../../domain/mdExport'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
 
-export async function itemsList(_req: VercelRequest, res: VercelResponse) {
-  const rows = await db.select().from(schema.items).orderBy(desc(schema.items.updatedAt)).limit(200)
+function singleParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export async function itemsList(req: VercelRequest, res: VercelResponse) {
+  const locationId = singleParam(req.query.locationId as string | string[] | undefined)
+  const ownerNpcId = singleParam(req.query.ownerNpcId as string | string[] | undefined)
+  const q = singleParam(req.query.q as string | string[] | undefined)
+
+  const conditions: SQL[] = []
+  if (locationId) conditions.push(eq(schema.items.locationId, locationId))
+  if (ownerNpcId) conditions.push(eq(schema.items.ownerNpcId, ownerNpcId))
+  if (q && q.trim().length > 0) conditions.push(like(schema.items.name, `%${q.trim()}%`))
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+  const rows = await db
+    .select()
+    .from(schema.items)
+    .where(where)
+    .orderBy(desc(schema.items.updatedAt))
+    .limit(200)
   return res.status(200).json(rows)
 }
 

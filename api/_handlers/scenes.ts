@@ -1,24 +1,39 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { asc, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { serializeEntity } from '../../domain/mdExport'
 import { sceneInputSchema } from '../../domain/scene'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
 
+function singleParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
 export async function scenesList(req: VercelRequest, res: VercelResponse) {
-  const scenarioIdParam = req.query.scenarioId
-  const scenarioId = Array.isArray(scenarioIdParam) ? scenarioIdParam[0] : scenarioIdParam
+  const scenarioId = singleParam(req.query.scenarioId as string | string[] | undefined)
+  const q = singleParam(req.query.q as string | string[] | undefined)
+
+  const conditions: SQL[] = []
+  if (scenarioId) conditions.push(eq(schema.scenes.scenarioId, scenarioId))
+  if (q && q.trim().length > 0) conditions.push(like(schema.scenes.name, `%${q.trim()}%`))
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+
+  // When filtering by scenario, order by orderIndex (preserves the
+  // scenario's narrative beat order). Otherwise show most-recent first.
   if (scenarioId) {
     const rows = await db
       .select()
       .from(schema.scenes)
-      .where(eq(schema.scenes.scenarioId, scenarioId))
+      .where(where)
       .orderBy(asc(schema.scenes.orderIndex))
     return res.status(200).json(rows)
   }
   const rows = await db
     .select()
     .from(schema.scenes)
+    .where(where)
     .orderBy(desc(schema.scenes.updatedAt))
     .limit(200)
   return res.status(200).json(rows)

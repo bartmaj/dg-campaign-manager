@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { getClue, listClues, type ClueRow } from '../api/clues'
+import { getClue, listClues, type ClueFilter, type ClueRow } from '../api/clues'
 
 export const clueKeys = {
   all: ['clues'] as const,
-  list: () => [...clueKeys.all, 'list'] as const,
+  lists: () => [...clueKeys.all, 'list'] as const,
+  list: (filter?: ClueFilter) => [...clueKeys.lists(), filter ?? {}] as const,
   detail: (id: string) => [...clueKeys.all, 'detail', id] as const,
 }
 
-export function useClues() {
+export function useClues(filter?: ClueFilter) {
   return useQuery<ClueRow[]>({
-    queryKey: clueKeys.list(),
-    queryFn: listClues,
+    queryKey: clueKeys.list(filter),
+    queryFn: () => listClues(filter ?? {}),
   })
 }
 

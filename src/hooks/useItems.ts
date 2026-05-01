@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { getItem, listItems, type ItemRow } from '../api/items'
+import { getItem, listItems, type ItemFilter, type ItemRow } from '../api/items'
 
 export const itemKeys = {
   all: ['items'] as const,
-  list: () => [...itemKeys.all, 'list'] as const,
+  lists: () => [...itemKeys.all, 'list'] as const,
+  list: (filter?: ItemFilter) => [...itemKeys.lists(), filter ?? {}] as const,
   detail: (id: string) => [...itemKeys.all, 'detail', id] as const,
 }
 
-export function useItems() {
+export function useItems(filter?: ItemFilter) {
   return useQuery<ItemRow[]>({
-    queryKey: itemKeys.list(),
-    queryFn: listItems,
+    queryKey: itemKeys.list(filter),
+    queryFn: () => listItems(filter ?? {}),
   })
 }
 

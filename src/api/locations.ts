@@ -13,6 +13,11 @@ export type LocationRow = {
   updatedAt: string
 }
 
+export type LocationFilter = {
+  parentLocationId?: string
+  q?: string
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
@@ -25,8 +30,16 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export function listLocations(): Promise<LocationRow[]> {
-  return fetchJson<LocationRow[]>('/api/locations')
+function buildLocationUrl(filter: LocationFilter): string {
+  const params = new URLSearchParams()
+  if (filter.parentLocationId) params.set('parentLocationId', filter.parentLocationId)
+  if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  const qs = params.toString()
+  return qs.length > 0 ? `/api/locations?${qs}` : '/api/locations'
+}
+
+export function listLocations(filter: LocationFilter = {}): Promise<LocationRow[]> {
+  return fetchJson<LocationRow[]>(buildLocationUrl(filter))
 }
 
 export function getLocation(id: string): Promise<LocationRow> {

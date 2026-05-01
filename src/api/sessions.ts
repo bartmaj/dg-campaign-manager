@@ -30,8 +30,22 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export function listSessions(orderBy: SessionOrderBy = 'realWorld'): Promise<SessionRow[]> {
-  return fetchJson<SessionRow[]>(`/api/sessions?orderBy=${encodeURIComponent(orderBy)}`)
+export type SessionFilter = {
+  q?: string
+}
+
+function buildSessionUrl(orderBy: SessionOrderBy, filter: SessionFilter): string {
+  const params = new URLSearchParams()
+  params.set('orderBy', orderBy)
+  if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  return `/api/sessions?${params.toString()}`
+}
+
+export function listSessions(
+  orderBy: SessionOrderBy = 'realWorld',
+  filter: SessionFilter = {},
+): Promise<SessionRow[]> {
+  return fetchJson<SessionRow[]>(buildSessionUrl(orderBy, filter))
 }
 
 export function getSession(id: string): Promise<SessionRow> {

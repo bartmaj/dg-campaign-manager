@@ -1,14 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, like } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { factionInputSchema } from '../../domain/faction'
 import { serializeEntity } from '../../domain/mdExport'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
 
-export async function factionsList(_req: VercelRequest, res: VercelResponse) {
+function singleParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export async function factionsList(req: VercelRequest, res: VercelResponse) {
+  const q = singleParam(req.query.q as string | string[] | undefined)
+  const where = q && q.trim().length > 0 ? like(schema.factions.name, `%${q.trim()}%`) : undefined
+
   const rows = await db
     .select()
     .from(schema.factions)
+    .where(where)
     .orderBy(desc(schema.factions.updatedAt))
     .limit(200)
   return res.status(200).json(rows)

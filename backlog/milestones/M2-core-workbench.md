@@ -1,6 +1,6 @@
 # M2 — Core Workbench
 
-**Status:** In Progress (8/14 done)
+**Status:** In Progress (9/14 done)
 **Target:** Weekends W3–W5
 **Effort:** ~2.5 PWE
 
@@ -29,7 +29,7 @@ M1 (entity schemas, Drizzle plumbing, character form).
 - [x] [#014 Implement bulk Markdown scenario import](../issues/014-implement-bulk-markdown-scenario-import.md)
 - [x] [#015 Implement per-entity Markdown export](../issues/015-implement-per-entity-markdown-export.md)
 - [x] [#016 Implement the Cmd-K global search palette](../issues/016-implement-the-cmd-k-global-search-palette.md)
-- [ ] [#017 Implement list views with filtering per entity type](../issues/017-implement-list-views-with-filtering-per-entity-.md)
+- [x] [#017 Implement list views with filtering per entity type](../issues/017-implement-list-views-with-filtering-per-entity-.md)
 - [ ] [#018 Surface relationships and recent activity on entity detail pages](../issues/018-surface-relationships-and-recent-activity-on-en.md)
 - [ ] [#019 Surface local context on the Location detail page](../issues/019-surface-local-context-on-the-location-detail-pa.md)
 - [ ] [#020 Surface the Faction status timeline and members](../issues/020-surface-the-faction-status-timeline-and-members.md)

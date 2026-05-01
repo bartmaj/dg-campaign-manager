@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { SessionOrderBy } from '../../api/sessions'
+import type { SessionFilter, SessionOrderBy } from '../../api/sessions'
+import FilterBar, {
+  type FilterBarField,
+  type FilterValues,
+} from '../../components/FilterBar/FilterBar'
 import { useSessions } from '../../hooks/useSessions'
 
 function formatRange(start: string | null, end: string | null): string {
@@ -17,7 +21,19 @@ function formatRealWorld(d: string | null): string {
 
 function SessionListPage() {
   const [orderBy, setOrderBy] = useState<SessionOrderBy>('realWorld')
-  const { data, isLoading, error } = useSessions(orderBy)
+  const [filterValues, setFilterValues] = useState<FilterValues>({})
+
+  const filter: SessionFilter = useMemo(() => {
+    const next: SessionFilter = {}
+    if (filterValues.q) next.q = filterValues.q
+    return next
+  }, [filterValues])
+
+  const { data, isLoading, error } = useSessions(orderBy, filter)
+
+  const fields: FilterBarField[] = [
+    { id: 'q', label: 'Name', type: 'text', placeholder: 'search by name' },
+  ]
 
   return (
     <section>
@@ -45,9 +61,11 @@ function SessionListPage() {
         </button>
       </div>
 
+      <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
+
       {isLoading && <p>Loading…</p>}
       {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No sessions yet.</p>}
+      {data && data.length === 0 && <p>No sessions match the current filters.</p>}
       {data && data.length > 0 && (
         <ul>
           {data.map((s) => {

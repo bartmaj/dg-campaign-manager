@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
-import { getFaction, listFactions, type FactionRow } from '../api/factions'
+import { getFaction, listFactions, type FactionFilter, type FactionRow } from '../api/factions'
 
 export const factionKeys = {
   all: ['factions'] as const,
-  list: () => [...factionKeys.all, 'list'] as const,
+  lists: () => [...factionKeys.all, 'list'] as const,
+  list: (filter?: FactionFilter) => [...factionKeys.lists(), filter ?? {}] as const,
   detail: (id: string) => [...factionKeys.all, 'detail', id] as const,
 }
 
-export function useFactions() {
+export function useFactions(filter?: FactionFilter) {
   return useQuery<FactionRow[]>({
-    queryKey: factionKeys.list(),
-    queryFn: listFactions,
+    queryKey: factionKeys.list(filter),
+    queryFn: () => listFactions(filter ?? {}),
   })
 }
 

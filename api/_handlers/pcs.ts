@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { asc, desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, like, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../db/client'
 import { serializeEntity } from '../../domain/mdExport'
@@ -17,8 +17,21 @@ const pcSanityListsPatchSchema = z.object({
   adaptedTo: z.array(z.string().min(1)).optional(),
 })
 
-export async function pcsList(_req: VercelRequest, res: VercelResponse) {
-  const rows = await db.select().from(schema.pcs).orderBy(desc(schema.pcs.createdAt)).limit(200)
+function singlePcParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export async function pcsList(req: VercelRequest, res: VercelResponse) {
+  const q = singlePcParam(req.query.q as string | string[] | undefined)
+  const where = q && q.trim().length > 0 ? like(schema.pcs.name, `%${q.trim()}%`) : undefined
+
+  const rows = await db
+    .select()
+    .from(schema.pcs)
+    .where(where)
+    .orderBy(desc(schema.pcs.createdAt))
+    .limit(200)
   return res.status(200).json(rows)
 }
 

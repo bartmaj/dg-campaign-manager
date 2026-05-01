@@ -1,14 +1,40 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { serializeEntity } from '../../domain/mdExport'
 import type { NpcStatus } from '../../domain/npc'
-import { npcInputSchema } from '../../domain/npc'
+import { NPC_STATUSES, npcInputSchema } from '../../domain/npc'
 import { deriveAttributes } from '../../domain/pc'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
 
-export async function npcsList(_req: VercelRequest, res: VercelResponse) {
-  const rows = await db.select().from(schema.npcs).orderBy(desc(schema.npcs.updatedAt)).limit(200)
+function singleParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value
+}
+
+export async function npcsList(req: VercelRequest, res: VercelResponse) {
+  const factionId = singleParam(req.query.factionId as string | string[] | undefined)
+  const locationId = singleParam(req.query.locationId as string | string[] | undefined)
+  const statusRaw = singleParam(req.query.status as string | string[] | undefined)
+  const q = singleParam(req.query.q as string | string[] | undefined)
+
+  const conditions: SQL[] = []
+  if (factionId) conditions.push(eq(schema.npcs.factionId, factionId))
+  if (locationId) conditions.push(eq(schema.npcs.locationId, locationId))
+  if (statusRaw && (NPC_STATUSES as readonly string[]).includes(statusRaw)) {
+    conditions.push(eq(schema.npcs.status, statusRaw as NpcStatus))
+  }
+  if (q && q.trim().length > 0) {
+    conditions.push(like(schema.npcs.name, `%${q.trim()}%`))
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+  const rows = await db
+    .select()
+    .from(schema.npcs)
+    .where(where)
+    .orderBy(desc(schema.npcs.updatedAt))
+    .limit(200)
   return res.status(200).json(rows)
 }
 

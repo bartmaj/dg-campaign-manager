@@ -9,7 +9,7 @@ export function useCreatePc() {
   return useMutation<PcRow, Error, PcInput>({
     mutationFn: createPc,
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: pcKeys.list() })
+      qc.invalidateQueries({ queryKey: pcKeys.lists() })
       qc.setQueryData(pcKeys.detail(row.id), row)
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },

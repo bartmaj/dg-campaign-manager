@@ -22,6 +22,6 @@ describe('ScenarioListPage', () => {
     renderPage([])
     expect(screen.getByRole('heading', { name: /scenarios/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /new scenario/i })).toBeInTheDocument()
-    expect(screen.getByText(/no scenarios yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/no scenarios match/i)).toBeInTheDocument()
   })
 })

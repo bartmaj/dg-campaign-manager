@@ -28,6 +28,13 @@ export type NpcRow = {
   updatedAt: string
 }
 
+export type NpcFilter = {
+  factionId?: string
+  locationId?: string
+  status?: NpcStatus
+  q?: string
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
@@ -40,8 +47,18 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export function listNpcs(): Promise<NpcRow[]> {
-  return fetchJson<NpcRow[]>('/api/npcs')
+function buildNpcUrl(filter: NpcFilter): string {
+  const params = new URLSearchParams()
+  if (filter.factionId) params.set('factionId', filter.factionId)
+  if (filter.locationId) params.set('locationId', filter.locationId)
+  if (filter.status) params.set('status', filter.status)
+  if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  const qs = params.toString()
+  return qs.length > 0 ? `/api/npcs?${qs}` : '/api/npcs'
+}
+
+export function listNpcs(filter: NpcFilter = {}): Promise<NpcRow[]> {
+  return fetchJson<NpcRow[]>(buildNpcUrl(filter))
 }
 
 export function getNpc(id: string): Promise<NpcRow> {

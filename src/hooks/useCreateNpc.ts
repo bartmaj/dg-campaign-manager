@@ -9,7 +9,7 @@ export function useCreateNpc() {
   return useMutation<NpcRow, Error, NpcInput>({
     mutationFn: createNpc,
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: npcKeys.list() })
+      qc.invalidateQueries({ queryKey: npcKeys.lists() })
       qc.setQueryData(npcKeys.detail(row.id), row)
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },

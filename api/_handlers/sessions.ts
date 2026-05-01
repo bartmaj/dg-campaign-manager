@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc, desc, eq, like } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { serializeEntity } from '../../domain/mdExport'
 import { sessionInputSchema } from '../../domain/session'
@@ -10,9 +10,14 @@ export async function sessionsList(req: VercelRequest, res: VercelResponse) {
   const orderBy = Array.isArray(orderByParam) ? orderByParam[0] : orderByParam
   const useInGame = orderBy === 'inGame'
 
+  const qParam = req.query.q
+  const q = Array.isArray(qParam) ? qParam[0] : qParam
+  const where = q && q.trim().length > 0 ? like(schema.sessions.name, `%${q.trim()}%`) : undefined
+
   const rows = await db
     .select()
     .from(schema.sessions)
+    .where(where)
     .orderBy(desc(schema.sessions.updatedAt))
     .limit(500)
 

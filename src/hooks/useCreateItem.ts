@@ -9,7 +9,7 @@ export function useCreateItem() {
   return useMutation<ItemRow, Error, ItemInput>({
     mutationFn: createItem,
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: itemKeys.list() })
+      qc.invalidateQueries({ queryKey: itemKeys.lists() })
       qc.setQueryData(itemKeys.detail(row.id), row)
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
     },
