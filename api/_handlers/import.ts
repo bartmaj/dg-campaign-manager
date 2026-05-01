@@ -3,23 +3,9 @@ import { asc } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import { parseScenarioMarkdown, type ImportedData } from '../../domain/mdImport'
 
-/**
- * POST /api/import/scenario
- *
- * Body: `{ markdown: string }` (JSON) — see `docs/md-import-template.md`.
- *
- * On success: 201 with { scenarioId, counts }.
- * On parse failure: 400 with { errors: [{ line, field, message }] }.
- *
- * The entire ingest runs in one libSQL transaction. If any insert fails,
- * the transaction rolls back and no partial state remains.
- */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
+export async function importScenario(req: VercelRequest, res: VercelResponse) {
   let markdown: string | undefined
   if (req.body && typeof req.body === 'object' && 'markdown' in req.body) {
     const m = (req.body as { markdown?: unknown }).markdown
@@ -45,7 +31,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ errors: parsed.errors })
   }
 
-  // Resolve / auto-create the default campaign.
   let campaignId: string
   const [existing] = await db
     .select()
@@ -76,24 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
-
-/**
- * Ingest a parsed scenario payload inside a libSQL transaction.
- * Insertion order:
- *   1. scenario
- *   2. locations (parents resolved in a second pass)
- *   3. factions
- *   4. npcs (faction/location FKs resolved here)
- *   5. items (owner/location FKs)
- *   6. clues
- *   7. scenes
- *   8. edges (all FK lookups already populated)
- *
- * Returns { scenarioId, counts } so the API can respond with summary info.
- */
 async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
-  // 1. Scenario
   const scenarioId = crypto.randomUUID()
   await tx.insert(schema.scenarios).values({
     id: scenarioId,
@@ -102,7 +70,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     description: data.scenario.description,
   })
 
-  // 2. Locations — first pass: id assignment without parentLocationId.
   const locationIdByName = new Map<string, string>()
   for (const l of data.locations) {
     locationIdByName.set(l.name, crypto.randomUUID())
@@ -119,7 +86,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     })
   }
 
-  // 3. Factions
   const factionIdByName = new Map<string, string>()
   for (const f of data.factions) {
     const id = crypto.randomUUID()
@@ -133,7 +99,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     })
   }
 
-  // 4. NPCs
   const npcIdByName = new Map<string, string>()
   for (const n of data.npcs) {
     const id = crypto.randomUUID()
@@ -154,7 +119,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     })
   }
 
-  // 5. Items
   const itemIdByName = new Map<string, string>()
   for (const it of data.items) {
     const id = crypto.randomUUID()
@@ -169,7 +133,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     })
   }
 
-  // 6. Clues
   const clueIdByName = new Map<string, string>()
   for (const c of data.clues) {
     const id = crypto.randomUUID()
@@ -183,7 +146,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     })
   }
 
-  // 7. Scenes
   const sceneIdByName = new Map<string, string>()
   for (const s of data.scenes) {
     const id = crypto.randomUUID()
@@ -197,7 +159,6 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     })
   }
 
-  // Lookup helpers: parser-side `targetType` -> id map.
   const idMaps: Record<string, Map<string, string>> = {
     npc: npcIdByName,
     faction: factionIdByName,
@@ -207,14 +168,11 @@ async function ingest(tx: Tx, campaignId: string, data: ImportedData) {
     scene: sceneIdByName,
   }
 
-  // 8. Edges
   let edgeCount = 0
   for (const e of data.edges) {
     const sourceId = idMaps[e.sourceType]?.get(e.sourceName)
     const targetId = idMaps[e.targetType]?.get(e.targetName)
     if (!sourceId || !targetId) {
-      // Should never happen — the parser validated all references, but
-      // throw to roll the transaction back rather than insert garbage.
       throw new Error(
         `Internal: failed to resolve edge ${e.sourceType}/${e.sourceName} → ${e.targetType}/${e.targetName}`,
       )

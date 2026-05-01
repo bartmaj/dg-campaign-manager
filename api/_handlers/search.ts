@@ -3,19 +3,6 @@ import { inArray } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
 import type { EntityType } from '../../db/schema'
 
-/**
- * GET /api/search/index — flat search index for the SPA's Cmd-K palette.
- *
- * Per ADR-003 (architecture.md §9), search is implemented as an
- * in-memory fuzzy match on the SPA side. The server's only job is to
- * serialize a compact `{ items: SearchIndexItem[] }` payload covering
- * every entity table.
- *
- * One query per table; small batched name lookups for the few subtitles
- * that need a parent name. No pagination — datasets are expected in the
- * hundreds-to-low-thousands range (REQ-N01 covers 1k entities).
- */
-
 export type SearchIndexItem = {
   id: string
   type: EntityType
@@ -27,13 +14,7 @@ export type SearchIndexResponse = {
   items: SearchIndexItem[]
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET')
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
-  // Pull every table in parallel — they're independent reads.
+export async function searchIndex(_req: VercelRequest, res: VercelResponse) {
   const [scenarios, scenes, pcs, npcs, clues, items, factions, locations, sessions, bonds] =
     await Promise.all([
       db.select({ id: schema.scenarios.id, name: schema.scenarios.name }).from(schema.scenarios),
@@ -82,7 +63,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from(schema.bonds),
     ])
 
-  // Batched name lookups for subtitles. Each is a single SELECT … WHERE id IN (…).
   const factionIds = uniq(npcs.map((n) => n.factionId))
   const scenarioIds = uniq([
     ...scenes.map((s) => s.scenarioId),
@@ -206,7 +186,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     out.push({ id: r.id, type: 'bond', name: r.name, subtitle })
   }
 
-  // Stable order: by (type, name).
   out.sort((a, b) => {
     if (a.type !== b.type) return a.type < b.type ? -1 : 1
     return a.name.localeCompare(b.name)
