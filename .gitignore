@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Env + local DB
+.env
+.env.local
+*.db
+*.db-journal
+*.db-shm
+*.db-wal

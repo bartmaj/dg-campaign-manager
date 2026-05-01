@@ -14,7 +14,14 @@
       "Bash(pnpm test *)",
       "Bash(pnpm build *)",
       "Bash(git add *)",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(pnpm db:migrate)",
+      "Bash(pnpm db:seed)",
+      "Bash(pnpm db:status)",
+      "Bash(brew list *)",
+      "Bash(vercel env *)",
+      "Bash(VERCEL_NON_INTERACTIVE=0 printf \"libsql://dg-campaign-manager-bartmaj.aws-us-east-1.turso.io\\\\ny\\\\n\")",
+      "Bash(/opt/homebrew/bin/vercel env *)"
     ]
   }
 }
