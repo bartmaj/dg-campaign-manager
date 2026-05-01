@@ -21,7 +21,8 @@
       "Bash(brew list *)",
       "Bash(vercel env *)",
       "Bash(VERCEL_NON_INTERACTIVE=0 printf \"libsql://dg-campaign-manager-bartmaj.aws-us-east-1.turso.io\\\\ny\\\\n\")",
-      "Bash(/opt/homebrew/bin/vercel env *)"
+      "Bash(/opt/homebrew/bin/vercel env *)",
+      "Bash(pnpm format *)"
     ]
   }
 }

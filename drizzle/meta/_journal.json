@@ -8,6 +8,13 @@
       "when": 1777595216264,
       "tag": "0000_nervous_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777596303796,
+      "tag": "0001_third_thundra",
+      "breakpoints": true
     }
   ]
 }
