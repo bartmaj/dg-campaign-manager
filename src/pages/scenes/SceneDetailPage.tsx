@@ -16,7 +16,12 @@ function SceneDetailPage() {
       <p>
         <Link to="/scenes">← All Scenes</Link>
       </p>
-      <h1>{scene.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{scene.name}</h1>
+        <a href={`/api/scenes/${scene.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
 
       <h2>Scenario</h2>
       <p>

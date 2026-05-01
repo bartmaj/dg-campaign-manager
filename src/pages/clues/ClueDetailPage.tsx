@@ -97,7 +97,12 @@ function ClueDetailPage() {
       <p>
         <Link to="/clues">← All Clues</Link>
       </p>
-      <h1>{clue.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{clue.name}</h1>
+        <a href={`/api/clues/${clue.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
 
       <h2>Description</h2>
       <p style={{ whiteSpace: 'pre-wrap' }}>{clue.description ?? '—'}</p>

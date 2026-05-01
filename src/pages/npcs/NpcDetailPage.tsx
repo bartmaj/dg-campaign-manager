@@ -45,10 +45,22 @@ function NpcDetailPage() {
       <p>
         <Link to="/npcs">← All NPCs</Link>
       </p>
-      <header style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <h1 style={{ margin: 0 }}>{npc.name}</h1>
-        {/* Continuity dimension #4: Status */}
-        <StatusChip status={npc.status} />
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          justifyContent: 'space-between',
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h1 style={{ margin: 0 }}>{npc.name}</h1>
+          {/* Continuity dimension #4: Status */}
+          <StatusChip status={npc.status} />
+        </span>
+        <a href={`/api/npcs/${npc.id}/export`} download>
+          Download as Markdown
+        </a>
       </header>
       {npc.profession && <p>Profession: {npc.profession}</p>}
 

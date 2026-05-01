@@ -14,7 +14,12 @@ function LocationDetailPage() {
       <p>
         <Link to="/locations">← All Locations</Link>
       </p>
-      <h1>{location.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{location.name}</h1>
+        <a href={`/api/locations/${location.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
 
       <h2>Description</h2>
       <p style={{ whiteSpace: 'pre-wrap' }}>{location.description ?? '—'}</p>

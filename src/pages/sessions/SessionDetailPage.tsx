@@ -101,7 +101,12 @@ function SessionDetailPage() {
       <p>
         <Link to="/sessions">← All Sessions</Link>
       </p>
-      <h1>{session.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{session.name}</h1>
+        <a href={`/api/sessions/${session.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
 
       <h2>Description</h2>
       <p style={{ whiteSpace: 'pre-wrap' }}>{session.description ?? '—'}</p>

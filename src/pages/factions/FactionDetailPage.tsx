@@ -23,7 +23,12 @@ function FactionDetailPage() {
       <p>
         <Link to="/factions">← All Factions</Link>
       </p>
-      <h1>{faction.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{faction.name}</h1>
+        <a href={`/api/factions/${faction.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
 
       <h2>Agenda</h2>
       <p style={{ whiteSpace: 'pre-wrap' }}>{faction.agenda ?? '—'}</p>

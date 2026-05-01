@@ -14,7 +14,12 @@ function ItemDetailPage() {
       <p>
         <Link to="/items">← All Items</Link>
       </p>
-      <h1>{item.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{item.name}</h1>
+        <a href={`/api/items/${item.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
 
       <h2>Description</h2>
       <p style={{ whiteSpace: 'pre-wrap' }}>{item.description ?? '—'}</p>

@@ -596,7 +596,12 @@ function PcDetailPage() {
       <p>
         <Link to="/pcs">← All PCs</Link>
       </p>
-      <h1>{pc.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{pc.name}</h1>
+        <a href={`/api/pcs/${pc.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
       {pc.profession && <p>Profession: {pc.profession}</p>}
 
       <h2>Stats</h2>

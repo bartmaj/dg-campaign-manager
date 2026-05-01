@@ -18,7 +18,12 @@ function ScenarioDetailPage() {
       <p>
         <Link to="/scenarios">← All Scenarios</Link>
       </p>
-      <h1>{scenario.name}</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>{scenario.name}</h1>
+        <a href={`/api/scenarios/${scenario.id}/export`} download>
+          Download as Markdown
+        </a>
+      </header>
       <h2>Description</h2>
       <p style={{ whiteSpace: 'pre-wrap' }}>{scenario.description ?? '—'}</p>
 

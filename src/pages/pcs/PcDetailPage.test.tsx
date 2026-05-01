@@ -147,6 +147,13 @@ describe('PcDetailPage', () => {
     expect(screen.getByRole('button', { name: /^gain$/i })).toBeInTheDocument()
   })
 
+  it('renders the "Download as Markdown" link pointing at the export endpoint', () => {
+    renderPage({ pc: makePc() })
+    const link = screen.getByRole('link', { name: /download as markdown/i })
+    expect(link).toHaveAttribute('href', `/api/pcs/${PC_ID}/export`)
+    expect(link).toHaveAttribute('download')
+  })
+
   it('renders a crossed-threshold badge on a seeded SAN event', () => {
     renderPage({
       pc: makePc({ sanityCurrent: 38, sanMax: 65, breakingPoints: [52, 39, 26, 13] }),
