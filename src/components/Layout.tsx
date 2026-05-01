@@ -16,6 +16,9 @@ function Layout() {
               <NavLink to={entity.path}>{entity.label}</NavLink>
             </li>
           ))}
+          <li>
+            <NavLink to="/import">Import</NavLink>
+          </li>
         </ul>
       </nav>
       <main>

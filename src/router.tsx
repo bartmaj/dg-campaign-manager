@@ -21,6 +21,13 @@ import NpcListPage from './pages/npcs/NpcListPage'
 import NewPcPage from './pages/pcs/NewPcPage'
 import PcDetailPage from './pages/pcs/PcDetailPage'
 import PcListPage from './pages/pcs/PcListPage'
+import ImportPage from './pages/import/ImportPage'
+import NewScenarioPage from './pages/scenarios/NewScenarioPage'
+import ScenarioDetailPage from './pages/scenarios/ScenarioDetailPage'
+import ScenarioListPage from './pages/scenarios/ScenarioListPage'
+import NewScenePage from './pages/scenes/NewScenePage'
+import SceneDetailPage from './pages/scenes/SceneDetailPage'
+import SceneListPage from './pages/scenes/SceneListPage'
 import NewSessionPage from './pages/sessions/NewSessionPage'
 import SessionDetailPage from './pages/sessions/SessionDetailPage'
 import SessionListPage from './pages/sessions/SessionListPage'
@@ -68,6 +75,20 @@ const entityRoutes = ENTITIES.flatMap((entity) => {
       { path: 'items/:id', element: <ItemDetailPage /> },
     ]
   }
+  if (entity.key === 'scenarios') {
+    return [
+      { path: 'scenarios', element: <ScenarioListPage /> },
+      { path: 'scenarios/new', element: <NewScenarioPage /> },
+      { path: 'scenarios/:id', element: <ScenarioDetailPage /> },
+    ]
+  }
+  if (entity.key === 'scenes') {
+    return [
+      { path: 'scenes', element: <SceneListPage /> },
+      { path: 'scenes/new', element: <NewScenePage /> },
+      { path: 'scenes/:id', element: <SceneDetailPage /> },
+    ]
+  }
   if (entity.key === 'sessions') {
     return [
       { path: 'sessions', element: <SessionListPage /> },
@@ -95,6 +116,10 @@ export const router = createBrowserRouter([
   {
     path: '/',
     Component: Layout,
-    children: [{ index: true, Component: HomePage }, ...entityRoutes],
+    children: [
+      { index: true, Component: HomePage },
+      { path: 'import', element: <ImportPage /> },
+      ...entityRoutes,
+    ],
   },
 ])

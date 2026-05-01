@@ -1,6 +1,6 @@
 # M2 — Core Workbench
 
-**Status:** In Progress (5/14 done)
+**Status:** In Progress (6/14 done)
 **Target:** Weekends W3–W5
 **Effort:** ~2.5 PWE
 
@@ -26,7 +26,7 @@ M1 (entity schemas, Drizzle plumbing, character form).
 - [x] [#011 Implement Bonds as a first-class entity with damage history](../issues/011-implement-bonds-as-a-first-class-entity-with-da.md)
 - [x] [#012 Implement Sanity tracking with breaking-point detection](../issues/012-implement-sanity-tracking-with-breaking-point-d.md)
 - [x] [#013 Implement Sessions with hybrid in-game / real-world timeline](../issues/013-implement-sessions-with-hybrid-in-game-real-wor.md)
-- [ ] [#014 Implement bulk Markdown scenario import](../issues/014-implement-bulk-markdown-scenario-import.md)
+- [x] [#014 Implement bulk Markdown scenario import](../issues/014-implement-bulk-markdown-scenario-import.md)
 - [ ] [#015 Implement per-entity Markdown export](../issues/015-implement-per-entity-markdown-export.md)
 - [ ] [#016 Implement the Cmd-K global search palette](../issues/016-implement-the-cmd-k-global-search-palette.md)
 - [ ] [#017 Implement list views with filtering per entity type](../issues/017-implement-list-views-with-filtering-per-entity-.md)
