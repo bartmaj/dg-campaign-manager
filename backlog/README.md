@@ -52,6 +52,7 @@ Update an issue's front-matter `status:` field to track progress. Update the mil
 | [015](issues/015-implement-per-entity-markdown-export.md) | Implement per-entity Markdown export | M2 | not-started | REQ-017, REQ-N04 |
 | [016](issues/016-implement-the-cmd-k-global-search-palette.md) | Implement the Cmd-K global search palette | M2 | not-started | REQ-013, REQ-N01 |
 | [017](issues/017-implement-list-views-with-filtering-per-entity-.md) | Implement list views with filtering per entity type | M2 | not-started | REQ-014 |
+| [033](issues/033-apply-design-system-and-tailwind.md) | Apply design system + Tailwind across the app | M2 | not-started | REQ-N06 |
 | [018](issues/018-surface-relationships-and-recent-activity-on-en.md) | Surface relationships and recent activity on entity detail pages | M2 | not-started | REQ-015 |
 | [019](issues/019-surface-local-context-on-the-location-detail-pa.md) | Surface local context on the Location detail page | M2 | not-started | REQ-024 |
 | [020](issues/020-surface-the-faction-status-timeline-and-members.md) | Surface the Faction status timeline and members | M2 | not-started | REQ-025 |
