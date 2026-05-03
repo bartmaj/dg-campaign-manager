@@ -11,26 +11,32 @@
 
 .cmdk-dialog {
   width: min(640px, 92vw);
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   max-height: 70vh;
+  color: var(--color-ink);
 }
 
 .cmdk-input {
   width: 100%;
   border: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--color-border);
   padding: 14px 16px;
   font-size: 16px;
   outline: none;
   background: transparent;
-  font-family: inherit;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
   box-sizing: border-box;
+}
+
+.cmdk-input::placeholder {
+  color: var(--color-ink-muted);
 }
 
 .cmdk-results {
@@ -40,7 +46,7 @@
 
 .cmdk-status {
   padding: 14px 16px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-ink-muted);
   font-size: 14px;
 }
 
@@ -56,11 +62,11 @@
   cursor: pointer;
   font-family: inherit;
   font-size: 14px;
-  color: inherit;
+  color: var(--color-ink);
 }
 
 .cmdk-result--active {
-  background: rgba(0, 100, 220, 0.08);
+  background: var(--color-surface);
 }
 
 .cmdk-result-type {
@@ -69,10 +75,12 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 2px 6px;
   flex-shrink: 0;
+  color: var(--color-ink-muted);
 }
 
 .cmdk-result-name {
@@ -80,14 +88,14 @@
 }
 
 .cmdk-result-name mark {
-  background: rgba(255, 230, 0, 0.4);
+  background: rgba(138, 42, 42, 0.15);
   color: inherit;
   padding: 0;
 }
 
 .cmdk-result-subtitle {
   margin-left: auto;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-ink-muted);
   font-size: 13px;
   text-align: right;
   white-space: nowrap;
