@@ -1,32 +1,24 @@
 import { Link, useParams } from 'react-router'
 import type { NpcStatus } from '../../../domain/npc'
+import Badge from '../../components/ui/Badge'
+import Card from '../../components/ui/Card'
+import DescriptionList from '../../components/ui/DescriptionList'
+import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
+import LinkButton from '../../components/ui/LinkButton'
+import Prose from '../../components/ui/Prose'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useIncomingBonds } from '../../hooks/useBonds'
 import { useNpc } from '../../hooks/useNpcs'
 
-const STATUS_COLOR: Record<NpcStatus, string> = {
-  alive: '#2e7d32',
-  dead: '#5a5a5a',
-  missing: '#b8860b',
-  turned: '#8b0000',
-}
-
-function StatusChip({ status }: { status: NpcStatus }) {
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: 12,
-        background: STATUS_COLOR[status],
-        color: 'white',
-        fontSize: '0.85em',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-      }}
-    >
-      {status}
-    </span>
-  )
+// Status -> Badge variant mapping (also used in NpcListPage).
+// alive -> ok, missing -> warn, turned -> danger, dead -> neutral.
+function statusVariant(s: NpcStatus): 'ok' | 'warn' | 'danger' | 'neutral' {
+  if (s === 'alive') return 'ok'
+  if (s === 'missing') return 'warn'
+  if (s === 'turned') return 'danger'
+  return 'neutral'
 }
 
 function NpcDetailPage() {
@@ -35,106 +27,118 @@ function NpcDetailPage() {
   const { data: incomingBonds = [] } = useIncomingBonds('npc', id)
 
   if (isLoading) return <p>Loading…</p>
-  if (error) return <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>
+  if (error) return <p>Failed to load: {error.message}</p>
   if (!npc) return <p>NPC not found.</p>
 
   const hasFullStats = npc.str !== null && npc.con !== null && npc.dex !== null
 
   return (
-    <section>
+    <Stack gap="md">
       <p>
         <Link to="/npcs">← All NPCs</Link>
       </p>
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <h1 style={{ margin: 0 }}>{npc.name}</h1>
+      <Toolbar align="between">
+        <Inline gap="sm">
+          <Heading level={1}>{npc.name}</Heading>
           {/* Continuity dimension #4: Status */}
-          <StatusChip status={npc.status} />
-        </span>
-        <a href={`/api/npcs/${npc.id}/export`} download>
+          <Badge variant={statusVariant(npc.status)}>{npc.status}</Badge>
+        </Inline>
+        <LinkButton href={`/api/npcs/${npc.id}/export`} variant="ghost" download>
           Download as Markdown
-        </a>
-      </header>
+        </LinkButton>
+      </Toolbar>
+
       {npc.profession && <p>Profession: {npc.profession}</p>}
 
-      <h2>Stat block</h2>
-      {hasFullStats ? (
-        <table>
-          <tbody>
-            <tr>
-              <td>STR</td>
-              <td>{npc.str}</td>
-              <td>CON</td>
-              <td>{npc.con}</td>
-              <td>DEX</td>
-              <td>{npc.dex}</td>
-            </tr>
-            <tr>
-              <td>INT</td>
-              <td>{npc.intelligence}</td>
-              <td>POW</td>
-              <td>{npc.pow}</td>
-              <td>CHA</td>
-              <td>{npc.cha}</td>
-            </tr>
-          </tbody>
-        </table>
-      ) : (
-        <p>
-          <em>Simplified.</em>
-        </p>
-      )}
-      <p>
-        HP: {npc.hp ?? '—'} · WP: {npc.wp ?? '—'}
-      </p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Stat block</Heading>
+          {hasFullStats ? (
+            <DescriptionList
+              items={[
+                { term: 'STR', details: npc.str },
+                { term: 'CON', details: npc.con },
+                { term: 'DEX', details: npc.dex },
+                { term: 'INT', details: npc.intelligence },
+                { term: 'POW', details: npc.pow },
+                { term: 'CHA', details: npc.cha },
+              ]}
+            />
+          ) : (
+            <p>
+              <em>Simplified.</em>
+            </p>
+          )}
+          <p>
+            HP: {npc.hp ?? '—'} · WP: {npc.wp ?? '—'}
+          </p>
+        </Stack>
+      </Card>
 
       {/* Continuity dimension #1: RP hooks */}
-      <h2>RP hooks</h2>
-      <dl>
-        <dt>Mannerisms</dt>
-        <dd style={{ whiteSpace: 'pre-wrap' }}>{npc.mannerisms ?? '—'}</dd>
-        <dt>Voice</dt>
-        <dd>{npc.voice ?? '—'}</dd>
-        <dt>Secrets</dt>
-        <dd style={{ whiteSpace: 'pre-wrap' }}>{npc.secrets ?? '—'}</dd>
-      </dl>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>RP hooks</Heading>
+          <DescriptionList
+            items={[
+              { term: 'Mannerisms', details: <Prose>{npc.mannerisms ?? '—'}</Prose> },
+              { term: 'Voice', details: npc.voice ?? '—' },
+              { term: 'Secrets', details: <Prose>{npc.secrets ?? '—'}</Prose> },
+            ]}
+          />
+        </Stack>
+      </Card>
 
       {/* Continuity dimension #2: Faction */}
-      <h2>Faction</h2>
-      <p>{npc.factionId ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Faction</Heading>
+          <p>{npc.factionId ?? '—'}</p>
+        </Stack>
+      </Card>
 
       {/* Continuity dimension #3: Relationship web */}
-      <h2>Relationships</h2>
-      <p>
-        <em>Relationships — surfaced in M2.2A via polymorphic edges.</em>
-      </p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Relationships</Heading>
+          <p>
+            <em>Relationships — surfaced in M2.2A via polymorphic edges.</em>
+          </p>
+        </Stack>
+      </Card>
 
-      <h2>Bonds with this character</h2>
-      {incomingBonds.length === 0 ? (
-        <p>—</p>
-      ) : (
-        <ul>
-          {incomingBonds.map((b) => (
-            <li key={b.id}>
-              <Link to={`/pcs/${b.pcId}`}>{b.pcId}</Link>: {b.name} ({b.currentScore}/{b.maxScore})
-            </li>
-          ))}
-        </ul>
-      )}
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Bonds with this character</Heading>
+          {incomingBonds.length === 0 ? (
+            <p>—</p>
+          ) : (
+            <ul>
+              {incomingBonds.map((b) => (
+                <li key={b.id}>
+                  <Link to={`/pcs/${b.pcId}`}>{b.pcId}</Link>: {b.name} ({b.currentScore}/
+                  {b.maxScore})
+                </li>
+              ))}
+            </ul>
+          )}
+        </Stack>
+      </Card>
 
-      <h2>Current goal</h2>
-      <p>{npc.currentGoal ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Current goal</Heading>
+          <p>{npc.currentGoal ?? '—'}</p>
+        </Stack>
+      </Card>
 
-      <h2>Location</h2>
-      <p>{npc.locationId ?? '—'}</p>
-    </section>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Location</Heading>
+          <p>{npc.locationId ?? '—'}</p>
+        </Stack>
+      </Card>
+    </Stack>
   )
 }
 

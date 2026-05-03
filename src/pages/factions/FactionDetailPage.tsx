@@ -1,17 +1,20 @@
 import { Link, useParams } from 'react-router'
+import Card from '../../components/ui/Card'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Prose from '../../components/ui/Prose'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useFaction } from '../../hooks/useFactions'
 import { useIncomingEdges } from '../../hooks/useEdges'
 
 function FactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: faction, isLoading, error } = useFaction(id)
-  // Reverse-ref: every edge pointing AT this faction. The full
-  // edge-management UI lands in #018; here we filter client-side to
-  // demonstrate the foundation.
   const { data: incomingEdges = [] } = useIncomingEdges('faction', id)
 
   if (isLoading) return <p>Loading…</p>
-  if (error) return <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>
+  if (error) return <p>Failed to load: {error.message}</p>
   if (!faction) return <p>Faction not found.</p>
 
   const implicatingClues = incomingEdges.filter(
@@ -19,42 +22,58 @@ function FactionDetailPage() {
   )
 
   return (
-    <section>
+    <Stack gap="md">
       <p>
         <Link to="/factions">← All Factions</Link>
       </p>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>{faction.name}</h1>
-        <a href={`/api/factions/${faction.id}/export`} download>
+      <Toolbar align="between">
+        <Heading level={1}>{faction.name}</Heading>
+        <LinkButton href={`/api/factions/${faction.id}/export`} variant="ghost" download>
           Download as Markdown
-        </a>
-      </header>
+        </LinkButton>
+      </Toolbar>
 
-      <h2>Agenda</h2>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{faction.agenda ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Agenda</Heading>
+          <Prose>{faction.agenda ?? '—'}</Prose>
+        </Stack>
+      </Card>
 
-      <h2>Description</h2>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{faction.description ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Description</Heading>
+          <Prose>{faction.description ?? '—'}</Prose>
+        </Stack>
+      </Card>
 
-      <h2>Implicating clues</h2>
-      {implicatingClues.length === 0 ? (
-        <p>—</p>
-      ) : (
-        <ul>
-          {implicatingClues.map((edge) => (
-            <li key={edge.id}>
-              <Link to={`/clues/${edge.sourceId}`}>{edge.sourceId}</Link>
-              {edge.notes ? ` — ${edge.notes}` : null}
-            </li>
-          ))}
-        </ul>
-      )}
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Implicating clues</Heading>
+          {implicatingClues.length === 0 ? (
+            <p>—</p>
+          ) : (
+            <ul>
+              {implicatingClues.map((edge) => (
+                <li key={edge.id}>
+                  <Link to={`/clues/${edge.sourceId}`}>{edge.sourceId}</Link>
+                  {edge.notes ? ` — ${edge.notes}` : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Stack>
+      </Card>
 
-      <h2>Members</h2>
-      <p>
-        <em>Member NPCs — surfaced in M2.2A via polymorphic edges.</em>
-      </p>
-    </section>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Members</Heading>
+          <p>
+            <em>Member NPCs — surfaced in M2.2A via polymorphic edges.</em>
+          </p>
+        </Stack>
+      </Card>
+    </Stack>
   )
 }
 

@@ -1,4 +1,10 @@
 import { Link, useParams } from 'react-router'
+import Card from '../../components/ui/Card'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Prose from '../../components/ui/Prose'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useIncomingEdges } from '../../hooks/useEdges'
 import { useScene } from '../../hooks/useScenes'
 
@@ -8,55 +14,71 @@ function SceneDetailPage() {
   const { data: incoming = [] } = useIncomingEdges('scene', id)
 
   if (isLoading) return <p>Loading…</p>
-  if (error) return <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>
+  if (error) return <p>Failed to load: {error.message}</p>
   if (!scene) return <p>Scene not found.</p>
 
   return (
-    <section>
+    <Stack gap="md">
       <p>
         <Link to="/scenes">← All Scenes</Link>
       </p>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>{scene.name}</h1>
-        <a href={`/api/scenes/${scene.id}/export`} download>
+      <Toolbar align="between">
+        <Heading level={1}>{scene.name}</Heading>
+        <LinkButton href={`/api/scenes/${scene.id}/export`} variant="ghost" download>
           Download as Markdown
-        </a>
-      </header>
+        </LinkButton>
+      </Toolbar>
 
-      <h2>Scenario</h2>
-      <p>
-        <Link to={`/scenarios/${scene.scenarioId}`}>{scene.scenarioId}</Link>
-      </p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Scenario</Heading>
+          <p>
+            <Link to={`/scenarios/${scene.scenarioId}`}>{scene.scenarioId}</Link>
+          </p>
+        </Stack>
+      </Card>
 
-      <h2>Order index</h2>
-      <p>{scene.orderIndex}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Order index</Heading>
+          <p>{scene.orderIndex}</p>
+        </Stack>
+      </Card>
 
-      <h2>Description</h2>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{scene.description ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Description</Heading>
+          <Prose>{scene.description ?? '—'}</Prose>
+        </Stack>
+      </Card>
 
-      <h2>Incoming references</h2>
-      {incoming.length === 0 ? (
-        <p>—</p>
-      ) : (
-        <ul>
-          {incoming.map((edge) => (
-            <li key={edge.id}>
-              <strong>{edge.kind}</strong> from{' '}
-              <Link to={`/${edge.sourceType}s/${edge.sourceId}`}>
-                {edge.sourceType}/{edge.sourceId}
-              </Link>
-              {edge.notes ? ` — ${edge.notes}` : null}
-            </li>
-          ))}
-        </ul>
-      )}
-      <p>
-        <em>
-          To add a reference (e.g., a clue delivered in this scene), open that source entity's
-          detail page and add an edge there.
-        </em>
-      </p>
-    </section>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Incoming references</Heading>
+          {incoming.length === 0 ? (
+            <p>—</p>
+          ) : (
+            <ul>
+              {incoming.map((edge) => (
+                <li key={edge.id}>
+                  <strong>{edge.kind}</strong> from{' '}
+                  <Link to={`/${edge.sourceType}s/${edge.sourceId}`}>
+                    {edge.sourceType}/{edge.sourceId}
+                  </Link>
+                  {edge.notes ? ` — ${edge.notes}` : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p>
+            <em>
+              To add a reference (e.g., a clue delivered in this scene), open that source entity's
+              detail page and add an edge there.
+            </em>
+          </p>
+        </Stack>
+      </Card>
+    </Stack>
   )
 }
 

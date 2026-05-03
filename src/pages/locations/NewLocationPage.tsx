@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { locationInputSchema, type LocationInputParsed } from '../../../domain/location'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateLocation } from '../../hooks/useCreateLocation'
 
 type FormValues = {
@@ -41,30 +49,31 @@ function NewLocationPage() {
   }
 
   return (
-    <section>
-      <h1>New Location</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Location</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="location-name">Name</label>
-          <br />
-          <input id="location-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="location-description">Description</label>
-          <br />
-          <textarea id="location-description" rows={4} {...register('description')} />
-        </p>
-        <p>
-          <label htmlFor="location-parent">Parent Location ID</label>
-          <br />
-          <input id="location-parent" type="text" {...register('parentLocationId')} />
-        </p>
-        <button type="submit" disabled={createLocation.isPending}>
-          {createLocation.isPending ? 'Creating…' : 'Create Location'}
-        </button>
+        <Stack gap="md">
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Field label="Parent Location ID">
+            <Input type="text" {...register('parentLocationId')} />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createLocation.isPending}>
+              {createLocation.isPending ? 'Creating…' : 'Create Location'}
+            </Button>
+            <LinkButton to="/locations" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

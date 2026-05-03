@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { clueInputSchema, type ClueInputParsed } from '../../../domain/clue'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateClue } from '../../hooks/useCreateClue'
 
 type FormValues = {
@@ -41,35 +49,35 @@ function NewCluePage() {
   }
 
   return (
-    <section>
-      <h1>New Clue</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Clue</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="clue-name">Name</label>
-          <br />
-          <input id="clue-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="clue-description">Description</label>
-          <br />
-          <textarea id="clue-description" rows={4} {...register('description')} />
-        </p>
-        <p>
-          <label htmlFor="clue-origin-scenario">Origin Scenario ID</label>
-          <br />
-          <input
-            id="clue-origin-scenario"
-            type="text"
-            placeholder="(optional) scenario UUID"
-            {...register('originScenarioId')}
-          />
-        </p>
-        <button type="submit" disabled={createClue.isPending}>
-          {createClue.isPending ? 'Creating…' : 'Create Clue'}
-        </button>
+        <Stack gap="md">
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Field label="Origin Scenario ID">
+            <Input
+              type="text"
+              placeholder="(optional) scenario UUID"
+              {...register('originScenarioId')}
+            />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createClue.isPending}>
+              {createClue.isPending ? 'Creating…' : 'Create Clue'}
+            </Button>
+            <LinkButton to="/clues" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

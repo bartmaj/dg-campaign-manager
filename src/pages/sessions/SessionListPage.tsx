@@ -1,10 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { SessionFilter, SessionOrderBy } from '../../api/sessions'
+import type { SessionFilter, SessionOrderBy, SessionRow } from '../../api/sessions'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
+import Button from '../../components/ui/Button'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useSessions } from '../../hooks/useSessions'
 
 function formatRange(start: string | null, end: string | null): string {
@@ -35,59 +43,59 @@ function SessionListPage() {
     { id: 'q', label: 'Name', type: 'text', placeholder: 'search by name' },
   ]
 
-  return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Sessions</h1>
-        <Link to="/sessions/new">+ New session</Link>
-      </header>
+  const columns: ReadonlyArray<DataTableColumn<SessionRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (s) => <Link to={`/sessions/${s.id}`}>{s.name}</Link>,
+    },
+    {
+      key: 'realWorld',
+      header: 'Real-world',
+      render: (s) => formatRealWorld(s.realWorldDate),
+    },
+    {
+      key: 'inGame',
+      header: 'In-game',
+      render: (s) => formatRange(s.inGameDate, s.inGameDateEnd),
+    },
+  ]
 
-      <div role="group" aria-label="Timeline order" style={{ margin: '0.5rem 0' }}>
-        <button
-          type="button"
-          aria-pressed={orderBy === 'realWorld'}
+  return (
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>Sessions</Heading>
+        <LinkButton to="/sessions/new" variant="primary">
+          + New session
+        </LinkButton>
+      </Toolbar>
+
+      <Inline gap="sm">
+        <Button
+          variant={orderBy === 'realWorld' ? 'primary' : 'secondary'}
           onClick={() => setOrderBy('realWorld')}
           disabled={orderBy === 'realWorld'}
         >
           Real-world order
-        </button>{' '}
-        <button
-          type="button"
-          aria-pressed={orderBy === 'inGame'}
+        </Button>
+        <Button
+          variant={orderBy === 'inGame' ? 'primary' : 'secondary'}
           onClick={() => setOrderBy('inGame')}
           disabled={orderBy === 'inGame'}
         >
           In-game order
-        </button>
-      </div>
+        </Button>
+      </Inline>
 
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
 
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No sessions match the current filters.</p>}
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && <EmptyState title="No sessions match the current filters." />}
       {data && data.length > 0 && (
-        <ul>
-          {data.map((s) => {
-            const preview = s.description
-              ? s.description.length > 80
-                ? `${s.description.slice(0, 80)}…`
-                : s.description
-              : null
-            return (
-              <li key={s.id}>
-                <Link to={`/sessions/${s.id}`}>{s.name}</Link>
-                {' — IRL: '}
-                {formatRealWorld(s.realWorldDate)}
-                {' — In-game: '}
-                {formatRange(s.inGameDate, s.inGameDateEnd)}
-                {preview ? ` — ${preview}` : ''}
-              </li>
-            )
-          })}
-        </ul>
+        <DataTable columns={columns} rows={data} getRowKey={(s) => s.id} />
       )}
-    </section>
+    </Stack>
   )
 }
 

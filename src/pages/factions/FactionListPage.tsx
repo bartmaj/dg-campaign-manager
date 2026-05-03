@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { FactionFilter } from '../../api/factions'
+import type { FactionFilter, FactionRow } from '../../api/factions'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useFactions } from '../../hooks/useFactions'
 
 function FactionListPage() {
@@ -22,27 +28,35 @@ function FactionListPage() {
     { id: 'q', label: 'Name', type: 'text', placeholder: 'search by name' },
   ]
 
+  const columns: ReadonlyArray<DataTableColumn<FactionRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (f) => <Link to={`/factions/${f.id}`}>{f.name}</Link>,
+    },
+    {
+      key: 'agenda',
+      header: 'Agenda',
+      render: (f) => f.agenda ?? '—',
+    },
+  ]
+
   return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Factions</h1>
-        <Link to="/factions/new">+ New Faction</Link>
-      </header>
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>Factions</Heading>
+        <LinkButton to="/factions/new" variant="primary">
+          + New Faction
+        </LinkButton>
+      </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No factions match the current filters.</p>}
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && <EmptyState title="No factions match the current filters." />}
       {data && data.length > 0 && (
-        <ul>
-          {data.map((faction) => (
-            <li key={faction.id}>
-              <Link to={`/factions/${faction.id}`}>{faction.name}</Link>
-              {faction.agenda ? ` — ${faction.agenda}` : ''}
-            </li>
-          ))}
-        </ul>
+        <DataTable columns={columns} rows={data} getRowKey={(f) => f.id} />
       )}
-    </section>
+    </Stack>
   )
 }
 

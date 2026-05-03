@@ -1,11 +1,21 @@
+// Modularity rule (#033): pages compose primitives from src/components/ui only.
+// `className` and `style` should not appear in this file or its siblings.
+// All visual styling lives in primitives; pages declare structure and content.
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
 import type { PcFilter } from '../../api/pcs'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
+import { Link } from 'react-router'
 import { usePcs } from '../../hooks/usePcs'
+import type { PcRow } from '../../api/pcs'
 
 function PcListPage() {
   const [filterValues, setFilterValues] = useState<FilterValues>({})
@@ -22,27 +32,40 @@ function PcListPage() {
     { id: 'q', label: 'Name', type: 'text', placeholder: 'search by name' },
   ]
 
+  const columns: ReadonlyArray<DataTableColumn<PcRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (pc) => <Link to={`/pcs/${pc.id}`}>{pc.name}</Link>,
+    },
+    {
+      key: 'profession',
+      header: 'Profession',
+      render: (pc) => pc.profession ?? '—',
+    },
+  ]
+
   return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>PCs</h1>
-        <Link to="/pcs/new">+ New PC</Link>
-      </header>
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>PCs</Heading>
+        <LinkButton to="/pcs/new" variant="primary">
+          + New PC
+        </LinkButton>
+      </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No PCs match the current filters.</p>}
-      {data && data.length > 0 && (
-        <ul>
-          {data.map((pc) => (
-            <li key={pc.id}>
-              <Link to={`/pcs/${pc.id}`}>{pc.name}</Link>
-              {pc.profession ? ` — ${pc.profession}` : ''}
-            </li>
-          ))}
-        </ul>
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && (
+        <EmptyState
+          title="No PCs match the current filters."
+          description="Try clearing filters or create a new PC."
+        />
       )}
-    </section>
+      {data && data.length > 0 && (
+        <DataTable columns={columns} rows={data} getRowKey={(pc) => pc.id} />
+      )}
+    </Stack>
   )
 }
 

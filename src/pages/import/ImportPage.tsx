@@ -1,5 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
+import Input from '../../components/ui/Input'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 
 type Counts = {
   locations: number
@@ -101,108 +111,90 @@ function ImportPage() {
   }
 
   return (
-    <section>
-      <h1>Import scenario</h1>
-      <p>
-        Paste a scenario Markdown document below or upload a <code>.md</code> file. See the{' '}
-        <button
-          type="button"
-          onClick={() => setShowTemplate((v) => !v)}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            color: 'steelblue',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-          }}
-        >
-          template
-        </button>{' '}
-        for the expected shape. Imports run in a single transaction — partial imports are rejected.
-      </p>
+    <Stack gap="md">
+      <Heading level={1}>Import scenario</Heading>
+      <Card>
+        <Stack gap="md">
+          <p>
+            Paste a scenario Markdown document below or upload a <code>.md</code> file. See the{' '}
+            <Button variant="ghost" size="sm" onClick={() => setShowTemplate((v) => !v)}>
+              template
+            </Button>{' '}
+            for the expected shape. Imports run in a single transaction — partial imports are
+            rejected.
+          </p>
 
-      {showTemplate && (
-        <pre
-          style={{
-            background: '#f4f4f4',
-            padding: '0.5rem',
-            maxHeight: '20rem',
-            overflow: 'auto',
-            fontSize: '0.85rem',
-          }}
-        >
-          {TEMPLATE_SAMPLE}
-        </pre>
-      )}
+          {showTemplate && (
+            <Card>
+              <pre>{TEMPLATE_SAMPLE}</pre>
+            </Card>
+          )}
 
-      <p>
-        <label htmlFor="import-file">Upload .md file: </label>
-        <input
-          id="import-file"
-          type="file"
-          accept=".md,.markdown,text/markdown,text/plain"
-          onChange={(e) => void onFile(e)}
-        />
-      </p>
+          <Field label="Upload .md file">
+            <Input
+              type="file"
+              accept=".md,.markdown,text/markdown,text/plain"
+              onChange={(e) => void onFile(e)}
+            />
+          </Field>
 
-      <p>
-        <label htmlFor="import-markdown">Markdown</label>
-        <br />
-        <textarea
-          id="import-markdown"
-          rows={20}
-          style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.85rem' }}
-          value={markdown}
-          onChange={(e) => setMarkdown(e.target.value)}
-        />
-      </p>
+          <Field label="Markdown">
+            <Textarea rows={20} value={markdown} onChange={(e) => setMarkdown(e.target.value)} />
+          </Field>
 
-      <button
-        type="button"
-        onClick={() => void onImport()}
-        disabled={busy || markdown.trim() === ''}
-      >
-        {busy ? 'Importing…' : 'Import'}
-      </button>
+          <Toolbar align="start">
+            <Button
+              variant="primary"
+              onClick={() => void onImport()}
+              disabled={busy || markdown.trim() === ''}
+            >
+              {busy ? 'Importing…' : 'Import'}
+            </Button>
+          </Toolbar>
+        </Stack>
+      </Card>
 
       {success && (
-        <div style={{ marginTop: '1rem', padding: '0.5rem', background: '#e6f7e6' }}>
-          <p>
-            <strong>Imported.</strong>{' '}
-            <Link to={`/scenarios/${success.scenarioId}`}>View scenario →</Link>
-          </p>
-          <ul>
-            <li>Locations: {success.counts.locations}</li>
-            <li>Factions: {success.counts.factions}</li>
-            <li>NPCs: {success.counts.npcs}</li>
-            <li>Items: {success.counts.items}</li>
-            <li>Clues: {success.counts.clues}</li>
-            <li>Scenes: {success.counts.scenes}</li>
-            <li>Edges: {success.counts.edges}</li>
-          </ul>
-        </div>
+        <Card>
+          <Stack gap="sm">
+            <Inline gap="sm">
+              <Badge variant="ok">Imported</Badge>
+              <Link to={`/scenarios/${success.scenarioId}`}>View scenario →</Link>
+            </Inline>
+            <ul>
+              <li>Locations: {success.counts.locations}</li>
+              <li>Factions: {success.counts.factions}</li>
+              <li>NPCs: {success.counts.npcs}</li>
+              <li>Items: {success.counts.items}</li>
+              <li>Clues: {success.counts.clues}</li>
+              <li>Scenes: {success.counts.scenes}</li>
+              <li>Edges: {success.counts.edges}</li>
+            </ul>
+          </Stack>
+        </Card>
       )}
 
       {errors && (
-        <div style={{ marginTop: '1rem', padding: '0.5rem', background: '#fff0f0' }}>
-          <p>
-            <strong>Validation errors ({errors.length}):</strong>
-          </p>
-          <ul>
-            {errors.map((e, i) => (
-              <li key={i}>
-                line {e.line}, field <code>{e.field}</code>: {e.message}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Card>
+          <Stack gap="sm">
+            <Heading level={2}>Validation errors ({errors.length})</Heading>
+            <ul>
+              {errors.map((e, i) => (
+                <li key={i}>
+                  <Inline gap="sm">
+                    <Badge variant="danger">line {e.line}</Badge>
+                    <Badge variant="neutral">{e.field}</Badge>
+                    <span>{e.message}</span>
+                  </Inline>
+                </li>
+              ))}
+            </ul>
+          </Stack>
+        </Card>
       )}
 
-      {transportError && (
-        <p style={{ color: 'crimson', marginTop: '1rem' }}>Failed: {transportError}</p>
-      )}
-    </section>
+      {transportError && <p>Failed: {transportError}</p>}
+    </Stack>
   )
 }
 

@@ -4,6 +4,8 @@ import { npcInputSchema, type NpcInputParsed } from '../../../domain/npc'
 import CharacterForm, {
   type CharacterFormValues,
 } from '../../components/CharacterForm/CharacterForm'
+import Heading from '../../components/ui/Heading'
+import Stack from '../../components/ui/Stack'
 import { useCreateNpc } from '../../hooks/useCreateNpc'
 
 function NewNpcPage() {
@@ -63,16 +65,16 @@ function NewNpcPage() {
   }
 
   return (
-    <section>
-      <h1>New NPC</h1>
+    <Stack gap="md">
+      <Heading level={1}>New NPC</Heading>
       <CharacterForm
         kind="npc"
         onSubmit={handleSubmit}
         isSubmitting={createNpc.isPending}
         submitLabel={createNpc.isPending ? 'Creating…' : 'Create NPC'}
       />
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+      {error && <p>{error}</p>}
+    </Stack>
   )
 }
 

@@ -4,6 +4,8 @@ import { pcInputSchema, type PcInputParsed } from '../../../domain/pc'
 import CharacterForm, {
   type CharacterFormValues,
 } from '../../components/CharacterForm/CharacterForm'
+import Heading from '../../components/ui/Heading'
+import Stack from '../../components/ui/Stack'
 import { useCreatePc } from '../../hooks/useCreatePc'
 
 function NewPcPage() {
@@ -53,16 +55,16 @@ function NewPcPage() {
   }
 
   return (
-    <section>
-      <h1>New PC</h1>
+    <Stack gap="md">
+      <Heading level={1}>New PC</Heading>
       <CharacterForm
         kind="pc"
         onSubmit={handleSubmit}
         isSubmitting={createPc.isPending}
         submitLabel={createPc.isPending ? 'Creating…' : 'Create PC'}
       />
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+      {error && <p>{error}</p>}
+    </Stack>
   )
 }
 

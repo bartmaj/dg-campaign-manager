@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { scenarioInputSchema } from '../../../domain/scenario'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateScenario } from '../../hooks/useCreateScenario'
 
 type FormValues = {
@@ -43,35 +51,31 @@ function NewScenarioPage() {
   }
 
   return (
-    <section>
-      <h1>New Scenario</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Scenario</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="scenario-name">Name</label>
-          <br />
-          <input id="scenario-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="scenario-description">Description</label>
-          <br />
-          <textarea id="scenario-description" rows={4} {...register('description')} />
-        </p>
-        <p>
-          <label htmlFor="scenario-campaign-id">Campaign ID</label>
-          <br />
-          <input
-            id="scenario-campaign-id"
-            type="text"
-            placeholder="(optional) leave blank to use default campaign"
-            {...register('campaignId')}
-          />
-        </p>
-        <button type="submit" disabled={createScenario.isPending}>
-          {createScenario.isPending ? 'Creating…' : 'Create Scenario'}
-        </button>
+        <Stack gap="md">
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Field label="Campaign ID" helper="(optional) leave blank to use default campaign">
+            <Input type="text" {...register('campaignId')} />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createScenario.isPending}>
+              {createScenario.isPending ? 'Creating…' : 'Create Scenario'}
+            </Button>
+            <LinkButton to="/scenarios" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

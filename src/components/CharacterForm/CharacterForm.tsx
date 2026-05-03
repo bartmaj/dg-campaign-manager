@@ -3,6 +3,15 @@ import { useFieldArray, useForm, useWatch, type SubmitHandler } from 'react-hook
 import { deriveAttributes } from '../../../domain/pc'
 import { NPC_STATUSES, type NpcStatus } from '../../../domain/npc'
 import { SKILL_PACKAGES, applySkillPackage } from '../../../domain/skillPackages'
+import Button from '../ui/Button'
+import IconButton from '../ui/IconButton'
+import Inline from '../ui/Inline'
+import Input from '../ui/Input'
+import Label from '../ui/Label'
+import Select from '../ui/Select'
+import Stack from '../ui/Stack'
+import Textarea from '../ui/Textarea'
+import Toolbar from '../ui/Toolbar'
 
 export type CharacterFormSkill = {
   name: string
@@ -11,12 +20,10 @@ export type CharacterFormSkill = {
 
 /** Union of fields needed by either the PC or NPC create flows. */
 export type CharacterFormValues = {
-  // Common
   name: string
   profession: string
   skills: CharacterFormSkill[]
 
-  // Stats (PC always; NPC when statBlockKind === 'full')
   str: number
   con: number
   dex: number
@@ -24,11 +31,9 @@ export type CharacterFormValues = {
   pow: number
   cha: number
 
-  // PC-only
   motivations: string
   backstoryHooks: string
 
-  // NPC-only
   status: NpcStatus
   statBlockKind: 'simplified' | 'full'
   hp: number
@@ -71,6 +76,11 @@ export type CharacterFormProps = {
   isSubmitting?: boolean
 }
 
+/**
+ * Manual Label+control pairing (rather than Field) so that the dual
+ * profession control (preset Select + custom Input) and the named skill
+ * rows can each carry their own aria-label without Field cloning a single id.
+ */
 function CharacterForm({
   kind,
   initialValues,
@@ -134,197 +144,218 @@ function CharacterForm({
 
   return (
     <form onSubmit={handleSubmit(onValid)} noValidate>
-      <div>
-        <label htmlFor="name">Name</label>
-        <input id="name" {...register('name', { required: 'name is required' })} />
-        {errors.name && <span style={{ color: 'crimson' }}>{errors.name.message}</span>}
-      </div>
+      <Stack gap="md">
+        <Stack gap="xs">
+          <Label htmlFor="name">Name</Label>
+          <Input id="name" {...register('name', { required: 'name is required' })} />
+          {errors.name && <span>{errors.name.message}</span>}
+        </Stack>
 
-      <div>
-        <label htmlFor="profession">Profession</label>
-        <select
-          id="profession"
-          aria-label="Profession"
-          onChange={(e) => handleProfessionChange(e.target.value)}
-          defaultValue={
-            defaultValues.profession &&
-            SKILL_PACKAGES.some((p) => p.profession === defaultValues.profession)
-              ? defaultValues.profession
-              : CUSTOM_PROFESSION_VALUE
-          }
-        >
-          <option value={CUSTOM_PROFESSION_VALUE}>(Custom — no preset)</option>
-          {SKILL_PACKAGES.map((p) => (
-            <option key={p.profession} value={p.profession}>
-              {p.profession}
-            </option>
-          ))}
-        </select>
-        <input
-          aria-label="Profession (custom)"
-          placeholder="Profession name"
-          {...register('profession')}
-        />
-      </div>
-
-      {kind === 'npc' && (
-        <div>
-          <label htmlFor="status">Status</label>
-          <select id="status" {...register('status')}>
-            {NPC_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
+        <Stack gap="xs">
+          <Label htmlFor="profession">Profession</Label>
+          <Select
+            id="profession"
+            aria-label="Profession"
+            onChange={(e) => handleProfessionChange(e.target.value)}
+            defaultValue={
+              defaultValues.profession &&
+              SKILL_PACKAGES.some((p) => p.profession === defaultValues.profession)
+                ? defaultValues.profession
+                : CUSTOM_PROFESSION_VALUE
+            }
+          >
+            <option value={CUSTOM_PROFESSION_VALUE}>(Custom — no preset)</option>
+            {SKILL_PACKAGES.map((p) => (
+              <option key={p.profession} value={p.profession}>
+                {p.profession}
               </option>
             ))}
-          </select>
-        </div>
-      )}
-
-      {kind === 'npc' && (
-        <fieldset>
-          <legend>Stat block</legend>
-          <div>
-            <label htmlFor="statBlockKind">Type</label>
-            <select id="statBlockKind" {...register('statBlockKind')}>
-              <option value="simplified">Simplified (HP / WP only)</option>
-              <option value="full">Full (DG RAW stats)</option>
-            </select>
-          </div>
-
-          {statBlockKind === 'simplified' && (
-            <div>
-              <label htmlFor="hp">HP</label>
-              <input
-                id="hp"
-                type="number"
-                min={0}
-                max={99}
-                {...register('hp', { valueAsNumber: true })}
-              />
-              <label htmlFor="wp">WP</label>
-              <input
-                id="wp"
-                type="number"
-                min={0}
-                max={99}
-                {...register('wp', { valueAsNumber: true })}
-              />
-            </div>
-          )}
-        </fieldset>
-      )}
-
-      {showFullStats && (
-        <fieldset>
-          <legend>Statistics (1–18)</legend>
-          {(['str', 'con', 'dex', 'intelligence', 'pow', 'cha'] as const).map((key) => (
-            <div key={key}>
-              <label htmlFor={key}>{key.toUpperCase()}</label>
-              <input
-                id={key}
-                type="number"
-                min={1}
-                max={18}
-                {...register(key, { valueAsNumber: true, min: 1, max: 18 })}
-              />
-            </div>
-          ))}
-        </fieldset>
-      )}
-
-      {showFullStats && (
-        <fieldset>
-          <legend>Derived (read-only)</legend>
-          <p>
-            HP: <output data-testid="derived-hp">{derived?.hp ?? '—'}</output> · WP:{' '}
-            <output data-testid="derived-wp">{derived?.wp ?? '—'}</output>
-            {kind === 'pc' && (
-              <>
-                {' '}
-                · BP: <output data-testid="derived-bp">{derived?.bp ?? '—'}</output> · SAN max:{' '}
-                <output data-testid="derived-san">{derived?.sanMax ?? '—'}</output>
-              </>
-            )}
+          </Select>
+          <Input
+            aria-label="Profession (custom)"
+            placeholder="Profession name"
+            {...register('profession')}
+          />
+          <p className="text-xs text-ink-muted">
+            Selecting a profession pre-fills the skills below.
           </p>
-        </fieldset>
-      )}
+        </Stack>
 
-      <fieldset>
-        <legend>Skills</legend>
-        {fields.length === 0 && <p>No skills yet. Pick a profession or add one manually.</p>}
-        {fields.map((field, index) => (
-          <div key={field.id} data-testid={`skill-row-${index}`}>
-            <label htmlFor={`skills.${index}.name`}>Skill</label>
-            <input
-              id={`skills.${index}.name`}
-              aria-label={`Skill ${index} name`}
-              {...register(`skills.${index}.name` as const)}
-            />
-            <label htmlFor={`skills.${index}.rating`}>Rating</label>
-            <input
-              id={`skills.${index}.rating`}
-              aria-label={`Skill ${index} rating`}
-              type="number"
-              min={0}
-              max={99}
-              {...register(`skills.${index}.rating` as const, { valueAsNumber: true })}
-            />
-            <button
-              type="button"
-              aria-label={`Remove skill ${index}`}
-              onClick={() => remove(index)}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-        <button type="button" onClick={() => append({ name: '', rating: 0 })}>
-          + Add skill
-        </button>
-      </fieldset>
+        {kind === 'npc' && (
+          <Stack gap="xs">
+            <Label htmlFor="status">Status</Label>
+            <Select id="status" {...register('status')}>
+              {NPC_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </Stack>
+        )}
 
-      {kind === 'pc' && (
-        <>
-          <div>
-            <label htmlFor="motivations">Motivations (one per line)</label>
-            <textarea id="motivations" rows={3} {...register('motivations')} />
-          </div>
-          <div>
-            <label htmlFor="backstoryHooks">Backstory hooks</label>
-            <textarea id="backstoryHooks" rows={3} {...register('backstoryHooks')} />
-          </div>
-        </>
-      )}
-
-      {kind === 'npc' && (
-        <>
+        {kind === 'npc' && (
           <fieldset>
-            <legend>RP hooks</legend>
-            <div>
-              <label htmlFor="mannerisms">Mannerisms</label>
-              <textarea id="mannerisms" rows={2} {...register('mannerisms')} />
-            </div>
-            <div>
-              <label htmlFor="voice">Voice</label>
-              <input id="voice" {...register('voice')} />
-            </div>
-            <div>
-              <label htmlFor="secrets">Secrets</label>
-              <textarea id="secrets" rows={2} {...register('secrets')} />
-            </div>
+            <legend>Stat block</legend>
+            <Stack gap="xs">
+              <Label htmlFor="statBlockKind">Type</Label>
+              <Select id="statBlockKind" {...register('statBlockKind')}>
+                <option value="simplified">Simplified (HP / WP only)</option>
+                <option value="full">Full (DG RAW stats)</option>
+              </Select>
+
+              {statBlockKind === 'simplified' && (
+                <Inline gap="md">
+                  <Stack gap="xs">
+                    <Label htmlFor="hp">HP</Label>
+                    <Input
+                      id="hp"
+                      type="number"
+                      min={0}
+                      max={99}
+                      {...register('hp', { valueAsNumber: true })}
+                    />
+                  </Stack>
+                  <Stack gap="xs">
+                    <Label htmlFor="wp">WP</Label>
+                    <Input
+                      id="wp"
+                      type="number"
+                      min={0}
+                      max={99}
+                      {...register('wp', { valueAsNumber: true })}
+                    />
+                  </Stack>
+                </Inline>
+              )}
+            </Stack>
           </fieldset>
-          <div>
-            <label htmlFor="currentGoal">Current goal</label>
-            <input id="currentGoal" {...register('currentGoal')} />
-          </div>
-        </>
-      )}
+        )}
 
-      {errors.root && <p style={{ color: 'crimson' }}>{errors.root.message}</p>}
+        {showFullStats && (
+          <fieldset>
+            <legend>Statistics (1–18)</legend>
+            <Inline gap="md">
+              {(['str', 'con', 'dex', 'intelligence', 'pow', 'cha'] as const).map((key) => (
+                <Stack key={key} gap="xs">
+                  <Label htmlFor={key}>{key.toUpperCase()}</Label>
+                  <Input
+                    id={key}
+                    type="number"
+                    min={1}
+                    max={18}
+                    {...register(key, { valueAsNumber: true, min: 1, max: 18 })}
+                  />
+                </Stack>
+              ))}
+            </Inline>
+          </fieldset>
+        )}
 
-      <button type="submit" disabled={submitting}>
-        {submitting ? 'Saving…' : label}
-      </button>
+        {showFullStats && (
+          <fieldset>
+            <legend>Derived (read-only)</legend>
+            <p>
+              HP: <output data-testid="derived-hp">{derived?.hp ?? '—'}</output> · WP:{' '}
+              <output data-testid="derived-wp">{derived?.wp ?? '—'}</output>
+              {kind === 'pc' && (
+                <>
+                  {' '}
+                  · BP: <output data-testid="derived-bp">{derived?.bp ?? '—'}</output> · SAN max:{' '}
+                  <output data-testid="derived-san">{derived?.sanMax ?? '—'}</output>
+                </>
+              )}
+            </p>
+          </fieldset>
+        )}
+
+        <fieldset>
+          <legend>Skills</legend>
+          <Stack gap="xs">
+            {fields.length === 0 && <p>No skills yet. Pick a profession or add one manually.</p>}
+            {fields.map((field, index) => (
+              <div key={field.id} data-testid={`skill-row-${index}`}>
+                <Inline gap="sm">
+                  <Stack gap="xs">
+                    <Label htmlFor={`skills.${index}.name`}>Skill</Label>
+                    <Input
+                      id={`skills.${index}.name`}
+                      aria-label={`Skill ${index} name`}
+                      {...register(`skills.${index}.name` as const)}
+                    />
+                  </Stack>
+                  <Stack gap="xs">
+                    <Label htmlFor={`skills.${index}.rating`}>Rating</Label>
+                    <Input
+                      id={`skills.${index}.rating`}
+                      aria-label={`Skill ${index} rating`}
+                      type="number"
+                      min={0}
+                      max={99}
+                      {...register(`skills.${index}.rating` as const, { valueAsNumber: true })}
+                    />
+                  </Stack>
+                  <IconButton aria-label={`Remove skill ${index}`} onClick={() => remove(index)}>
+                    ✕
+                  </IconButton>
+                </Inline>
+              </div>
+            ))}
+            <Toolbar align="start">
+              <Button type="button" onClick={() => append({ name: '', rating: 0 })}>
+                + Add skill
+              </Button>
+            </Toolbar>
+          </Stack>
+        </fieldset>
+
+        {kind === 'pc' && (
+          <>
+            <Stack gap="xs">
+              <Label htmlFor="motivations">Motivations (one per line)</Label>
+              <Textarea id="motivations" rows={3} {...register('motivations')} />
+            </Stack>
+            <Stack gap="xs">
+              <Label htmlFor="backstoryHooks">Backstory hooks</Label>
+              <Textarea id="backstoryHooks" rows={3} {...register('backstoryHooks')} />
+            </Stack>
+          </>
+        )}
+
+        {kind === 'npc' && (
+          <>
+            <fieldset>
+              <legend>RP hooks</legend>
+              <Stack gap="md">
+                <Stack gap="xs">
+                  <Label htmlFor="mannerisms">Mannerisms</Label>
+                  <Textarea id="mannerisms" rows={2} {...register('mannerisms')} />
+                </Stack>
+                <Stack gap="xs">
+                  <Label htmlFor="voice">Voice</Label>
+                  <Input id="voice" {...register('voice')} />
+                </Stack>
+                <Stack gap="xs">
+                  <Label htmlFor="secrets">Secrets</Label>
+                  <Textarea id="secrets" rows={2} {...register('secrets')} />
+                </Stack>
+              </Stack>
+            </fieldset>
+            <Stack gap="xs">
+              <Label htmlFor="currentGoal">Current goal</Label>
+              <Input id="currentGoal" {...register('currentGoal')} />
+            </Stack>
+          </>
+        )}
+
+        {errors.root && <p>{errors.root.message}</p>}
+
+        <Toolbar align="start">
+          <Button type="submit" variant="primary" disabled={submitting}>
+            {submitting ? 'Saving…' : label}
+          </Button>
+        </Toolbar>
+      </Stack>
     </form>
   )
 }

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { searchMatch, type SearchMatchResult } from '../../../domain/searchMatch'
 import { useSearchIndex } from '../../hooks/useSearchIndex'
+import Badge from '../ui/Badge'
 import { ENTITY_TYPE_LABEL, resolveResultPath } from './entityRoutes'
 import { useCmdKShortcut } from './useCmdKShortcut'
-import './cmdk.css'
 
 const MIN_QUERY_LENGTH = 3
 const RESULT_LIMIT = 50
@@ -12,8 +12,7 @@ const RESULT_LIMIT = 50
 /**
  * Outer wrapper: owns the `isOpen` flag and the global Cmd-K shortcut.
  * The inner palette component only mounts while open, so its local
- * state (query, active index, focus) resets cleanly per session — no
- * setState-in-useEffect dance required.
+ * state (query, active index, focus) resets cleanly per session.
  */
 export function CmdKPalette() {
   const [isOpen, setIsOpen] = useState(false)
@@ -29,7 +28,6 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const { items, isLoading } = useSearchIndex()
 
-  // Focus the input on mount.
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
@@ -39,9 +37,6 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
     return searchMatch(query, items, { limit: RESULT_LIMIT })
   }, [query, items])
 
-  // Clamp the active index to the current results length without
-  // setState-in-effect cascades. If the user typed and the results
-  // shrank past the previous index, fall back to 0 for rendering.
   const activeIndex = results.length === 0 ? 0 : rawActiveIndex % results.length
   const activeIndexRef = useRef(activeIndex)
   useEffect(() => {
@@ -88,9 +83,13 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
   const showLoading = isLoading && items.length === 0
 
   return (
-    <div className="cmdk-backdrop" onClick={onClose} role="presentation">
+    <div
+      className="fixed inset-0 z-[1000] flex items-start justify-center bg-black/45 pt-[12vh]"
+      onClick={onClose}
+      role="presentation"
+    >
       <div
-        className="cmdk-dialog"
+        className="w-[min(640px,92vw)] max-h-[70vh] flex flex-col overflow-hidden rounded-md border border-border bg-surface-2 text-ink shadow-[0_20px_50px_rgba(0,0,0,0.25)]"
         role="dialog"
         aria-modal="true"
         aria-label="Global search"
@@ -100,7 +99,7 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
         <input
           ref={inputRef}
           type="text"
-          className="cmdk-input"
+          className="w-full border-0 border-b border-border bg-transparent px-4 py-3.5 text-base text-ink placeholder:text-ink-muted outline-none box-border"
           placeholder="Search PCs, NPCs, scenes…"
           value={query}
           onChange={(e) => {
@@ -114,12 +113,16 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
           spellCheck={false}
           data-cmdk-input="true"
         />
-        <div id="cmdk-results" className="cmdk-results" role="listbox">
-          {showLoading && <div className="cmdk-status">Loading index…</div>}
+        <div id="cmdk-results" className="overflow-y-auto py-1" role="listbox">
+          {showLoading && <div className="px-4 py-3.5 text-sm text-ink-muted">Loading index…</div>}
           {!showLoading && showHint && (
-            <div className="cmdk-status">Type at least {MIN_QUERY_LENGTH} characters to search</div>
+            <div className="px-4 py-3.5 text-sm text-ink-muted">
+              Type at least {MIN_QUERY_LENGTH} characters to search
+            </div>
           )}
-          {!showLoading && showEmpty && <div className="cmdk-status">No matches</div>}
+          {!showLoading && showEmpty && (
+            <div className="px-4 py-3.5 text-sm text-ink-muted">No matches</div>
+          )}
           {!showLoading &&
             results.map((r, i) => (
               <Result
@@ -147,20 +150,27 @@ function Result({
   onMouseEnter: () => void
   onSelect: () => void
 }) {
+  const baseRow =
+    'flex w-full items-baseline gap-2 border-0 px-4 py-2 text-left text-sm text-ink cursor-pointer'
+  const tone = active ? 'bg-surface' : 'bg-transparent'
   return (
     <button
       type="button"
-      className={`cmdk-result${active ? ' cmdk-result--active' : ''}`}
+      className={`${baseRow} ${tone}`}
       role="option"
       aria-selected={active}
       onMouseEnter={onMouseEnter}
       onClick={onSelect}
     >
-      <span className="cmdk-result-type">{ENTITY_TYPE_LABEL[result.type]}</span>
-      <span className="cmdk-result-name">
+      <Badge variant="neutral">{ENTITY_TYPE_LABEL[result.type]}</Badge>
+      <span className="font-medium">
         <HighlightedName name={result.name} ranges={result.matchedRanges} />
       </span>
-      {result.subtitle && <span className="cmdk-result-subtitle">{result.subtitle}</span>}
+      {result.subtitle && (
+        <span className="ml-auto max-w-[50%] overflow-hidden text-ellipsis whitespace-nowrap text-xs text-ink-muted">
+          {result.subtitle}
+        </span>
+      )}
     </button>
   )
 }
@@ -173,7 +183,6 @@ function HighlightedName({
   ranges: ReadonlyArray<readonly [number, number]>
 }) {
   if (ranges.length === 0) return <>{name}</>
-  // Ranges from searchMatch are already in ascending order, non-overlapping.
   const parts: React.ReactNode[] = []
   let cursor = 0
   for (let i = 0; i < ranges.length; i++) {
@@ -182,7 +191,11 @@ function HighlightedName({
     if (start > cursor) {
       parts.push(<span key={`p${i}`}>{name.slice(cursor, start)}</span>)
     }
-    parts.push(<mark key={`m${i}`}>{name.slice(start, end)}</mark>)
+    parts.push(
+      <mark key={`m${i}`} className="bg-accent/15 text-inherit p-0">
+        {name.slice(start, end)}
+      </mark>,
+    )
     cursor = end
   }
   if (cursor < name.length) {

@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useSearchParams } from 'react-router'
 import { sceneInputSchema } from '../../../domain/scene'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateScene } from '../../hooks/useCreateScene'
 
 type FormValues = {
@@ -53,35 +61,34 @@ function NewScenePage() {
   }
 
   return (
-    <section>
-      <h1>New Scene</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Scene</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="scene-scenario-id">Scenario ID</label>
-          <br />
-          <input id="scene-scenario-id" type="text" {...register('scenarioId')} />
-        </p>
-        <p>
-          <label htmlFor="scene-name">Name</label>
-          <br />
-          <input id="scene-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="scene-description">Description</label>
-          <br />
-          <textarea id="scene-description" rows={4} {...register('description')} />
-        </p>
-        <p>
-          <label htmlFor="scene-order-index">Order index</label>
-          <br />
-          <input id="scene-order-index" type="number" min={0} {...register('orderIndex')} />
-        </p>
-        <button type="submit" disabled={createScene.isPending}>
-          {createScene.isPending ? 'Creating…' : 'Create Scene'}
-        </button>
+        <Stack gap="md">
+          <Field label="Scenario ID">
+            <Input type="text" {...register('scenarioId')} />
+          </Field>
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Field label="Order index">
+            <Input type="number" min={0} {...register('orderIndex')} />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createScene.isPending}>
+              {createScene.isPending ? 'Creating…' : 'Create Scene'}
+            </Button>
+            <LinkButton to="/scenes" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

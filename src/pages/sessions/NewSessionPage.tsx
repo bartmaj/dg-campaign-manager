@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { sessionInputSchema } from '../../../domain/session'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateSession } from '../../hooks/useCreateSession'
 
 type FormValues = {
@@ -56,55 +64,40 @@ function NewSessionPage() {
   }
 
   return (
-    <section>
-      <h1>New Session</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Session</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="session-name">Name</label>
-          <br />
-          <input id="session-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="session-description">Description</label>
-          <br />
-          <textarea id="session-description" rows={4} {...register('description')} />
-        </p>
-        <p>
-          <label htmlFor="session-real-world-date">Real-world date</label>
-          <br />
-          <input id="session-real-world-date" type="date" {...register('realWorldDate')} />
-        </p>
-        <p>
-          <label htmlFor="session-in-game-date">In-game start date</label>
-          <br />
-          <input id="session-in-game-date" type="date" {...register('inGameDate')} />
-        </p>
-        <p>
-          <label htmlFor="session-in-game-date-end">In-game end date</label>
-          <br />
-          <input
-            id="session-in-game-date-end"
-            type="date"
-            placeholder="(optional) end of in-game span"
-            {...register('inGameDateEnd')}
-          />
-        </p>
-        <p>
-          <label htmlFor="session-campaign-id">Campaign ID</label>
-          <br />
-          <input
-            id="session-campaign-id"
-            type="text"
-            placeholder="(optional) leave blank to use default campaign"
-            {...register('campaignId')}
-          />
-        </p>
-        <button type="submit" disabled={createSession.isPending}>
-          {createSession.isPending ? 'Creating…' : 'Create Session'}
-        </button>
+        <Stack gap="md">
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Field label="Real-world date">
+            <Input type="date" {...register('realWorldDate')} />
+          </Field>
+          <Field label="In-game start date">
+            <Input type="date" {...register('inGameDate')} />
+          </Field>
+          <Field label="In-game end date" helper="(optional) end of in-game span">
+            <Input type="date" {...register('inGameDateEnd')} />
+          </Field>
+          <Field label="Campaign ID" helper="(optional) leave blank to use default campaign">
+            <Input type="text" {...register('campaignId')} />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createSession.isPending}>
+              {createSession.isPending ? 'Creating…' : 'Create Session'}
+            </Button>
+            <LinkButton to="/sessions" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

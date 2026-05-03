@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { factionInputSchema, type FactionInputParsed } from '../../../domain/faction'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateFaction } from '../../hooks/useCreateFaction'
 
 type FormValues = {
@@ -40,30 +48,31 @@ function NewFactionPage() {
   }
 
   return (
-    <section>
-      <h1>New Faction</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Faction</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="faction-name">Name</label>
-          <br />
-          <input id="faction-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="faction-agenda">Agenda</label>
-          <br />
-          <textarea id="faction-agenda" rows={3} {...register('agenda')} />
-        </p>
-        <p>
-          <label htmlFor="faction-description">Description</label>
-          <br />
-          <textarea id="faction-description" rows={4} {...register('description')} />
-        </p>
-        <button type="submit" disabled={createFaction.isPending}>
-          {createFaction.isPending ? 'Creating…' : 'Create Faction'}
-        </button>
+        <Stack gap="md">
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Agenda">
+            <Textarea rows={3} {...register('agenda')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createFaction.isPending}>
+              {createFaction.isPending ? 'Creating…' : 'Create Faction'}
+            </Button>
+            <LinkButton to="/factions" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

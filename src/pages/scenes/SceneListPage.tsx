@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { SceneFilter } from '../../api/scenes'
+import type { SceneFilter, SceneRow } from '../../api/scenes'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useScenarios } from '../../hooks/useScenarios'
 import { useScenes } from '../../hooks/useScenes'
 
@@ -34,28 +40,35 @@ function SceneListPage() {
     [scenarios],
   )
 
+  const columns: ReadonlyArray<DataTableColumn<SceneRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (s) => <Link to={`/scenes/${s.id}`}>{s.name}</Link>,
+    },
+    {
+      key: 'scenario',
+      header: 'Scenario',
+      render: (s) => <Link to={`/scenarios/${s.scenarioId}`}>{s.scenarioId}</Link>,
+    },
+  ]
+
   return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Scenes</h1>
-        <Link to="/scenes/new">+ New scene</Link>
-      </header>
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>Scenes</Heading>
+        <LinkButton to="/scenes/new" variant="primary">
+          + New scene
+        </LinkButton>
+      </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No scenes match the current filters.</p>}
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && <EmptyState title="No scenes match the current filters." />}
       {data && data.length > 0 && (
-        <ul>
-          {data.map((s) => (
-            <li key={s.id}>
-              <Link to={`/scenes/${s.id}`}>{s.name}</Link>
-              {' — scenario '}
-              <Link to={`/scenarios/${s.scenarioId}`}>{s.scenarioId}</Link>
-            </li>
-          ))}
-        </ul>
+        <DataTable columns={columns} rows={data} getRowKey={(s) => s.id} />
       )}
-    </section>
+    </Stack>
   )
 }
 

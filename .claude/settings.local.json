@@ -30,7 +30,8 @@
       "Bash(pnpm format:check)",
       "Bash(pnpm prettier *)",
       "Bash(vercel ls *)",
-      "Bash(vercel inspect *)"
+      "Bash(vercel inspect *)",
+      "Bash(node *)"
     ]
   }
 }

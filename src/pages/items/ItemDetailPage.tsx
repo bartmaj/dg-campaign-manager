@@ -1,4 +1,10 @@
 import { Link, useParams } from 'react-router'
+import Card from '../../components/ui/Card'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Prose from '../../components/ui/Prose'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useItem } from '../../hooks/useItems'
 
 function ItemDetailPage() {
@@ -6,41 +12,57 @@ function ItemDetailPage() {
   const { data: item, isLoading, error } = useItem(id)
 
   if (isLoading) return <p>Loading…</p>
-  if (error) return <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>
+  if (error) return <p>Failed to load: {error.message}</p>
   if (!item) return <p>Item not found.</p>
 
   return (
-    <section>
+    <Stack gap="md">
       <p>
         <Link to="/items">← All Items</Link>
       </p>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>{item.name}</h1>
-        <a href={`/api/items/${item.id}/export`} download>
+      <Toolbar align="between">
+        <Heading level={1}>{item.name}</Heading>
+        <LinkButton href={`/api/items/${item.id}/export`} variant="ghost" download>
           Download as Markdown
-        </a>
-      </header>
+        </LinkButton>
+      </Toolbar>
 
-      <h2>Description</h2>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{item.description ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Description</Heading>
+          <Prose>{item.description ?? '—'}</Prose>
+        </Stack>
+      </Card>
 
-      <h2>History</h2>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{item.history ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>History</Heading>
+          <Prose>{item.history ?? '—'}</Prose>
+        </Stack>
+      </Card>
 
-      <h2>Owner</h2>
-      <p>
-        {item.ownerNpcId ? <Link to={`/npcs/${item.ownerNpcId}`}>{item.ownerNpcId}</Link> : '—'}
-      </p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Owner</Heading>
+          <p>
+            {item.ownerNpcId ? <Link to={`/npcs/${item.ownerNpcId}`}>{item.ownerNpcId}</Link> : '—'}
+          </p>
+        </Stack>
+      </Card>
 
-      <h2>Location</h2>
-      <p>
-        {item.locationId ? (
-          <Link to={`/locations/${item.locationId}`}>{item.locationId}</Link>
-        ) : (
-          '—'
-        )}
-      </p>
-    </section>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Location</Heading>
+          <p>
+            {item.locationId ? (
+              <Link to={`/locations/${item.locationId}`}>{item.locationId}</Link>
+            ) : (
+              '—'
+            )}
+          </p>
+        </Stack>
+      </Card>
+    </Stack>
   )
 }
 

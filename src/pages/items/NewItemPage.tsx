@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { itemInputSchema, type ItemInputParsed } from '../../../domain/item'
+import Button from '../../components/ui/Button'
+import Field from '../../components/ui/Field'
+import Heading from '../../components/ui/Heading'
+import Input from '../../components/ui/Input'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
+import Toolbar from '../../components/ui/Toolbar'
 import { useCreateItem } from '../../hooks/useCreateItem'
 
 type FormValues = {
@@ -50,40 +58,37 @@ function NewItemPage() {
   }
 
   return (
-    <section>
-      <h1>New Item</h1>
+    <Stack gap="md">
+      <Heading level={1}>New Item</Heading>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
-        <p>
-          <label htmlFor="item-name">Name</label>
-          <br />
-          <input id="item-name" type="text" {...register('name')} />
-        </p>
-        <p>
-          <label htmlFor="item-description">Description</label>
-          <br />
-          <textarea id="item-description" rows={4} {...register('description')} />
-        </p>
-        <p>
-          <label htmlFor="item-history">History</label>
-          <br />
-          <textarea id="item-history" rows={3} {...register('history')} />
-        </p>
-        <p>
-          <label htmlFor="item-owner">Owner NPC ID</label>
-          <br />
-          <input id="item-owner" type="text" {...register('ownerNpcId')} />
-        </p>
-        <p>
-          <label htmlFor="item-location">Location ID</label>
-          <br />
-          <input id="item-location" type="text" {...register('locationId')} />
-        </p>
-        <button type="submit" disabled={createItem.isPending}>
-          {createItem.isPending ? 'Creating…' : 'Create Item'}
-        </button>
+        <Stack gap="md">
+          <Field label="Name">
+            <Input type="text" {...register('name')} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={4} {...register('description')} />
+          </Field>
+          <Field label="History">
+            <Textarea rows={3} {...register('history')} />
+          </Field>
+          <Field label="Owner NPC ID">
+            <Input type="text" {...register('ownerNpcId')} />
+          </Field>
+          <Field label="Location ID">
+            <Input type="text" {...register('locationId')} />
+          </Field>
+          <Toolbar align="start">
+            <Button type="submit" variant="primary" disabled={createItem.isPending}>
+              {createItem.isPending ? 'Creating…' : 'Create Item'}
+            </Button>
+            <LinkButton to="/items" variant="ghost">
+              Cancel
+            </LinkButton>
+          </Toolbar>
+          {error && <p>{error}</p>}
+        </Stack>
       </form>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </section>
+    </Stack>
   )
 }
 

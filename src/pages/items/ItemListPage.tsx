@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { ItemFilter } from '../../api/items'
+import type { ItemFilter, ItemRow } from '../../api/items'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useItems } from '../../hooks/useItems'
 
 function ItemListPage() {
@@ -26,28 +32,40 @@ function ItemListPage() {
     { id: 'ownerNpcId', label: 'Owner NPC ID', type: 'text', placeholder: 'npc id' },
   ]
 
+  const columns: ReadonlyArray<DataTableColumn<ItemRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (i) => <Link to={`/items/${i.id}`}>{i.name}</Link>,
+    },
+    {
+      key: 'owner',
+      header: 'Owner',
+      render: (i) => i.ownerNpcId ?? '—',
+    },
+    {
+      key: 'location',
+      header: 'Location',
+      render: (i) => i.locationId ?? '—',
+    },
+  ]
+
   return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Items</h1>
-        <Link to="/items/new">+ New Item</Link>
-      </header>
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>Items</Heading>
+        <LinkButton to="/items/new" variant="primary">
+          + New Item
+        </LinkButton>
+      </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No items match the current filters.</p>}
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && <EmptyState title="No items match the current filters." />}
       {data && data.length > 0 && (
-        <ul>
-          {data.map((item) => (
-            <li key={item.id}>
-              <Link to={`/items/${item.id}`}>{item.name}</Link>
-              {item.ownerNpcId ? ` · owner: ${item.ownerNpcId}` : ''}
-              {item.locationId ? ` · at: ${item.locationId}` : ''}
-            </li>
-          ))}
-        </ul>
+        <DataTable columns={columns} rows={data} getRowKey={(i) => i.id} />
       )}
-    </section>
+    </Stack>
   )
 }
 

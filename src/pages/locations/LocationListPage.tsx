@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { LocationFilter } from '../../api/locations'
+import type { LocationFilter, LocationRow } from '../../api/locations'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useLocations } from '../../hooks/useLocations'
 
 function LocationListPage() {
@@ -29,27 +35,35 @@ function LocationListPage() {
     },
   ]
 
+  const columns: ReadonlyArray<DataTableColumn<LocationRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (l) => <Link to={`/locations/${l.id}`}>{l.name}</Link>,
+    },
+    {
+      key: 'parent',
+      header: 'Parent',
+      render: (l) => l.parentLocationId ?? '—',
+    },
+  ]
+
   return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Locations</h1>
-        <Link to="/locations/new">+ New Location</Link>
-      </header>
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>Locations</Heading>
+        <LinkButton to="/locations/new" variant="primary">
+          + New Location
+        </LinkButton>
+      </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No locations match the current filters.</p>}
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && <EmptyState title="No locations match the current filters." />}
       {data && data.length > 0 && (
-        <ul>
-          {data.map((location) => (
-            <li key={location.id}>
-              <Link to={`/locations/${location.id}`}>{location.name}</Link>
-              {location.parentLocationId ? ` · in ${location.parentLocationId}` : ''}
-            </li>
-          ))}
-        </ul>
+        <DataTable columns={columns} rows={data} getRowKey={(l) => l.id} />
       )}
-    </section>
+    </Stack>
   )
 }
 

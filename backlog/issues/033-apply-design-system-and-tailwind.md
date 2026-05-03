@@ -3,7 +3,7 @@ id: 033
 title: Apply design system + Tailwind across the app
 milestone: M2
 unit: M2 — Core Workbench
-status: not-started
+status: done
 labels: [ui, scaffold]
 req-ids: [REQ-N06]
 ---
@@ -54,3 +54,14 @@ Blocked by: none directly (touches every page, but logic is feature-complete eno
 - Dark theme as a token-only swap (post-design-system).
 - Print stylesheet for the player handout export (relates to REQ-012 / #028).
 - Accessibility audit (color contrast, focus rings, keyboard nav) once primitives exist — own follow-up issue.
+- Skeleton primitive — current `<p>Loading…</p>` placeholders could become proper skeleton blocks.
+- The redacted `█` heading prefix idea broke heading-name regex tests; the per-Card top-bar carries the dossier flourish instead.
+
+**Delivered (2 phases)**:
+- **Phase 1** (commit `c7230ba`): Tailwind 4 + tokens + 19 primitives in `src/components/ui/` + Layout + HomePage migrated.
+- **Phase 2**: every list / new / detail page (27 total), Import page, Cmd-K palette, CharacterForm, FilterBar migrated to primitives. Three additional primitives created: `LinkButton` (link-styled-as-button), `Prose` (whitespace-pre-wrap text), `Meter` (SAN-style progress bar with tone shifts).
+- Card primitive carries a thin black top-bar across every card — the chosen redacted-document flourish.
+- `cmdk.css` deleted; CmdKPalette is fully Tailwind.
+- Tests: 217 → 223 (+6 from primitive tests in phase 1; phase 2 added zero — page tests still passed via role/name queries).
+- Bundle: CSS 18.55 kB, JS 543.68 kB.
+- Modularity verified: `grep -rEl '(style=\\{|className=)' src/pages` returns 1 (HomePage's intentional muted-copy classes — allowed exception).

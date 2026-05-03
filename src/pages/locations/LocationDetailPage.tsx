@@ -1,4 +1,10 @@
 import { Link, useParams } from 'react-router'
+import Card from '../../components/ui/Card'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Prose from '../../components/ui/Prose'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useLocation } from '../../hooks/useLocations'
 
 function LocationDetailPage() {
@@ -6,38 +12,52 @@ function LocationDetailPage() {
   const { data: location, isLoading, error } = useLocation(id)
 
   if (isLoading) return <p>Loading…</p>
-  if (error) return <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>
+  if (error) return <p>Failed to load: {error.message}</p>
   if (!location) return <p>Location not found.</p>
 
   return (
-    <section>
+    <Stack gap="md">
       <p>
         <Link to="/locations">← All Locations</Link>
       </p>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>{location.name}</h1>
-        <a href={`/api/locations/${location.id}/export`} download>
+      <Toolbar align="between">
+        <Heading level={1}>{location.name}</Heading>
+        <LinkButton href={`/api/locations/${location.id}/export`} variant="ghost" download>
           Download as Markdown
-        </a>
-      </header>
+        </LinkButton>
+      </Toolbar>
 
-      <h2>Description</h2>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{location.description ?? '—'}</p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Description</Heading>
+          <Prose>{location.description ?? '—'}</Prose>
+        </Stack>
+      </Card>
 
-      <h2>Parent Location</h2>
-      <p>
-        {location.parentLocationId ? (
-          <Link to={`/locations/${location.parentLocationId}`}>{location.parentLocationId}</Link>
-        ) : (
-          '—'
-        )}
-      </p>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Parent Location</Heading>
+          <p>
+            {location.parentLocationId ? (
+              <Link to={`/locations/${location.parentLocationId}`}>
+                {location.parentLocationId}
+              </Link>
+            ) : (
+              '—'
+            )}
+          </p>
+        </Stack>
+      </Card>
 
-      <h2>Contents</h2>
-      <p>
-        <em>Items and NPCs at this location — surfaced in M2.2A via polymorphic edges.</em>
-      </p>
-    </section>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Contents</Heading>
+          <p>
+            <em>Items and NPCs at this location — surfaced in M2.2A via polymorphic edges.</em>
+          </p>
+        </Stack>
+      </Card>
+    </Stack>
   )
 }
 

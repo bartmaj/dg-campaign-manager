@@ -1,13 +1,29 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import type { NpcFilter } from '../../api/npcs'
+import type { NpcFilter, NpcRow } from '../../api/npcs'
 import FilterBar, {
   type FilterBarField,
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
 import { NPC_STATUSES, type NpcStatus } from '../../../domain/npc'
+import Badge from '../../components/ui/Badge'
+import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EmptyState from '../../components/ui/EmptyState'
+import Heading from '../../components/ui/Heading'
+import LinkButton from '../../components/ui/LinkButton'
+import Stack from '../../components/ui/Stack'
+import Toolbar from '../../components/ui/Toolbar'
 import { useFactions } from '../../hooks/useFactions'
 import { useNpcs } from '../../hooks/useNpcs'
+
+// Status -> Badge variant mapping (used here and on detail pages).
+// alive -> ok, missing -> warn, turned -> danger, dead -> neutral.
+function statusVariant(s: NpcStatus): 'ok' | 'warn' | 'danger' | 'neutral' {
+  if (s === 'alive') return 'ok'
+  if (s === 'missing') return 'warn'
+  if (s === 'turned') return 'danger'
+  return 'neutral'
+}
 
 function NpcListPage() {
   const [filterValues, setFilterValues] = useState<FilterValues>({})
@@ -28,12 +44,7 @@ function NpcListPage() {
 
   const fields: FilterBarField[] = useMemo(
     () => [
-      {
-        id: 'q',
-        label: 'Name',
-        type: 'text',
-        placeholder: 'search by name',
-      },
+      { id: 'q', label: 'Name', type: 'text', placeholder: 'search by name' },
       {
         id: 'factionId',
         label: 'Faction',
@@ -56,28 +67,45 @@ function NpcListPage() {
     [factions],
   )
 
+  const columns: ReadonlyArray<DataTableColumn<NpcRow>> = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (npc) => <Link to={`/npcs/${npc.id}`}>{npc.name}</Link>,
+    },
+    {
+      key: 'profession',
+      header: 'Profession',
+      render: (npc) => npc.profession ?? '—',
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (npc) => <Badge variant={statusVariant(npc.status)}>{npc.status}</Badge>,
+    },
+    {
+      key: 'faction',
+      header: 'Faction',
+      render: (npc) => npc.factionId ?? '—',
+    },
+  ]
+
   return (
-    <section>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>NPCs</h1>
-        <Link to="/npcs/new">+ New NPC</Link>
-      </header>
+    <Stack gap="md">
+      <Toolbar align="between">
+        <Heading level={1}>NPCs</Heading>
+        <LinkButton to="/npcs/new" variant="primary">
+          + New NPC
+        </LinkButton>
+      </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}
-      {error && <p style={{ color: 'crimson' }}>Failed to load: {error.message}</p>}
-      {data && data.length === 0 && <p>No NPCs match the current filters.</p>}
+      {error && <p>Failed to load: {error.message}</p>}
+      {data && data.length === 0 && <EmptyState title="No NPCs match the current filters." />}
       {data && data.length > 0 && (
-        <ul>
-          {data.map((npc) => (
-            <li key={npc.id}>
-              <Link to={`/npcs/${npc.id}`}>{npc.name}</Link>
-              {npc.profession ? ` — ${npc.profession}` : ''} · <em>{npc.status}</em>
-              {npc.factionId ? ` · faction: ${npc.factionId}` : ''}
-            </li>
-          ))}
-        </ul>
+        <DataTable columns={columns} rows={data} getRowKey={(npc) => npc.id} />
       )}
-    </section>
+    </Stack>
   )
 }
 
