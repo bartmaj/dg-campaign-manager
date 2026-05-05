@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { EdgeRow } from '../../api/edges'
 import type { FactionRow } from '../../api/factions'
 import { edgeKeys } from '../../hooks/useEdges'
 import { factionKeys } from '../../hooks/useFactions'
+import { sessionKeys } from '../../hooks/useSessions'
 import FactionDetailPage from './FactionDetailPage'
 
 const FACTION_ID = 'faction-1'
@@ -45,6 +46,13 @@ function renderPage(opts: { faction?: FactionRow; edges?: EdgeRow[] }) {
   // Prime the same query key the hook uses so React Query returns the
   // seeded data instead of fetching.
   qc.setQueryData(edgeKeys.list({ targetType: 'faction', targetId: FACTION_ID }), opts.edges ?? [])
+  // EntityRelationships also queries outgoing edges; seed empty.
+  qc.setQueryData(edgeKeys.list({ sourceType: 'faction', sourceId: FACTION_ID }), [])
+  // EntityRecentActivity queries sessions involving this entity; seed empty.
+  qc.setQueryData(
+    sessionKeys.list('realWorld', { involvesType: 'faction', involvesId: FACTION_ID }),
+    [],
+  )
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[`/factions/${FACTION_ID}`]}>
@@ -63,9 +71,11 @@ describe('FactionDetailPage', () => {
       edges: [makeEdge({ id: 'edge-1', sourceId: 'clue-abc' })],
     })
     expect(screen.getByRole('heading', { name: /implicating clues/i })).toBeInTheDocument()
-    const link = screen.getByRole('link', { name: 'clue-abc' })
-    expect(link).toBeInTheDocument()
-    expect(link).toHaveAttribute('href', '/clues/clue-abc')
+    // Two links — one in the curated "Implicating clues" section, one in
+    // the generic Relationships card. Both point to the same clue.
+    const links = screen.getAllByRole('link', { name: 'clue-abc' })
+    expect(links.length).toBeGreaterThanOrEqual(1)
+    expect(links[0]).toHaveAttribute('href', '/clues/clue-abc')
   })
 
   it('shows an empty state when there are no implicating clues', () => {
@@ -98,8 +108,20 @@ describe('FactionDetailPage', () => {
         }),
       ],
     })
-    expect(screen.getByRole('link', { name: 'clue-1' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'clue-2' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'npc-1' })).not.toBeInTheDocument()
+    // The curated "Implicating clues" section only includes clue-1; the
+    // generic Relationships card surfaces all incoming edges, so the
+    // wrong-kind/wrong-type ids appear there.
+    const implicatingHeading = screen.getByRole('heading', { name: /implicating clues/i })
+    const implicatingCard = implicatingHeading.closest('div')
+    expect(implicatingCard).not.toBeNull()
+    expect(
+      within(implicatingCard as HTMLElement).getByRole('link', { name: 'clue-1' }),
+    ).toBeInTheDocument()
+    expect(
+      within(implicatingCard as HTMLElement).queryByRole('link', { name: 'clue-2' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(implicatingCard as HTMLElement).queryByRole('link', { name: 'npc-1' }),
+    ).not.toBeInTheDocument()
   })
 })

@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router'
 import { ENTITY_TYPES, type EntityType } from '../../../db/schema'
 import { EDGE_RULES, kindsForSource } from '../../../domain/edges'
 import type { EdgeRow } from '../../api/edges'
+import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
+import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Field from '../../components/ui/Field'
@@ -215,6 +217,9 @@ function ClueDetailPage() {
           </form>
         </Stack>
       </Card>
+
+      {id && <EntityRelationships entityType="clue" entityId={id} />}
+      {id && <EntityRecentActivity entityType="clue" entityId={id} />}
     </Stack>
   )
 }

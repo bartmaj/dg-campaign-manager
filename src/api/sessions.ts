@@ -1,3 +1,4 @@
+import type { EntityType } from '../../db/schema'
 import type { SessionInput } from '../../domain/session'
 
 /**
@@ -32,12 +33,18 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 export type SessionFilter = {
   q?: string
+  involvesType?: EntityType
+  involvesId?: string
 }
 
 function buildSessionUrl(orderBy: SessionOrderBy, filter: SessionFilter): string {
   const params = new URLSearchParams()
   params.set('orderBy', orderBy)
   if (filter.q && filter.q.trim().length > 0) params.set('q', filter.q.trim())
+  if (filter.involvesType && filter.involvesId) {
+    params.set('involvesType', filter.involvesType)
+    params.set('involvesId', filter.involvesId)
+  }
   return `/api/sessions?${params.toString()}`
 }
 

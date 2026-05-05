@@ -1,5 +1,7 @@
 import { Link, useParams } from 'react-router'
 import type { NpcStatus } from '../../../domain/npc'
+import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
+import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import DescriptionList from '../../components/ui/DescriptionList'
@@ -97,16 +99,6 @@ function NpcDetailPage() {
         </Stack>
       </Card>
 
-      {/* Continuity dimension #3: Relationship web */}
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Relationships</Heading>
-          <p>
-            <em>Relationships — surfaced in M2.2A via polymorphic edges.</em>
-          </p>
-        </Stack>
-      </Card>
-
       <Card>
         <Stack gap="sm">
           <Heading level={2}>Bonds with this character</Heading>
@@ -138,6 +130,9 @@ function NpcDetailPage() {
           <p>{npc.locationId ?? '—'}</p>
         </Stack>
       </Card>
+
+      {id && <EntityRelationships entityType="npc" entityId={id} />}
+      {id && <EntityRecentActivity entityType="npc" entityId={id} />}
     </Stack>
   )
 }

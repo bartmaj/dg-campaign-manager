@@ -4,6 +4,8 @@ import type { BondTargetType } from '../../../domain/bonds'
 import type { BondRow } from '../../api/bonds'
 import type { PcRow } from '../../api/pcs'
 import type { SanChangeEvent } from '../../api/sanity'
+import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
+import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -654,6 +656,9 @@ function PcDetailPage() {
       </Card>
 
       <SanitySection pc={pc} />
+
+      {id && <EntityRelationships entityType="pc" entityId={id} />}
+      {id && <EntityRecentActivity entityType="pc" entityId={id} />}
     </Stack>
   )
 }

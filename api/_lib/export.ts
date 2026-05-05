@@ -70,7 +70,7 @@ export async function loadEdgeContext(
   return { outgoing, incoming, entityNameById: nameMap }
 }
 
-async function fetchNamesForType(
+export async function fetchNamesForType(
   type: EntityType,
   ids: string[],
 ): Promise<Array<{ id: string; name: string }>> {

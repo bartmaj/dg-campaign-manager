@@ -18,6 +18,7 @@ import {
 } from './_handlers/pcs'
 import { scenarioExport, scenarioGet, scenariosCreate, scenariosList } from './_handlers/scenarios'
 import { sceneExport, sceneGet, scenesCreate, scenesList } from './_handlers/scenes'
+import { namesLookup } from './_handlers/names'
 import { searchIndex } from './_handlers/search'
 import { sessionExport, sessionGet, sessionsCreate, sessionsList } from './_handlers/sessions'
 
@@ -116,6 +117,7 @@ const routes: Route[] = [
 
   // search
   r0('GET', '/search/index', searchIndex),
+  r0('GET', '/search/names', namesLookup),
 ]
 
 /**

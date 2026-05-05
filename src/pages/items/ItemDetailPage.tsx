@@ -1,4 +1,6 @@
 import { Link, useParams } from 'react-router'
+import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
+import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -62,6 +64,9 @@ function ItemDetailPage() {
           </p>
         </Stack>
       </Card>
+
+      {id && <EntityRelationships entityType="item" entityId={id} />}
+      {id && <EntityRecentActivity entityType="item" entityId={id} />}
     </Stack>
   )
 }

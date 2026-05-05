@@ -1,4 +1,6 @@
 import { Link, useParams } from 'react-router'
+import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
+import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -73,6 +75,9 @@ function FactionDetailPage() {
           </p>
         </Stack>
       </Card>
+
+      {id && <EntityRelationships entityType="faction" entityId={id} />}
+      {id && <EntityRecentActivity entityType="faction" entityId={id} />}
     </Stack>
   )
 }

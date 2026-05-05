@@ -1,9 +1,74 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { asc, desc, eq, like } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, like, or, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client'
+import { ENTITY_TYPES, type EntityType } from '../../db/schema'
 import { serializeEntity } from '../../domain/mdExport'
 import { sessionInputSchema } from '../../domain/session'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
+
+/**
+ * Computes the set of session ids whose timeline "involves" a given
+ * entity. Three sources are unioned:
+ *   1. Edges from session → entity (session id is `source_id`).
+ *   2. Edges from entity → session (session id is `target_id`).
+ *   3. bond_damage_events tied to bonds where pc_id or target_id is the
+ *      entity id (only meaningful when type is 'pc' or 'npc').
+ *   4. san_change_events for this PC (only when type is 'pc').
+ *
+ * Returns an unordered list of session ids; the caller filters
+ * `sessions` accordingly. Empty list ⇒ no involvement.
+ */
+async function sessionIdsInvolving(type: EntityType, id: string): Promise<string[]> {
+  const incomingEdges = await db
+    .select({ sessionId: schema.edges.sourceId })
+    .from(schema.edges)
+    .where(
+      and(
+        eq(schema.edges.sourceType, 'session'),
+        eq(schema.edges.targetType, type),
+        eq(schema.edges.targetId, id),
+      ),
+    )
+  const outgoingEdges = await db
+    .select({ sessionId: schema.edges.targetId })
+    .from(schema.edges)
+    .where(
+      and(
+        eq(schema.edges.sourceType, type),
+        eq(schema.edges.sourceId, id),
+        eq(schema.edges.targetType, 'session'),
+      ),
+    )
+
+  const ids = new Set<string>()
+  for (const r of incomingEdges) if (r.sessionId) ids.add(r.sessionId)
+  for (const r of outgoingEdges) if (r.sessionId) ids.add(r.sessionId)
+
+  if (type === 'pc' || type === 'npc') {
+    const bondsRows = await db
+      .select({ id: schema.bonds.id })
+      .from(schema.bonds)
+      .where(or(eq(schema.bonds.pcId, id), eq(schema.bonds.targetId, id)))
+    const bondIds = bondsRows.map((b) => b.id)
+    if (bondIds.length > 0) {
+      const damageRows = await db
+        .select({ sessionId: schema.bondDamageEvents.sessionId })
+        .from(schema.bondDamageEvents)
+        .where(inArray(schema.bondDamageEvents.bondId, bondIds))
+      for (const r of damageRows) if (r.sessionId) ids.add(r.sessionId)
+    }
+  }
+
+  if (type === 'pc') {
+    const sanRows = await db
+      .select({ sessionId: schema.sanChangeEvents.sessionId })
+      .from(schema.sanChangeEvents)
+      .where(eq(schema.sanChangeEvents.pcId, id))
+    for (const r of sanRows) if (r.sessionId) ids.add(r.sessionId)
+  }
+
+  return [...ids]
+}
 
 export async function sessionsList(req: VercelRequest, res: VercelResponse) {
   const orderByParam = req.query.orderBy
@@ -12,7 +77,29 @@ export async function sessionsList(req: VercelRequest, res: VercelResponse) {
 
   const qParam = req.query.q
   const q = Array.isArray(qParam) ? qParam[0] : qParam
-  const where = q && q.trim().length > 0 ? like(schema.sessions.name, `%${q.trim()}%`) : undefined
+
+  const involvesTypeParam = req.query.involvesType
+  const involvesIdParam = req.query.involvesId
+  const involvesType = Array.isArray(involvesTypeParam) ? involvesTypeParam[0] : involvesTypeParam
+  const involvesId = Array.isArray(involvesIdParam) ? involvesIdParam[0] : involvesIdParam
+
+  const conds: SQL[] = []
+  if (q && q.trim().length > 0) {
+    conds.push(like(schema.sessions.name, `%${q.trim()}%`))
+  }
+
+  if (involvesType && involvesId) {
+    if (!ENTITY_TYPES.includes(involvesType as EntityType)) {
+      return res.status(400).json({ error: 'Invalid involvesType' })
+    }
+    const ids = await sessionIdsInvolving(involvesType as EntityType, involvesId)
+    if (ids.length === 0) {
+      return res.status(200).json([])
+    }
+    conds.push(inArray(schema.sessions.id, ids))
+  }
+
+  const where = conds.length === 0 ? undefined : conds.length === 1 ? conds[0] : and(...conds)
 
   const rows = await db
     .select()

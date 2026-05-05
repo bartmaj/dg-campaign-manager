@@ -6,6 +6,7 @@ import type { ClueRow } from '../../api/clues'
 import type { EdgeRow } from '../../api/edges'
 import { clueKeys } from '../../hooks/useClues'
 import { edgeKeys } from '../../hooks/useEdges'
+import { sessionKeys } from '../../hooks/useSessions'
 import ClueDetailPage from './ClueDetailPage'
 
 const CLUE_ID = 'clue-1'
@@ -43,6 +44,9 @@ function renderPage(opts: { clue?: ClueRow; edges?: EdgeRow[] }) {
     qc.setQueryData(clueKeys.detail(CLUE_ID), opts.clue)
   }
   qc.setQueryData(edgeKeys.list({ sourceType: 'clue', sourceId: CLUE_ID }), opts.edges ?? [])
+  // EntityRelationships also queries incoming edges; seed empty.
+  qc.setQueryData(edgeKeys.list({ targetType: 'clue', targetId: CLUE_ID }), [])
+  qc.setQueryData(sessionKeys.list('realWorld', { involvesType: 'clue', involvesId: CLUE_ID }), [])
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[`/clues/${CLUE_ID}`]}>
@@ -69,17 +73,21 @@ describe('ClueDetailPage', () => {
     expect(screen.getByRole('heading', { name: /linked factions/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /linked locations/i })).toBeInTheDocument()
 
-    expect(screen.getByRole('link', { name: 'npc-1' })).toHaveAttribute('href', '/npcs/npc-1')
-    expect(screen.getByRole('link', { name: 'faction-1' })).toHaveAttribute(
+    // The curated "Linked entities" card and the generic Relationships
+    // card both render a link to each related entity, so we expect at
+    // least one match. Verify the curated section's link href.
+    expect(screen.getAllByRole('link', { name: 'npc-1' })[0]).toHaveAttribute('href', '/npcs/npc-1')
+    expect(screen.getAllByRole('link', { name: 'faction-1' })[0]).toHaveAttribute(
       'href',
       '/factions/faction-1',
     )
-    expect(screen.getByRole('link', { name: 'location-1' })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'location-1' })[0]).toHaveAttribute(
       'href',
       '/locations/location-1',
     )
 
-    // Three "Remove" buttons (one per edge) plus there's no extra noise here.
+    // Three "Remove" buttons (one per edge) — the generic Relationships
+    // card is read-only, so no extra remove buttons are introduced.
     const removeButtons = screen.getAllByRole('button', { name: /remove/i })
     expect(removeButtons).toHaveLength(3)
   })
