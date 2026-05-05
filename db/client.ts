@@ -1,4 +1,4 @@
-import { createClient, type Client as LibsqlClient } from '@libsql/client'
+import { createClient } from '@libsql/client'
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql'
 import * as schema from './schema'
 
@@ -10,7 +10,6 @@ export type DB = LibSQLDatabase<Schema>
 // turns module-load throws into opaque FUNCTION_INVOCATION_FAILED, which is
 // undebuggable. By deferring to first use, the dispatcher's try/catch can
 // surface a real error message.
-let _libsql: LibsqlClient | null = null
 let _db: DB | null = null
 
 function getDb(): DB {
@@ -21,8 +20,8 @@ function getDb(): DB {
       'DB env missing: set TURSO_DATABASE_URL (and TURSO_AUTH_TOKEN for production) or DATABASE_URL for local dev',
     )
   }
-  _libsql = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN })
-  _db = drizzle(_libsql, { schema })
+  const libsql = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN })
+  _db = drizzle(libsql, { schema })
   return _db
 }
 
