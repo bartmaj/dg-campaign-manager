@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { SessionFilter, SessionOrderBy, SessionRow } from '../../api/sessions'
 import FilterBar, {
   type FilterBarField,
@@ -47,7 +47,7 @@ function SessionListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (s) => <Link to={`/sessions/${s.id}`}>{s.name}</Link>,
+      render: (s) => <PrefetchLink to={`/sessions/${s.id}`}>{s.name}</PrefetchLink>,
     },
     {
       key: 'realWorld',

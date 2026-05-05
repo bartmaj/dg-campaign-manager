@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { ItemFilter, ItemRow } from '../../api/items'
 import FilterBar, {
   type FilterBarField,
@@ -36,7 +36,7 @@ function ItemListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (i) => <Link to={`/items/${i.id}`}>{i.name}</Link>,
+      render: (i) => <PrefetchLink to={`/items/${i.id}`}>{i.name}</PrefetchLink>,
     },
     {
       key: 'owner',

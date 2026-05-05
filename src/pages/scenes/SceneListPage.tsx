@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { SceneFilter, SceneRow } from '../../api/scenes'
 import FilterBar, {
   type FilterBarField,
@@ -44,12 +44,12 @@ function SceneListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (s) => <Link to={`/scenes/${s.id}`}>{s.name}</Link>,
+      render: (s) => <PrefetchLink to={`/scenes/${s.id}`}>{s.name}</PrefetchLink>,
     },
     {
       key: 'scenario',
       header: 'Scenario',
-      render: (s) => <Link to={`/scenarios/${s.scenarioId}`}>{s.scenarioId}</Link>,
+      render: (s) => <PrefetchLink to={`/scenarios/${s.scenarioId}`}>{s.scenarioId}</PrefetchLink>,
     },
   ]
 

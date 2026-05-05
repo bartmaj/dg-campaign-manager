@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { LocationFilter, LocationRow } from '../../api/locations'
 import FilterBar, {
   type FilterBarField,
@@ -39,7 +39,7 @@ function LocationListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (l) => <Link to={`/locations/${l.id}`}>{l.name}</Link>,
+      render: (l) => <PrefetchLink to={`/locations/${l.id}`}>{l.name}</PrefetchLink>,
     },
     {
       key: 'parent',

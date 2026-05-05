@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { ClueFilter, ClueRow } from '../../api/clues'
 import FilterBar, {
   type FilterBarField,
@@ -49,7 +49,7 @@ function ClueListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (c) => <Link to={`/clues/${c.id}`}>{c.name}</Link>,
+      render: (c) => <PrefetchLink to={`/clues/${c.id}`}>{c.name}</PrefetchLink>,
     },
     {
       key: 'origin',

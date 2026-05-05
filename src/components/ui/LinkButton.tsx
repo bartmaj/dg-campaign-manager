@@ -2,6 +2,7 @@
 // Renders an <a> when `href` is provided, otherwise expects `to` and renders a react-router <Link>.
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { useLinkPrefetch } from '../../hooks/useLinkPrefetch'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type Size = 'sm' | 'md'
@@ -48,6 +49,8 @@ const base =
 function LinkButton(props: Props) {
   const { variant = 'secondary', size = 'md', children } = props
   const className = `${base} ${variantClasses[variant]} ${sizeClasses[size]}`
+  const prefetchPath = 'to' in props && props.to ? props.to : ''
+  const prefetch = useLinkPrefetch(prefetchPath)
   if ('href' in props && props.href !== undefined) {
     return (
       <a href={props.href} download={props.download} className={className}>
@@ -56,7 +59,12 @@ function LinkButton(props: Props) {
     )
   }
   return (
-    <Link to={props.to} className={className}>
+    <Link
+      to={props.to}
+      className={className}
+      onMouseEnter={prefetch.onMouseEnter}
+      onFocus={prefetch.onFocus}
+    >
       {children}
     </Link>
   )

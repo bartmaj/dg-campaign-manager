@@ -13,7 +13,7 @@ import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import { usePcs } from '../../hooks/usePcs'
 import type { PcRow } from '../../api/pcs'
 
@@ -36,7 +36,7 @@ function PcListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (pc) => <Link to={`/pcs/${pc.id}`}>{pc.name}</Link>,
+      render: (pc) => <PrefetchLink to={`/pcs/${pc.id}`}>{pc.name}</PrefetchLink>,
     },
     {
       key: 'profession',

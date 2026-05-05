@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { ScenarioFilter, ScenarioRow } from '../../api/scenarios'
 import FilterBar, {
   type FilterBarField,
@@ -37,7 +37,7 @@ function ScenarioListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (s) => <Link to={`/scenarios/${s.id}`}>{s.name}</Link>,
+      render: (s) => <PrefetchLink to={`/scenarios/${s.id}`}>{s.name}</PrefetchLink>,
     },
     {
       key: 'description',

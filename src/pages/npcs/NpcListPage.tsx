@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { NpcFilter, NpcRow } from '../../api/npcs'
 import FilterBar, {
   type FilterBarField,
@@ -71,7 +71,7 @@ function NpcListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (npc) => <Link to={`/npcs/${npc.id}`}>{npc.name}</Link>,
+      render: (npc) => <PrefetchLink to={`/npcs/${npc.id}`}>{npc.name}</PrefetchLink>,
     },
     {
       key: 'profession',

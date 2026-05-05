@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import PrefetchLink from '../../components/ui/PrefetchLink'
 import type { FactionFilter, FactionRow } from '../../api/factions'
 import FilterBar, {
   type FilterBarField,
@@ -32,7 +32,7 @@ function FactionListPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (f) => <Link to={`/factions/${f.id}`}>{f.name}</Link>,
+      render: (f) => <PrefetchLink to={`/factions/${f.id}`}>{f.name}</PrefetchLink>,
     },
     {
       key: 'agenda',
