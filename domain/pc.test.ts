@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { deriveAttributes, pcInputSchema, pcStatsSchema } from './pc'
+import { deriveAttributes, pcInputSchema, pcStatsSchema } from './pc.js'
 
 describe('deriveAttributes', () => {
   it('computes derived attrs for an average PC (all 10s)', () => {

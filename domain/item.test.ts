@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { itemInputSchema } from './item'
+import { itemInputSchema } from './item.js'
 
 describe('itemInputSchema', () => {
   const valid = {

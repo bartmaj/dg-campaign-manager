@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/libsql'
 import { migrate } from 'drizzle-orm/libsql/migrator'
 import { beforeAll, describe, expect, it } from 'vitest'
-import * as schema from './schema'
+import * as schema from './schema.js'
 
 type DB = ReturnType<typeof drizzle<typeof schema>>
 

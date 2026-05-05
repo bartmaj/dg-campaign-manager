@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { locationInputSchema } from './location'
+import { locationInputSchema } from './location.js'
 
 describe('locationInputSchema', () => {
   const valid = {

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { SKILL_PACKAGES, applySkillPackage, getSkillPackage } from './skillPackages'
+import { SKILL_PACKAGES, applySkillPackage, getSkillPackage } from './skillPackages.js'
 
 describe('SKILL_PACKAGES', () => {
   it('is non-empty', () => {

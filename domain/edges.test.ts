@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { EDGE_RULES, edgeInputSchema, getEdgeRule, isValidEdge, kindsForSource } from './edges'
+import { EDGE_RULES, edgeInputSchema, getEdgeRule, isValidEdge, kindsForSource } from './edges.js'
 
 describe('EDGE_RULES allowlist', () => {
   it('contains the canonical clue→faction implicates rule', () => {

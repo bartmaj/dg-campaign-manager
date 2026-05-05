@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { and, desc, eq, like, type SQL } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import { serializeEntity } from '../../domain/mdExport'
-import type { NpcStatus } from '../../domain/npc'
-import { NPC_STATUSES, npcInputSchema } from '../../domain/npc'
-import { deriveAttributes } from '../../domain/pc'
-import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
+import { db, schema } from '../../db/client.js'
+import { serializeEntity } from '../../domain/mdExport.js'
+import type { NpcStatus } from '../../domain/npc.js'
+import { NPC_STATUSES, npcInputSchema } from '../../domain/npc.js'
+import { deriveAttributes } from '../../domain/pc.js'
+import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0]

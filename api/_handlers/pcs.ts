@@ -1,15 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { asc, desc, eq, like, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { db, schema } from '../../db/client'
-import { serializeEntity } from '../../domain/mdExport'
-import { deriveAttributes, pcInputSchema } from '../../domain/pc'
+import { db, schema } from '../../db/client.js'
+import { serializeEntity } from '../../domain/mdExport.js'
+import { deriveAttributes, pcInputSchema } from '../../domain/pc.js'
 import {
   applySanityChange,
   detectCrossedThresholds,
   sanChangeInputSchema,
-} from '../../domain/sanity'
-import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
+} from '../../domain/sanity.js'
+import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 const pcSanityListsPatchSchema = z.object({
   breakingPoints: z.array(z.number().int()).optional(),

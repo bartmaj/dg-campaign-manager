@@ -21,7 +21,7 @@
  * perf assertion in the test asserts <200ms locally.
  */
 
-import type { EntityType } from '../db/schema'
+import type { EntityType } from '../db/schema.js'
 
 export type SearchIndexItem = {
   id: string

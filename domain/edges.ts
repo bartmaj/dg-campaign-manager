@@ -12,7 +12,7 @@
  * reject invalid triples.
  */
 import { z } from 'zod'
-import { ENTITY_TYPES, type EntityType } from '../db/schema'
+import { ENTITY_TYPES, type EntityType } from '../db/schema.js'
 
 export type EdgeRule = {
   source: EntityType

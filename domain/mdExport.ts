@@ -50,9 +50,9 @@
  *
  * No DB, no React, no I/O — this module is trivially unit-testable.
  */
-import type { EntityType } from '../db/schema'
-import type { NpcStatus } from './npc'
-import type { BondTargetType } from './bonds'
+import type { EntityType } from '../db/schema.js'
+import type { NpcStatus } from './npc.js'
+import type { BondTargetType } from './bonds.js'
 
 // ─── Local row types (structural, wire-format-compatible) ───────────────────
 //

@@ -1,6 +1,6 @@
 import { createClient } from '@libsql/client'
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql'
-import * as schema from './schema'
+import * as schema from './schema.js'
 
 export { schema }
 export type Schema = typeof schema
@@ -25,7 +25,7 @@ function getDb(): DB {
   return _db
 }
 
-// Proxy preserves the existing `import { db } from './client'` API while
+// Proxy preserves the existing `import { db } from './client.js'` API while
 // deferring the actual client creation until the first property access.
 export const db: DB = new Proxy({} as DB, {
   get(_target, prop, receiver) {

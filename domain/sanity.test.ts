@@ -5,7 +5,7 @@ import {
   detectCrossedThresholds,
   sanChangeInputSchema,
   summarizeSanHistory,
-} from './sanity'
+} from './sanity.js'
 
 describe('applySanityChange', () => {
   it('decreases current SAN on negative delta', () => {

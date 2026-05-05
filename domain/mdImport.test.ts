@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { isValidEdge } from './edges'
-import { parseScenarioMarkdown, type ImportedData, type ParseError } from './mdImport'
+import { isValidEdge } from './edges.js'
+import { parseScenarioMarkdown, type ImportedData, type ParseError } from './mdImport.js'
 
 function ok(res: ReturnType<typeof parseScenarioMarkdown>): ImportedData {
   if (!res.ok) {

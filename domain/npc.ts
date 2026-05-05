@@ -8,7 +8,7 @@
  * Handler's Guide.
  */
 import { z } from 'zod'
-import { pcStatsSchema, type PcStats } from './pc'
+import { pcStatsSchema, type PcStats } from './pc.js'
 
 /** Status of an NPC in the campaign world. */
 export const NPC_STATUSES = ['alive', 'dead', 'missing', 'turned'] as const

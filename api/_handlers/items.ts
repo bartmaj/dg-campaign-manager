@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { and, desc, eq, like, type SQL } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import { itemInputSchema } from '../../domain/item'
-import { serializeEntity } from '../../domain/mdExport'
-import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
+import { db, schema } from '../../db/client.js'
+import { itemInputSchema } from '../../domain/item.js'
+import { serializeEntity } from '../../domain/mdExport.js'
+import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0]

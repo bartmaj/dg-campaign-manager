@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { searchMatch, type SearchIndexItem } from './searchMatch'
+import { searchMatch, type SearchIndexItem } from './searchMatch.js'
 
 function item(id: string, name: string, type: SearchIndexItem['type'] = 'npc'): SearchIndexItem {
   return { id, type, name }

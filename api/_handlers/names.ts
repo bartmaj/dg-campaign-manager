@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ENTITY_TYPES, type EntityType } from '../../db/schema'
-import { fetchNamesForType } from '../_lib/export'
+import { ENTITY_TYPES, type EntityType } from '../../db/schema.js'
+import { fetchNamesForType } from '../_lib/export.js'
 
 /**
  * GET /api/search/names?type=<entityType>&ids=<comma-separated>

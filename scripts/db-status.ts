@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { db, schema } from '../db/client'
+import { db, schema } from '../db/client.js'
 
 async function main() {
   const url = process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL

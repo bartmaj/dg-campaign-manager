@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { and, asc, desc, eq, inArray, like, or, type SQL } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import { ENTITY_TYPES, type EntityType } from '../../db/schema'
-import { serializeEntity } from '../../domain/mdExport'
-import { sessionInputSchema } from '../../domain/session'
-import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
+import { db, schema } from '../../db/client.js'
+import { ENTITY_TYPES, type EntityType } from '../../db/schema.js'
+import { serializeEntity } from '../../domain/mdExport.js'
+import { sessionInputSchema } from '../../domain/session.js'
+import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 /**
  * Computes the set of session ids whose timeline "involves" a given

@@ -19,7 +19,7 @@
  *   an edge the API would reject.
  */
 import { z } from 'zod'
-import { isValidEdge } from './edges'
+import { isValidEdge } from './edges.js'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

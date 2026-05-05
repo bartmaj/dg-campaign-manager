@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { inArray } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import type { EntityType } from '../../db/schema'
+import { db, schema } from '../../db/client.js'
+import type { EntityType } from '../../db/schema.js'
 
 export type SearchIndexItem = {
   id: string

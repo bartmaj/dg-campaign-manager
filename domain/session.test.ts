@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { compareByInGame, compareByRealWorld, sessionInputSchema } from './session'
+import { compareByInGame, compareByRealWorld, sessionInputSchema } from './session.js'
 
 describe('sessionInputSchema', () => {
   const valid = {

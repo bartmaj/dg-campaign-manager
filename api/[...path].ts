@@ -1,12 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { bondDamageApply, bondDelete, bondGet, bondsCreate, bondsList } from './_handlers/bonds'
-import { clueExport, clueGet, cluesCreate, cluesList } from './_handlers/clues'
-import { edgeDelete, edgeGet, edgesCreate, edgesList } from './_handlers/edges'
-import { factionExport, factionGet, factionsCreate, factionsList } from './_handlers/factions'
-import { importScenario } from './_handlers/import'
-import { itemExport, itemGet, itemsCreate, itemsList } from './_handlers/items'
-import { locationExport, locationGet, locationsCreate, locationsList } from './_handlers/locations'
-import { npcExport, npcGet, npcsCreate, npcsList } from './_handlers/npcs'
+import { bondDamageApply, bondDelete, bondGet, bondsCreate, bondsList } from './_handlers/bonds.js'
+import { clueExport, clueGet, cluesCreate, cluesList } from './_handlers/clues.js'
+import { edgeDelete, edgeGet, edgesCreate, edgesList } from './_handlers/edges.js'
+import { factionExport, factionGet, factionsCreate, factionsList } from './_handlers/factions.js'
+import { importScenario } from './_handlers/import.js'
+import { itemExport, itemGet, itemsCreate, itemsList } from './_handlers/items.js'
+import {
+  locationExport,
+  locationGet,
+  locationsCreate,
+  locationsList,
+} from './_handlers/locations.js'
+import { npcExport, npcGet, npcsCreate, npcsList } from './_handlers/npcs.js'
 import {
   pcExport,
   pcGet,
@@ -15,12 +20,17 @@ import {
   pcsList,
   pcSanityApply,
   pcSanityEvents,
-} from './_handlers/pcs'
-import { scenarioExport, scenarioGet, scenariosCreate, scenariosList } from './_handlers/scenarios'
-import { sceneExport, sceneGet, scenesCreate, scenesList } from './_handlers/scenes'
-import { namesLookup } from './_handlers/names'
-import { searchIndex } from './_handlers/search'
-import { sessionExport, sessionGet, sessionsCreate, sessionsList } from './_handlers/sessions'
+} from './_handlers/pcs.js'
+import {
+  scenarioExport,
+  scenarioGet,
+  scenariosCreate,
+  scenariosList,
+} from './_handlers/scenarios.js'
+import { sceneExport, sceneGet, scenesCreate, scenesList } from './_handlers/scenes.js'
+import { namesLookup } from './_handlers/names.js'
+import { searchIndex } from './_handlers/search.js'
+import { sessionExport, sessionGet, sessionsCreate, sessionsList } from './_handlers/sessions.js'
 
 type Handler0 = (req: VercelRequest, res: VercelResponse) => unknown | Promise<unknown>
 type Handler1 = (req: VercelRequest, res: VercelResponse, id: string) => unknown | Promise<unknown>

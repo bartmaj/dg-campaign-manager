@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { and, desc, eq, type SQL } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import { ENTITY_TYPES, type EntityType } from '../../db/schema'
-import { edgeInputSchema } from '../../domain/edges'
+import { db, schema } from '../../db/client.js'
+import { ENTITY_TYPES, type EntityType } from '../../db/schema.js'
+import { edgeInputSchema } from '../../domain/edges.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0]

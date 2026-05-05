@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { applyDamage, bondDamageInputSchema, bondInputSchema, summarizeHistory } from './bonds'
+import { applyDamage, bondDamageInputSchema, bondInputSchema, summarizeHistory } from './bonds.js'
 
 describe('applyDamage', () => {
   it('decreases current score on negative delta', () => {

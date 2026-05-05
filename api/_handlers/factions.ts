@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { desc, eq, like } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import { factionInputSchema } from '../../domain/faction'
-import { serializeEntity } from '../../domain/mdExport'
-import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export'
+import { db, schema } from '../../db/client.js'
+import { factionInputSchema } from '../../domain/faction.js'
+import { serializeEntity } from '../../domain/mdExport.js'
+import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0]

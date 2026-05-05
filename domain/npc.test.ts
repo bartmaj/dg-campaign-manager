@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { NPC_STATUSES, npcInputSchema, npcStatBlockSchema } from './npc'
+import { NPC_STATUSES, npcInputSchema, npcStatBlockSchema } from './npc.js'
 
 describe('npcStatBlockSchema', () => {
   it('accepts a simplified stat block', () => {

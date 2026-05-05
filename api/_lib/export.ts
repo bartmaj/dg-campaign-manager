@@ -12,9 +12,9 @@
  */
 import type { VercelResponse } from '@vercel/node'
 import { and, eq, inArray } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import type { EntityType } from '../../db/schema'
-import { slugifyName } from '../../domain/mdExport'
+import { db, schema } from '../../db/client.js'
+import type { EntityType } from '../../db/schema.js'
+import { slugifyName } from '../../domain/mdExport.js'
 
 type AnyEdgeRow = typeof schema.edges.$inferSelect
 

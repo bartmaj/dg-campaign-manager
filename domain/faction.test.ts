@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { factionInputSchema } from './faction'
+import { factionInputSchema } from './faction.js'
 
 describe('factionInputSchema', () => {
   const valid = {

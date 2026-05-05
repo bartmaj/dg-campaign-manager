@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { asc } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
-import { parseScenarioMarkdown, type ImportedData } from '../../domain/mdImport'
+import { db, schema } from '../../db/client.js'
+import { parseScenarioMarkdown, type ImportedData } from '../../domain/mdImport.js'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 

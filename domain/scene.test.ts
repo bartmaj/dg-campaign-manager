@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { sceneInputSchema } from './scene'
+import { sceneInputSchema } from './scene.js'
 
 describe('sceneInputSchema', () => {
   it('accepts a minimal valid input', () => {

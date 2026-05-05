@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { db, schema } from '../db/client'
+import { db, schema } from '../db/client.js'
 
 async function main() {
   await db

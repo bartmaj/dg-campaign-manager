@@ -1,13 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { and, asc, desc, eq, sql, type SQL } from 'drizzle-orm'
-import { db, schema } from '../../db/client'
+import { db, schema } from '../../db/client.js'
 import {
   applyDamage,
   BOND_TARGET_TYPES,
   bondDamageInputSchema,
   bondInputSchema,
   type BondTargetType,
-} from '../../domain/bonds'
+} from '../../domain/bonds.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0]
