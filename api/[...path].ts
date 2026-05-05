@@ -165,25 +165,34 @@ function matchRoute(method: string, segments: string[]): { route: Route; id?: st
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const segments = getPathSegments(req)
-  const method = (req.method ?? 'GET').toUpperCase()
+  try {
+    const segments = getPathSegments(req)
+    const method = (req.method ?? 'GET').toUpperCase()
 
-  const match = matchRoute(method, segments)
-  if (!match) {
-    return res.status(404).json({ error: 'Not found' })
-  }
-
-  // Decode the id segment so that any percent-encoded characters in the URL
-  // arrive at handlers in raw form (matches the per-route Vercel behavior).
-  if (match.route.arity === 1) {
-    const rawId = match.id ?? ''
-    let id: string
-    try {
-      id = decodeURIComponent(rawId)
-    } catch {
-      id = rawId
+    const match = matchRoute(method, segments)
+    if (!match) {
+      return res.status(404).json({ error: 'Not found' })
     }
-    return match.route.handler(req, res, id)
+
+    // Decode the id segment so that any percent-encoded characters in the URL
+    // arrive at handlers in raw form (matches the per-route Vercel behavior).
+    if (match.route.arity === 1) {
+      const rawId = match.id ?? ''
+      let id: string
+      try {
+        id = decodeURIComponent(rawId)
+      } catch {
+        id = rawId
+      }
+      return await match.route.handler(req, res, id)
+    }
+    return await match.route.handler(req, res)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    const stack = err instanceof Error ? err.stack : undefined
+    console.error('[api] handler crashed:', { method: req.method, url: req.url, message, stack })
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Internal server error', message })
+    }
   }
-  return match.route.handler(req, res)
 }
