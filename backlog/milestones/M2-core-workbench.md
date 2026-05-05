@@ -1,6 +1,6 @@
 # M2 — Core Workbench
 
-**Status:** In Progress (11/15 done)
+**Status:** In Progress (12/15 done)
 **Target:** Weekends W3–W5
 **Effort:** ~2.5 PWE
 
@@ -32,7 +32,7 @@ M1 (entity schemas, Drizzle plumbing, character form).
 - [x] [#017 Implement list views with filtering per entity type](../issues/017-implement-list-views-with-filtering-per-entity-.md)
 - [x] [#033 Apply design system + Tailwind across the app](../issues/033-apply-design-system-and-tailwind.md)
 - [x] [#018 Surface relationships and recent activity on entity detail pages](../issues/018-surface-relationships-and-recent-activity-on-en.md)
-- [ ] [#019 Surface local context on the Location detail page](../issues/019-surface-local-context-on-the-location-detail-pa.md)
+- [x] [#019 Surface local context on the Location detail page](../issues/019-surface-local-context-on-the-location-detail-pa.md)
 - [ ] [#020 Surface the Faction status timeline and members](../issues/020-surface-the-faction-status-timeline-and-members.md)
 - [ ] [#021 Hit page navigation latency target](../issues/021-hit-page-navigation-latency-target.md)
 - [ ] [#022 Cover critical domain logic with unit tests](../issues/022-cover-critical-domain-logic-with-unit-tests.md)

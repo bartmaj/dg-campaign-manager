@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router'
-import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
+import LocationContext from '../../components/LocationContext/LocationContext'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -51,17 +51,8 @@ function LocationDetailPage() {
         </Stack>
       </Card>
 
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Contents</Heading>
-          <p>
-            <em>Items and NPCs at this location — surfaced in M2.2A via polymorphic edges.</em>
-          </p>
-        </Stack>
-      </Card>
-
+      {id && <LocationContext locationId={id} />}
       {id && <EntityRelationships entityType="location" entityId={id} />}
-      {id && <EntityRecentActivity entityType="location" entityId={id} />}
     </Stack>
   )
 }
