@@ -2,7 +2,15 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { bondDamageApply, bondDelete, bondGet, bondsCreate, bondsList } from './_handlers/bonds.js'
 import { clueExport, clueGet, cluesCreate, cluesList } from './_handlers/clues.js'
 import { edgeDelete, edgeGet, edgesCreate, edgesList } from './_handlers/edges.js'
-import { factionExport, factionGet, factionsCreate, factionsList } from './_handlers/factions.js'
+import {
+  factionExport,
+  factionGet,
+  factionsCreate,
+  factionsList,
+  factionStatusCreate,
+  factionStatusDelete,
+  factionStatusList,
+} from './_handlers/factions.js'
 import { importScenario } from './_handlers/import.js'
 import { itemExport, itemGet, itemsCreate, itemsList } from './_handlers/items.js'
 import {
@@ -78,6 +86,12 @@ const routes: Route[] = [
   r0('POST', '/factions', factionsCreate),
   r1('GET', '/factions/:id', factionGet),
   r1('GET', '/factions/:id/export', factionExport),
+  // Faction status timeline (#020). Note: DELETE uses eventId — routed
+  // under a separate top-level path because the router only supports a
+  // single positional id parameter per route.
+  r1('GET', '/factions/:id/status', factionStatusList),
+  r1('POST', '/factions/:id/status', factionStatusCreate),
+  r1('DELETE', '/faction-status-events/:id', factionStatusDelete),
 
   // locations
   r0('GET', '/locations', locationsList),

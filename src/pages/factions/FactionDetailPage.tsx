@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
+import FactionContext from '../../components/FactionContext/FactionContext'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -8,20 +9,14 @@ import Prose from '../../components/ui/Prose'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
 import { useFaction } from '../../hooks/useFactions'
-import { useIncomingEdges } from '../../hooks/useEdges'
 
 function FactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: faction, isLoading, error } = useFaction(id)
-  const { data: incomingEdges = [] } = useIncomingEdges('faction', id)
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
   if (!faction) return <p>Faction not found.</p>
-
-  const implicatingClues = incomingEdges.filter(
-    (e) => e.sourceType === 'clue' && e.kind === 'implicates',
-  )
 
   return (
     <Stack gap="md">
@@ -49,33 +44,7 @@ function FactionDetailPage() {
         </Stack>
       </Card>
 
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Implicating clues</Heading>
-          {implicatingClues.length === 0 ? (
-            <p>—</p>
-          ) : (
-            <ul>
-              {implicatingClues.map((edge) => (
-                <li key={edge.id}>
-                  <Link to={`/clues/${edge.sourceId}`}>{edge.sourceId}</Link>
-                  {edge.notes ? ` — ${edge.notes}` : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Stack>
-      </Card>
-
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Members</Heading>
-          <p>
-            <em>Member NPCs — surfaced in M2.2A via polymorphic edges.</em>
-          </p>
-        </Stack>
-      </Card>
-
+      {id && <FactionContext factionId={id} />}
       {id && <EntityRelationships entityType="faction" entityId={id} />}
       {id && <EntityRecentActivity entityType="faction" entityId={id} />}
     </Stack>

@@ -258,6 +258,24 @@ export const bonds = sqliteTable('bonds', {
   updatedAt: updatedAt(),
 })
 
+// `faction_status_events` (#020): per-faction timeline of status notes. The
+// GM picks the in-game/IRL date the note is associated with via
+// `occurredAt`; `createdAt` provides a stable tiebreaker for ordering when
+// two events share the same `occurredAt`. `sessionId` is FK-loose so a
+// deleted session doesn't cascade-delete the historical note.
+export const factionStatusEvents = sqliteTable('faction_status_events', {
+  id: id(),
+  factionId: text('faction_id')
+    .notNull()
+    .references(() => factions.id, { onDelete: 'cascade' }),
+  note: text('note').notNull(),
+  occurredAt: integer('occurred_at', { mode: 'timestamp' }).notNull(),
+  // Loose reference (no FK constraint) so deleting a session leaves the
+  // status note intact — match the bond/sanity event pattern.
+  sessionId: text('session_id'),
+  createdAt: createdAt(),
+})
+
 // `san_change_events` (#012): per-PC log of SAN losses and gains. The API
 // computes `crossedThresholds` from the PC's breakingPoints list at apply
 // time and persists the result so reads are O(1).
@@ -348,6 +366,8 @@ export type BondDamageEvent = typeof bondDamageEvents.$inferSelect
 export type NewBondDamageEvent = typeof bondDamageEvents.$inferInsert
 export type SanChangeEvent = typeof sanChangeEvents.$inferSelect
 export type NewSanChangeEvent = typeof sanChangeEvents.$inferInsert
+export type FactionStatusEvent = typeof factionStatusEvents.$inferSelect
+export type NewFactionStatusEvent = typeof factionStatusEvents.$inferInsert
 export type Edge = typeof edges.$inferSelect
 export type NewEdge = typeof edges.$inferInsert
 export type Meta = typeof meta.$inferSelect

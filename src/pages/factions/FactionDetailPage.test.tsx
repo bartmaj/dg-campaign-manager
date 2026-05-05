@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest'
 import type { EdgeRow } from '../../api/edges'
 import type { FactionRow } from '../../api/factions'
 import { edgeKeys } from '../../hooks/useEdges'
+import { entityNameKeys } from '../../hooks/useEntityNames'
 import { factionKeys } from '../../hooks/useFactions'
+import { factionStatusKeys } from '../../hooks/useFactionStatus'
+import { npcKeys } from '../../hooks/useNpcs'
 import { sessionKeys } from '../../hooks/useSessions'
 import FactionDetailPage from './FactionDetailPage'
 
@@ -53,6 +56,18 @@ function renderPage(opts: { faction?: FactionRow; edges?: EdgeRow[] }) {
     sessionKeys.list('realWorld', { involvesType: 'faction', involvesId: FACTION_ID }),
     [],
   )
+  // FactionContext panels (#020): status timeline + members.
+  qc.setQueryData(factionStatusKeys.list(FACTION_ID), [])
+  qc.setQueryData(npcKeys.list({ factionId: FACTION_ID }), [])
+  // Resolve clue names for implicating-clues entries (one per seeded edge).
+  const clueIds = (opts.edges ?? [])
+    .filter((e) => e.sourceType === 'clue' && e.kind === 'implicates')
+    .map((e) => e.sourceId)
+  if (clueIds.length > 0) {
+    qc.setQueryData(entityNameKeys.list('clue', [...clueIds].sort()), {
+      items: clueIds.map((id) => ({ id, name: id })),
+    })
+  }
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[`/factions/${FACTION_ID}`]}>
@@ -82,8 +97,7 @@ describe('FactionDetailPage', () => {
     renderPage({ faction: makeFaction(), edges: [] })
     const heading = screen.getByRole('heading', { name: /implicating clues/i })
     expect(heading).toBeInTheDocument()
-    // Empty state: a single em-dash paragraph follows the heading.
-    expect(heading.nextElementSibling?.textContent).toBe('—')
+    expect(screen.getByText('No clues implicate this faction.')).toBeInTheDocument()
   })
 
   it('ignores incoming edges that are not clue→faction implicates', () => {

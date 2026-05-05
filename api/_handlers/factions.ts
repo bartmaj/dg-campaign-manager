@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { desc, eq, like } from 'drizzle-orm'
+import { asc, desc, eq, like } from 'drizzle-orm'
 import { db, schema } from '../../db/client.js'
 import { factionInputSchema } from '../../domain/faction.js'
+import { factionStatusEventInputSchema } from '../../domain/factionStatus.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
@@ -74,4 +75,65 @@ export async function factionExport(_req: VercelRequest, res: VercelResponse, id
   })
 
   return sendMarkdown(res, md, exportFilename('faction', faction.name))
+}
+
+// ─── Faction status timeline (#020) ─────────────────────────────────────────
+
+export async function factionStatusList(
+  _req: VercelRequest,
+  res: VercelResponse,
+  factionId: string,
+) {
+  const rows = await db
+    .select()
+    .from(schema.factionStatusEvents)
+    .where(eq(schema.factionStatusEvents.factionId, factionId))
+    .orderBy(asc(schema.factionStatusEvents.occurredAt), asc(schema.factionStatusEvents.createdAt))
+    .limit(500)
+  return res.status(200).json(rows)
+}
+
+export async function factionStatusCreate(
+  req: VercelRequest,
+  res: VercelResponse,
+  factionId: string,
+) {
+  // Allow factionId to come from either the URL or the body; prefer URL.
+  const body = (req.body ?? {}) as Record<string, unknown>
+  const parsed = factionStatusEventInputSchema.safeParse({
+    ...body,
+    factionId,
+  })
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid faction status input', issues: parsed.error.issues })
+  }
+  const input = parsed.data
+
+  const [row] = await db
+    .insert(schema.factionStatusEvents)
+    .values({
+      factionId: input.factionId,
+      note: input.note,
+      occurredAt: input.occurredAt,
+      sessionId: input.sessionId ?? null,
+    })
+    .returning()
+  return res.status(201).json(row)
+}
+
+export async function factionStatusDelete(
+  _req: VercelRequest,
+  res: VercelResponse,
+  eventId: string,
+) {
+  const [row] = await db
+    .delete(schema.factionStatusEvents)
+    .where(eq(schema.factionStatusEvents.id, eventId))
+    .returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Faction status event not found' })
+  }
+  return res.status(200).json(row)
 }
