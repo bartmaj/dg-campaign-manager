@@ -3,7 +3,7 @@ id: 021
 title: Hit page navigation latency target
 milestone: M2
 unit: M2 — Core Workbench
-status: not-started
+status: done
 labels: [performance, ui]
 req-ids: [REQ-N02]
 ---
