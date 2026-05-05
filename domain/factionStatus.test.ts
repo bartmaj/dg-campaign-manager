@@ -54,4 +54,33 @@ describe('compareByOccurredAt', () => {
     const sorted = [...rows].sort(compareByOccurredAt)
     expect(sorted.map((r) => r.tag)).toEqual(['early', 'late'])
   })
+
+  it('handles ISO date string occurredAt values', () => {
+    const rows = [
+      { occurredAt: '2026-03-01T00:00:00Z', createdAt: '2026-03-01T00:00:00Z', tag: 'mid' },
+      { occurredAt: '2026-01-01T00:00:00Z', createdAt: '2026-03-01T00:00:00Z', tag: 'early' },
+      { occurredAt: '2026-05-01T00:00:00Z', createdAt: '2026-03-01T00:00:00Z', tag: 'late' },
+    ]
+    const sorted = [...rows].sort(compareByOccurredAt)
+    expect(sorted.map((r) => r.tag)).toEqual(['early', 'mid', 'late'])
+  })
+
+  it('handles numeric (epoch ms) occurredAt values', () => {
+    const rows = [
+      { occurredAt: 3000, createdAt: 0, tag: 'late' },
+      { occurredAt: 1000, createdAt: 0, tag: 'early' },
+      { occurredAt: 2000, createdAt: 0, tag: 'mid' },
+    ]
+    const sorted = [...rows].sort(compareByOccurredAt)
+    expect(sorted.map((r) => r.tag)).toEqual(['early', 'mid', 'late'])
+  })
+
+  it('treats unparseable occurredAt strings as epoch 0 so they sort first', () => {
+    const rows = [
+      { occurredAt: '2026-01-01T00:00:00Z', createdAt: '2026-01-01T00:00:00Z', tag: 'real' },
+      { occurredAt: 'not-a-date', createdAt: '2026-01-01T00:00:00Z', tag: 'broken' },
+    ]
+    const sorted = [...rows].sort(compareByOccurredAt)
+    expect(sorted[0]!.tag).toBe('broken')
+  })
 })

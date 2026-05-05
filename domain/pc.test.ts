@@ -106,3 +106,35 @@ describe('pcInputSchema', () => {
     ).toBe(false)
   })
 })
+
+describe('deriveAttributes — exhaustive sanity', () => {
+  it('never returns NaN for any valid stat tuple in the 1..18 range', () => {
+    // Sample the stat lattice at the bounds plus a few interior points to keep
+    // the test fast but exhaustive enough to catch arithmetic mistakes.
+    const samples = [1, 6, 10, 13, 18]
+    for (const str of samples) {
+      for (const con of samples) {
+        for (const pow of samples) {
+          for (const cha of samples) {
+            const derived = deriveAttributes({
+              str,
+              con,
+              dex: 10,
+              intelligence: 10,
+              pow,
+              cha,
+            })
+            expect(Number.isNaN(derived.hp)).toBe(false)
+            expect(Number.isNaN(derived.wp)).toBe(false)
+            expect(Number.isNaN(derived.bp)).toBe(false)
+            expect(Number.isNaN(derived.sanMax)).toBe(false)
+            expect(Number.isFinite(derived.hp)).toBe(true)
+            expect(Number.isFinite(derived.wp)).toBe(true)
+            expect(Number.isFinite(derived.bp)).toBe(true)
+            expect(Number.isFinite(derived.sanMax)).toBe(true)
+          }
+        }
+      }
+    }
+  })
+})

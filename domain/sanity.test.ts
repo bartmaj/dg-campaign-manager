@@ -136,3 +136,16 @@ describe('sanChangeInputSchema', () => {
     expect(sanChangeInputSchema.safeParse({ delta: -1.5, source: 'x' }).success).toBe(false)
   })
 })
+
+describe('detectCrossedThresholds — symmetry', () => {
+  it('crosses the same threshold set going down then back up through it', () => {
+    const thresholds = [13, 26, 39]
+    const downward = detectCrossedThresholds(50, 12, thresholds)
+    const upward = detectCrossedThresholds(12, 50, thresholds)
+    // Downward returns highest-first crossings; upward returns lowest-first.
+    // Reversed they describe the same set of crossings.
+    expect(downward).toEqual([39, 26, 13])
+    expect(upward).toEqual([13, 26, 39])
+    expect([...upward].reverse()).toEqual(downward)
+  })
+})

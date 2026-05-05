@@ -547,6 +547,77 @@ describe('serializeEntity — determinism (REQ-N04)', () => {
   })
 })
 
+describe('serializeEntity — PC with no optional collections', () => {
+  it('handles a PC where skills/motivations/disorders/breakingPoints/adaptedTo/sanityCurrent are nullish', () => {
+    // Hits the `?? []` and `?? sanMax` fallback branches in serializePc.
+    const md = serializeEntity({
+      kind: 'pc',
+      pc: makePc({
+        skills: null,
+        motivations: null,
+        backstoryHooks: null,
+        sanityCurrent: null,
+        sanityDisorders: null,
+        breakingPoints: null,
+        adaptedTo: null,
+      }) as PcRow,
+    })
+    expect(md).toContain('# PC: PC One')
+    expect(md).toContain('## Sanity')
+  })
+})
+
+describe('serializeEntity — edge variants', () => {
+  it('emits incoming-edge sections including notes when present', () => {
+    const md = serializeEntity({
+      kind: 'npc',
+      npc: makeNpc(),
+      incomingEdges: [
+        edge({
+          sourceType: 'clue',
+          sourceId: 'clue-letter',
+          targetType: 'npc',
+          targetId: 'npc-marlow',
+          kind: 'mentions',
+          notes: 'partial signature',
+        }),
+      ],
+      entityNameById: NAMES,
+    })
+    expect(md).toContain('## Incoming relationships')
+    expect(md).toContain('mentions')
+    expect(md).toContain('partial signature')
+  })
+
+  it('falls back to bare id in edge sort when entityNameById is omitted', () => {
+    // Exercises the `names?.[…] ?? id` branch in edgeSortKey for both sides.
+    const md = serializeEntity({
+      kind: 'npc',
+      npc: makeNpc(),
+      outgoingEdges: [
+        edge({
+          sourceType: 'npc',
+          sourceId: 'npc-marlow',
+          targetType: 'faction',
+          targetId: 'fac-blue',
+          kind: 'member_of',
+        }),
+      ],
+      incomingEdges: [
+        edge({
+          sourceType: 'clue',
+          sourceId: 'clue-letter',
+          targetType: 'npc',
+          targetId: 'npc-marlow',
+          kind: 'mentions',
+        }),
+      ],
+    })
+    expect(md).toContain('## Outgoing relationships')
+    expect(md).toContain('## Incoming relationships')
+  })
+})
+
 describe('serializeEntity — wiki-link fallback when name is unknown', () => {
   it('falls back to id + html comment when entityNameById is not provided', () => {
     const md = serializeEntity({

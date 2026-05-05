@@ -1,6 +1,6 @@
 # M2 — Core Workbench
 
-**Status:** In Progress (14/15 done)
+**Status:** Done (15/15)
 **Target:** Weekends W3–W5
 **Effort:** ~2.5 PWE
 
@@ -35,7 +35,7 @@ M1 (entity schemas, Drizzle plumbing, character form).
 - [x] [#019 Surface local context on the Location detail page](../issues/019-surface-local-context-on-the-location-detail-pa.md)
 - [x] [#020 Surface the Faction status timeline and members](../issues/020-surface-the-faction-status-timeline-and-members.md)
 - [x] [#021 Hit page navigation latency target](../issues/021-hit-page-navigation-latency-target.md)
-- [ ] [#022 Cover critical domain logic with unit tests](../issues/022-cover-critical-domain-logic-with-unit-tests.md)
+- [x] [#022 Cover critical domain logic with unit tests](../issues/022-cover-critical-domain-logic-with-unit-tests.md)
 
 ## Definition of Done
 

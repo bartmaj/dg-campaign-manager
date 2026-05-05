@@ -302,4 +302,67 @@ describe('parseScenarioMarkdown — empty/edge cases', () => {
     )
     expect(data.edges).toHaveLength(0)
   })
+
+  it('produces a clear error for completely empty input', () => {
+    const errors = fail(parseScenarioMarkdown(''))
+    expect(errors.length).toBeGreaterThan(0)
+    expect(errors[0]!.field).toBe('heading')
+    expect(errors[0]!.message.toLowerCase()).toContain('scenario')
+  })
+
+  it('produces a clear error for whitespace-only input', () => {
+    const errors = fail(parseScenarioMarkdown('   \n\n\t\n'))
+    expect(errors.length).toBeGreaterThan(0)
+    expect(errors[0]!.field).toBe('heading')
+  })
+
+  it('coerces empty string field values to null across entity types', () => {
+    // Hits the `f.value || null` fallback branch for many entity fields.
+    const md = `# Scenario: Empty Values
+
+## Locations
+### LocA
+- **Description**:
+
+## Factions
+### FacA
+- **Description**:
+- **Agenda**:
+
+## NPCs
+### NpcA
+- **Description**:
+- **Profession**:
+- **Mannerisms**:
+- **Voice**:
+- **Secrets**:
+- **Current goal**:
+
+## Items
+### ItemA
+- **Description**:
+
+## Clues
+### ClueA
+- **Description**:
+
+## Scenes
+### SceneA
+- **Description**:
+`
+    const data = ok(parseScenarioMarkdown(md))
+    expect(data.locations[0]!.description).toBeNull()
+    expect(data.factions[0]!.description).toBeNull()
+    expect(data.factions[0]!.agenda).toBeNull()
+    const npc = data.npcs[0]!
+    expect(npc.description).toBeNull()
+    expect(npc.profession).toBeNull()
+    expect(npc.mannerisms).toBeNull()
+    expect(npc.voice).toBeNull()
+    expect(npc.secrets).toBeNull()
+    expect(npc.currentGoal).toBeNull()
+    expect(data.items[0]!.description).toBeNull()
+    expect(data.clues[0]!.description).toBeNull()
+    expect(data.scenes[0]!.description).toBeNull()
+  })
 })
