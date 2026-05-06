@@ -3,7 +3,7 @@ import { and, asc, desc, eq, inArray, like, or, sql, type SQL } from 'drizzle-or
 import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { ENTITY_TYPES, type EntityType } from '../../db/schema.js'
-import { serializeEntity } from '../../domain/mdExport.js'
+import { serializeEntity, serializeSessionHandout, slugifyName } from '../../domain/mdExport.js'
 import { sessionInputSchema } from '../../domain/session.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
@@ -342,6 +342,7 @@ export async function sessionDelete(_req: VercelRequest, res: VercelResponse, id
 const sessionPatchSchema = z
   .object({
     notes: z.string().nullable().optional(),
+    playerNotes: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     name: z.string().min(1).optional(),
   })
@@ -562,4 +563,151 @@ export async function sessionReport(_req: VercelRequest, res: VercelResponse, se
     generatedAt: new Date().toISOString(),
   }
   return res.status(200).json(payload)
+}
+
+// ─── Session handout (#028, REQ-012) ────────────────────────────────────────
+//
+// Player-safe Markdown handout. Strict redaction:
+//   - The shape passed to `serializeSessionHandout` is the safety boundary —
+//     only `name`, `profession`, `description` (and only on clues/locations)
+//     reach the serializer. NPC mannerisms / voice / secrets / currentGoal,
+//     PC SAN / breaking points, bond damage etc. are never wired in.
+//   - Inline-redaction primitive: any clue or location whose `description`
+//     begins with the literal `[GM]` prefix has its description omitted from
+//     the handout. The entity's NAME still appears so players know it
+//     exists. This gives the GM a per-field escape hatch without forcing
+//     them to maintain a parallel "player description" column for every
+//     clue and location.
+//
+// Locations are derived from two edge sources:
+//   (a) `clue → location` `points_to` edges where the source clue was
+//       delivered in this session.
+//   (b) `npc → location` `occupies` / `frequents` edges for any NPC
+//       encountered in this session.
+export async function sessionHandout(_req: VercelRequest, res: VercelResponse, sessionId: string) {
+  const [session] = await db
+    .select()
+    .from(schema.sessions)
+    .where(eq(schema.sessions.id, sessionId))
+    .limit(1)
+  if (!session) return res.status(404).json({ error: 'Session not found' })
+
+  // ─── Delivered clues ────────────────────────────────────────────────────
+  // Fold the per-clue event log: keep only clues whose latest event in this
+  // session is `delivered` (i.e. an `undelivered` follow-up cancels it).
+  const deliveryRows = await db
+    .select()
+    .from(schema.clueDeliveryEvents)
+    .where(eq(schema.clueDeliveryEvents.sessionId, sessionId))
+    .orderBy(asc(schema.clueDeliveryEvents.appliedAt), asc(schema.clueDeliveryEvents.id))
+
+  const lastByClue = new Map<string, 'delivered' | 'undelivered'>()
+  for (const r of deliveryRows) lastByClue.set(r.clueId, r.kind as 'delivered' | 'undelivered')
+  const deliveredClueIds = [...lastByClue.entries()]
+    .filter(([, k]) => k === 'delivered')
+    .map(([id]) => id)
+
+  const clueRows =
+    deliveredClueIds.length === 0
+      ? []
+      : await db
+          .select({
+            id: schema.clues.id,
+            name: schema.clues.name,
+            description: schema.clues.description,
+          })
+          .from(schema.clues)
+          .where(inArray(schema.clues.id, deliveredClueIds))
+
+  // ─── Encountered NPCs ──────────────────────────────────────────────────
+  const encounterRows = await db
+    .select({ npcId: schema.npcEncounterEvents.npcId })
+    .from(schema.npcEncounterEvents)
+    .where(eq(schema.npcEncounterEvents.sessionId, sessionId))
+  const encounteredNpcIds = [...new Set(encounterRows.map((r) => r.npcId))]
+
+  const npcRows =
+    encounteredNpcIds.length === 0
+      ? []
+      : await db
+          .select({
+            id: schema.npcs.id,
+            name: schema.npcs.name,
+            profession: schema.npcs.profession,
+          })
+          .from(schema.npcs)
+          .where(inArray(schema.npcs.id, encounteredNpcIds))
+
+  // ─── Locations ─────────────────────────────────────────────────────────
+  // (a) clue→location 'points_to' edges from delivered clues.
+  // (b) npc→location 'occupies'/'frequents' edges from encountered NPCs.
+  const locationIds = new Set<string>()
+  if (deliveredClueIds.length > 0) {
+    const clueLocEdges = await db
+      .select({ targetId: schema.edges.targetId })
+      .from(schema.edges)
+      .where(
+        and(
+          eq(schema.edges.sourceType, 'clue'),
+          inArray(schema.edges.sourceId, deliveredClueIds),
+          eq(schema.edges.targetType, 'location'),
+          eq(schema.edges.kind, 'points_to'),
+        ),
+      )
+    for (const r of clueLocEdges) locationIds.add(r.targetId)
+  }
+  if (encounteredNpcIds.length > 0) {
+    const npcLocEdges = await db
+      .select({ targetId: schema.edges.targetId, kind: schema.edges.kind })
+      .from(schema.edges)
+      .where(
+        and(
+          eq(schema.edges.sourceType, 'npc'),
+          inArray(schema.edges.sourceId, encounteredNpcIds),
+          eq(schema.edges.targetType, 'location'),
+          inArray(schema.edges.kind, ['occupies', 'frequents']),
+        ),
+      )
+    for (const r of npcLocEdges) locationIds.add(r.targetId)
+  }
+
+  const locationRows =
+    locationIds.size === 0
+      ? []
+      : await db
+          .select({
+            id: schema.locations.id,
+            name: schema.locations.name,
+            description: schema.locations.description,
+          })
+          .from(schema.locations)
+          .where(inArray(schema.locations.id, [...locationIds]))
+
+  const realWorldDateMs =
+    session.realWorldDate === null || session.realWorldDate === undefined
+      ? null
+      : session.realWorldDate instanceof Date
+        ? session.realWorldDate.getTime()
+        : Number.isNaN(Date.parse(String(session.realWorldDate)))
+          ? null
+          : Date.parse(String(session.realWorldDate))
+
+  const md = serializeSessionHandout({
+    session: {
+      name: session.name,
+      inGameDate: session.inGameDate,
+      realWorldDate: realWorldDateMs,
+      playerNotes: session.playerNotes,
+    },
+    clues: clueRows.map((c) => ({ name: c.name, description: c.description })),
+    npcs: npcRows.map((n) => ({ name: n.name, profession: n.profession })),
+    locations: locationRows.map((l) => ({ name: l.name, description: l.description })),
+  })
+
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="handout-${slugifyName(session.name)}.md"`,
+  )
+  return res.status(200).send(md)
 }

@@ -11,6 +11,8 @@ type Common = {
   variant?: Variant
   size?: Size
   children: ReactNode
+  'aria-label'?: string
+  title?: string
 }
 
 type RouterProps = Common & {
@@ -48,12 +50,20 @@ const base =
 
 function LinkButton(props: Props) {
   const { variant = 'secondary', size = 'md', children } = props
+  const ariaLabel = props['aria-label']
+  const title = props.title
   const className = `${base} ${variantClasses[variant]} ${sizeClasses[size]}`
   const prefetchPath = 'to' in props && props.to ? props.to : ''
   const prefetch = useLinkPrefetch(prefetchPath)
   if ('href' in props && props.href !== undefined) {
     return (
-      <a href={props.href} download={props.download} className={className}>
+      <a
+        href={props.href}
+        download={props.download}
+        className={className}
+        aria-label={ariaLabel}
+        title={title ?? ariaLabel}
+      >
         {children}
       </a>
     )
@@ -64,6 +74,8 @@ function LinkButton(props: Props) {
       className={className}
       onMouseEnter={prefetch.onMouseEnter}
       onFocus={prefetch.onFocus}
+      aria-label={ariaLabel}
+      title={title ?? ariaLabel}
     >
       {children}
     </Link>

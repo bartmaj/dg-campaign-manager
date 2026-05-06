@@ -701,6 +701,105 @@ function serializeScene(input: Extract<ExportInput, { kind: 'scene' }>): string 
   return doc.toString()
 }
 
+// ─── Session handout (#028, REQ-012) ────────────────────────────────────────
+//
+// Player-safe Markdown for sharing with the table. The shape itself is the
+// safety boundary — only the listed public-safe fields are accepted, so a
+// caller cannot accidentally smuggle GM-only data (secrets, mannerisms,
+// breaking points, SAN, bond damage) into the handout.
+//
+// Inline-redaction primitive: the `[GM]` prefix. Any `description` (clue or
+// location) whose first non-whitespace characters are `[GM]` is treated as
+// GM-only and the field is omitted entirely from the handout.
+
+export type HandoutInput = {
+  session: {
+    name: string
+    inGameDate: string | null
+    realWorldDate: number | null
+    playerNotes: string | null
+  }
+  clues: Array<{ name: string; description: string | null }>
+  npcs: Array<{ name: string; profession: string | null }>
+  locations: Array<{ name: string; description: string | null }>
+}
+
+function isGmRedacted(value: string | null | undefined): boolean {
+  if (!value) return false
+  return /^\s*\[GM\]/i.test(value)
+}
+
+function publicDescription(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null
+  if (isGmRedacted(value)) return null
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
+}
+
+export function serializeSessionHandout(input: HandoutInput): string {
+  const doc = new Doc()
+  doc.push(`# Session Handout — ${input.session.name}`)
+
+  // ─── Date ──────────────────────────────────────────────────────────────
+  const inGame = input.session.inGameDate
+  const real =
+    typeof input.session.realWorldDate === 'number'
+      ? new Date(input.session.realWorldDate).toISOString().slice(0, 10)
+      : null
+  if (inGame || real) {
+    doc.blank()
+    doc.push('## Date')
+    if (inGame) doc.push(`- **In-game**: ${inGame}`)
+    if (real) doc.push(`- **Real-world**: ${real}`)
+  }
+
+  // ─── What you learned ──────────────────────────────────────────────────
+  const clues = [...input.clues].sort((a, b) => a.name.localeCompare(b.name))
+  if (clues.length > 0) {
+    doc.blank()
+    doc.push('## What you learned')
+    for (const c of clues) {
+      const desc = publicDescription(c.description)
+      doc.push(desc ? `- **${c.name}** — ${desc}` : `- **${c.name}**`)
+    }
+  }
+
+  // ─── People encountered ────────────────────────────────────────────────
+  const npcs = [...input.npcs].sort((a, b) => a.name.localeCompare(b.name))
+  if (npcs.length > 0) {
+    doc.blank()
+    doc.push('## People encountered')
+    for (const n of npcs) {
+      const prof = n.profession && n.profession.trim().length > 0 ? n.profession.trim() : null
+      doc.push(prof ? `- **${n.name}** — ${prof}` : `- **${n.name}**`)
+    }
+  }
+
+  // ─── Places visited ────────────────────────────────────────────────────
+  const locations = [...input.locations].sort((a, b) => a.name.localeCompare(b.name))
+  if (locations.length > 0) {
+    doc.blank()
+    doc.push('## Places visited')
+    for (const l of locations) {
+      const desc = publicDescription(l.description)
+      doc.push(desc ? `- **${l.name}** — ${desc}` : `- **${l.name}**`)
+    }
+  }
+
+  // ─── Notes from your handler ───────────────────────────────────────────
+  const pn =
+    input.session.playerNotes && input.session.playerNotes.trim().length > 0
+      ? input.session.playerNotes
+      : null
+  if (pn) {
+    doc.blank()
+    doc.push('## Notes from your handler')
+    doc.push(pn)
+  }
+
+  return doc.toString()
+}
+
 // ─── Internal helpers ───────────────────────────────────────────────────────
 
 function pushIfPresent(doc: Doc, line: string | null): void {

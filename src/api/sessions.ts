@@ -14,6 +14,7 @@ export type SessionRow = {
   inGameDateEnd: string | null
   realWorldDate: string | null
   notes: string | null
+  playerNotes: string | null
   createdAt: string
   updatedAt: string
 }
@@ -69,6 +70,7 @@ export type SessionReport = {
 
 export type SessionPatch = {
   notes?: string | null
+  playerNotes?: string | null
   description?: string | null
   name?: string
 }

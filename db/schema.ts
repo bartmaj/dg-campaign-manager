@@ -236,6 +236,10 @@ export const sessions = sqliteTable('sessions', {
   // `description` (which remains a one-line summary set on create).
   // Persisted independently from the auto-derived structured event log.
   notes: text('notes'),
+  // Player-safe handout prose (#028). The GM authors what they want to share
+  // with the table — distinct from `notes`, which stays GM-only. Surfaced in
+  // the `## Notes from your handler` section of the player handout export.
+  playerNotes: text('player_notes'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })

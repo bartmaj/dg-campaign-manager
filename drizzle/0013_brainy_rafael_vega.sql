@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` ADD `player_notes` text;

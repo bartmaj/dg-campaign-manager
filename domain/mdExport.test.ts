@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { serializeEntity, slugifyName, type ExportInput } from './mdExport.js'
+import {
+  serializeEntity,
+  serializeSessionHandout,
+  slugifyName,
+  type ExportInput,
+  type HandoutInput,
+} from './mdExport.js'
 import { parseScenarioMarkdown } from './mdImport.js'
 import type { EdgeRow } from '../src/api/edges.js'
 import type { PcRow } from '../src/api/pcs.js'
@@ -164,6 +170,7 @@ function makeSession(overrides: Partial<SessionRow> = {}): SessionRow {
     inGameDateEnd: null,
     realWorldDate: '2026-04-01T00:00:00Z',
     notes: null,
+    playerNotes: null,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
@@ -740,5 +747,149 @@ describe('serializeEntity — round-trip with mdImport', () => {
     expect(memberOf?.targetName).toBe('Cell Blue')
     const mentions = parsed.data.edges.find((e) => e.kind === 'mentions')
     expect(mentions?.targetName).toBe('Agent Marlow')
+  })
+})
+
+describe('serializeSessionHandout (#028)', () => {
+  function makeHandout(overrides: Partial<HandoutInput> = {}): HandoutInput {
+    return {
+      session: {
+        name: 'Op: Black Goat',
+        inGameDate: '1995-03-12',
+        realWorldDate: Date.parse('2026-04-01T00:00:00Z'),
+        playerNotes: 'You arrived in Newark on a wet Tuesday.',
+        ...(overrides.session ?? {}),
+      },
+      clues: overrides.clues ?? [
+        { name: 'Bloody letter', description: 'A half-burned letter on stained paper.' },
+        { name: 'Symbol on the wall', description: null },
+      ],
+      npcs: overrides.npcs ?? [
+        { name: 'Agent Marlow', profession: 'Federal Agent' },
+        { name: 'Sister Mary', profession: null },
+      ],
+      locations: overrides.locations ?? [
+        { name: 'Newark', description: 'A grim industrial town.' },
+      ],
+    }
+  }
+
+  it('renders all sections in the documented order (happy path)', () => {
+    const md = serializeSessionHandout(makeHandout())
+    expect(md).toContain('# Session Handout — Op: Black Goat')
+    expect(md).toContain('## Date')
+    expect(md).toContain('- **In-game**: 1995-03-12')
+    expect(md).toContain('- **Real-world**: 2026-04-01')
+    expect(md).toContain('## What you learned')
+    expect(md).toContain('- **Bloody letter** — A half-burned letter on stained paper.')
+    expect(md).toContain('- **Symbol on the wall**')
+    expect(md).toContain('## People encountered')
+    expect(md).toContain('- **Agent Marlow** — Federal Agent')
+    expect(md).toContain('- **Sister Mary**')
+    expect(md).toContain('## Places visited')
+    expect(md).toContain('- **Newark** — A grim industrial town.')
+    expect(md).toContain('## Notes from your handler')
+    expect(md).toContain('You arrived in Newark on a wet Tuesday.')
+    // Section order: Date < What you learned < People < Places < Notes.
+    const order = [
+      '## Date',
+      '## What you learned',
+      '## People encountered',
+      '## Places visited',
+      '## Notes from your handler',
+    ]
+    let lastIdx = -1
+    for (const heading of order) {
+      const idx = md.indexOf(heading)
+      expect(idx).toBeGreaterThan(lastIdx)
+      lastIdx = idx
+    }
+  })
+
+  it('collapses empty sections', () => {
+    const md = serializeSessionHandout({
+      session: { name: 'Empty Session', inGameDate: null, realWorldDate: null, playerNotes: null },
+      clues: [],
+      npcs: [],
+      locations: [],
+    })
+    expect(md).toContain('# Session Handout — Empty Session')
+    expect(md).not.toContain('## Date')
+    expect(md).not.toContain('## What you learned')
+    expect(md).not.toContain('## People encountered')
+    expect(md).not.toContain('## Places visited')
+    expect(md).not.toContain('## Notes from your handler')
+  })
+
+  it('sorts each section alphabetically by name', () => {
+    const md = serializeSessionHandout(
+      makeHandout({
+        clues: [
+          { name: 'Charlie clue', description: null },
+          { name: 'Alpha clue', description: null },
+          { name: 'Bravo clue', description: null },
+        ],
+        npcs: [
+          { name: 'Zane', profession: null },
+          { name: 'Anya', profession: null },
+          { name: 'Marlow', profession: null },
+        ],
+        locations: [
+          { name: 'Yarmouth', description: null },
+          { name: 'Arkham', description: null },
+          { name: 'Newark', description: null },
+        ],
+      }),
+    )
+    // Clues
+    expect(md.indexOf('Alpha clue')).toBeLessThan(md.indexOf('Bravo clue'))
+    expect(md.indexOf('Bravo clue')).toBeLessThan(md.indexOf('Charlie clue'))
+    // NPCs
+    expect(md.indexOf('Anya')).toBeLessThan(md.indexOf('Marlow'))
+    expect(md.indexOf('Marlow')).toBeLessThan(md.indexOf('Zane'))
+    // Locations
+    expect(md.indexOf('Arkham')).toBeLessThan(md.indexOf('Newark'))
+    expect(md.indexOf('Newark')).toBeLessThan(md.indexOf('Yarmouth'))
+  })
+
+  it('redacts GM-only content: shape boundary plus [GM]-prefix descriptions', () => {
+    // Smuggle suspicious words into the *descriptions* — the shape itself
+    // forbids fields named secrets/breakingPoints/sanityCurrent/damage so
+    // those can't reach the serializer at all. The redactions we test here:
+    //  (a) descriptions that begin with [GM] are dropped wholesale.
+    //  (b) the handout output never contains the literal field labels
+    //      "secrets", "Breaking points", "SAN max", "Bond" that show up in
+    //      the GM-side serializers.
+    const md = serializeSessionHandout({
+      session: {
+        name: 'Redacted Session',
+        inGameDate: null,
+        realWorldDate: null,
+        playerNotes: 'Public recap text only.',
+      },
+      clues: [
+        { name: 'Visible clue', description: 'Public description, safe to share.' },
+        { name: 'Hidden clue', description: '[GM] Only the handler should see this — secret.' },
+      ],
+      npcs: [{ name: 'Marlow', profession: 'Agent' }],
+      locations: [
+        { name: 'Visible place', description: 'Public.' },
+        { name: 'Hidden place', description: '[GM] Bond NPC stash; SAN: -3.' },
+      ],
+    })
+    // GM-prefixed descriptions are gone entirely.
+    expect(md).not.toContain('Only the handler should see this')
+    expect(md).not.toContain('Bond NPC stash')
+    expect(md).not.toContain('SAN:')
+    // Every variant of the redaction marker is stripped.
+    expect(md).not.toContain('[GM]')
+    // GM-side section labels never appear in the handout format.
+    expect(md).not.toContain('Breaking points')
+    expect(md).not.toContain('SAN max')
+    expect(md).not.toContain('Mannerisms')
+    expect(md).not.toContain('Stat block')
+    // The Hidden clue/place still appear by name (no description, just name)
+    expect(md).toContain('- **Hidden clue**')
+    expect(md).toContain('- **Hidden place**')
   })
 })

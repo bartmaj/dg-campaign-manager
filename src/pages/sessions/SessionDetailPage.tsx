@@ -128,6 +128,14 @@ function SessionDetailPage() {
           <LinkButton href={`/api/sessions/${session.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
+          <LinkButton
+            href={`/api/sessions/${session.id}/handout`}
+            variant="ghost"
+            download
+            aria-label="Player-safe handout (delivered clues, encountered NPCs, locations, your handler notes)."
+          >
+            Download handout
+          </LinkButton>
           <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteSession.mutateAsync(session.id).then(() => undefined)}
@@ -279,6 +287,14 @@ function SessionDetailPage() {
 
       {id && (
         <NotesCard sessionId={id} initialNotes={session.notes ?? null} key={session.updatedAt} />
+      )}
+
+      {id && (
+        <PlayerNotesCard
+          sessionId={id}
+          initialPlayerNotes={session.playerNotes ?? null}
+          key={`player-${session.updatedAt}`}
+        />
       )}
 
       {id && <EntityRelationships entityType="session" entityId={id} />}
@@ -449,6 +465,58 @@ function NotesCard({
                 disabled={patch.isPending}
               >
                 {patch.isPending ? 'Saving…' : 'Save notes'}
+              </Button>
+              {savedAt && !patch.isPending ? <span>Saved at {savedAt}</span> : null}
+            </Toolbar>
+          </Stack>
+        </EditOnly>
+      </Stack>
+    </Card>
+  )
+}
+
+function PlayerNotesCard({
+  sessionId,
+  initialPlayerNotes,
+}: {
+  sessionId: string
+  initialPlayerNotes: string | null
+}) {
+  // Same remount-on-update pattern as NotesCard.
+  const [value, setValue] = useState<string>(initialPlayerNotes ?? '')
+  const patch = usePatchSession()
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+
+  async function onSave() {
+    const next = value.trim() === '' ? null : value
+    await patch.mutateAsync({ id: sessionId, patch: { playerNotes: next } })
+    setSavedAt(new Date().toLocaleTimeString())
+  }
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <Heading level={2}>Player notes</Heading>
+        <EditOnly
+          fallback={
+            value.trim() === '' ? <Prose>No notes for players yet.</Prose> : <Prose>{value}</Prose>
+          }
+        >
+          <Stack gap="sm">
+            <Textarea
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Use this to draft what players will see in the handout."
+              aria-label="Player notes"
+            />
+            <Toolbar align="start">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => void onSave()}
+                disabled={patch.isPending}
+              >
+                {patch.isPending ? 'Saving…' : 'Save player notes'}
               </Button>
               {savedAt && !patch.isPending ? <span>Saved at {savedAt}</span> : null}
             </Toolbar>

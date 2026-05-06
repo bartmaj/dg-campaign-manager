@@ -32,6 +32,7 @@ function makeSession(overrides: Partial<SessionRow> = {}): SessionRow {
     inGameDateEnd: null,
     realWorldDate: '2026-04-01T00:00:00Z',
     notes: null,
+    playerNotes: null,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
@@ -149,6 +150,31 @@ describe('SessionDetailPage', () => {
 
     await waitFor(() => {
       expect(patchSession).toHaveBeenCalledWith(SESSION_ID, { notes: 'recap text' })
+    })
+  })
+
+  it('renders the Download handout link pointing at the handout endpoint', () => {
+    renderPage({})
+    const link = screen.getByRole('link', { name: /player-safe handout/i })
+    expect(link).toBeInTheDocument()
+    expect(link.getAttribute('href')).toBe(`/api/sessions/${SESSION_ID}/handout`)
+    expect(link.hasAttribute('download')).toBe(true)
+  })
+
+  it('renders the Player notes card with empty state and saves via patchSession', async () => {
+    vi.mocked(patchSession).mockResolvedValue(makeSession({ playerNotes: 'Public recap.' }))
+    renderPage({ session: makeSession({ playerNotes: null }) })
+
+    expect(screen.getByRole('heading', { name: /player notes/i })).toBeInTheDocument()
+    const textarea = screen.getByLabelText(/^player notes$/i)
+    await act(async () => {
+      await userEvent.type(textarea, 'Public recap.')
+    })
+    await act(async () => {
+      await userEvent.click(screen.getByRole('button', { name: /save player notes/i }))
+    })
+    await waitFor(() => {
+      expect(patchSession).toHaveBeenCalledWith(SESSION_ID, { playerNotes: 'Public recap.' })
     })
   })
 })

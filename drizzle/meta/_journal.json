@@ -92,6 +92,13 @@
       "when": 1778077409128,
       "tag": "0012_glossy_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1778078058579,
+      "tag": "0013_brainy_rafael_vega",
+      "breakpoints": true
     }
   ]
 }

@@ -64,6 +64,7 @@ import {
   sessionEncounteredNpcs,
   sessionExport,
   sessionGet,
+  sessionHandout,
   sessionPatch,
   sessionReport,
   sessionsCreate,
@@ -155,6 +156,7 @@ const routes: Route[] = [
   r1('GET', '/sessions/:id/delivered-clues', sessionDeliveredClues),
   r1('GET', '/sessions/:id/encountered-npcs', sessionEncounteredNpcs),
   r1('GET', '/sessions/:id/report', sessionReport),
+  r1('GET', '/sessions/:id/handout', sessionHandout),
 
   // scenarios
   r0('GET', '/scenarios', scenariosList),

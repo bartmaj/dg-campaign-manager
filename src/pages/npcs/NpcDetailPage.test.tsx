@@ -102,6 +102,7 @@ describe('NpcDetailPage', () => {
           inGameDateEnd: null,
           realWorldDate: '2026-02-01T00:00:00Z',
           notes: null,
+          playerNotes: null,
           createdAt: '2026-01-01T00:00:00Z',
           updatedAt: '2026-01-01T00:00:00Z',
         },
