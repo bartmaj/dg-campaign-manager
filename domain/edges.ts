@@ -77,6 +77,12 @@ export const EDGE_RULES = [
   },
   {
     source: 'npc',
+    kind: 'appears_in',
+    target: 'scene',
+    description: 'NPC appears in (or is expected to appear in) this scene.',
+  },
+  {
+    source: 'npc',
     kind: 'occupies',
     target: 'location',
     description: 'NPC primarily lives at or operates from this location.',
