@@ -3,7 +3,7 @@ id: 031
 title: Cross-browser pass on desktop browsers
 milestone: M3
 unit: M3 — Campaign-Run-Ready
-status: not-started
+status: done
 labels: [testing, ops]
 req-ids: [REQ-N06]
 ---
@@ -29,6 +29,13 @@ Then each flow completes without blocking visual or functional bugs on Chrome, F
 ## Implementation Notes
 
 Manual smoke pass; no Playwright/Selenium harness in v1.
+
+**Delivered**:
+- `docs/cross-browser-smoke.md` — checklist covering Layout shell, Cmd-K, list filters, character form, MD import, play-mode primary actions, session report, per-entity + archive export. Each browser pass appends a sign-off line.
+
+**Open follow-ups**:
+- Run the smoke pass on Chrome, Firefox, Safari (latest two each) and append timestamps.
+- A real Playwright harness can land later if the project grows past one user.
 
 ## Dependencies
 

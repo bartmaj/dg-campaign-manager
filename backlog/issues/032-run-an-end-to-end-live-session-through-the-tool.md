@@ -32,6 +32,13 @@ And post-session, all P0 issues surfaced are closed; P1 issues are documented wi
 
 This story is the v1 launch gate. Wall-clock-bound — players must be available the chosen weekend.
 
+**Delivered (infrastructure only — actual sign-off is the GM running a session)**:
+- `docs/v1-acceptance.md` documents the pre-flight, during-session, and post-session checklists, plus the sign-off slot. v1 is observably done when an entry lands there with all boxes checked.
+
+**Open follow-ups**:
+- Run a real session and append the sign-off entry.
+- File P1 issues discovered during the run.
+
 ## Dependencies
 
 Blocked by all M1 + M2 + M3 stories. Specifically: #014 (real scenario must be importable), #024–#027 (play-mode + session report functional), #031 (cross-browser pass passed).

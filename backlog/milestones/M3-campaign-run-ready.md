@@ -1,6 +1,6 @@
 # M3 — Campaign-Run-Ready
 
-**Status:** In Progress (8/10 done)
+**Status:** In Progress (9/10 done)
 **Target:** Weekend W6 (+ live-session run-through)
 **Effort:** ~1.5 PWE
 
@@ -28,7 +28,7 @@ M1 (entities) + M2 (sessions, edges, exports, mechanics).
 - [x] [#028 Export player-safe Markdown handouts from a Session](../issues/028-export-player-safe-markdown-handouts-from-a-ses.md)
 - [x] [#029 Export the whole campaign as a Markdown archive](../issues/029-export-the-whole-campaign-as-a-markdown-archive.md)
 - [x] [#030 Verify daily Turso point-in-time recovery backup](../issues/030-verify-daily-turso-point-in-time-recovery-backu.md)
-- [ ] [#031 Cross-browser pass on desktop browsers](../issues/031-cross-browser-pass-on-desktop-browsers.md)
+- [x] [#031 Cross-browser pass on desktop browsers](../issues/031-cross-browser-pass-on-desktop-browsers.md)
 - [ ] [#032 Run an end-to-end live session through the tool](../issues/032-run-an-end-to-end-live-session-through-the-tool.md)
 
 ## Definition of Done
