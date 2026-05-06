@@ -84,6 +84,20 @@ function Layout() {
                   Import
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/archive"
+                  className={({ isActive }) =>
+                    `block rounded-sm px-2 py-1.5 text-sm no-underline transition-colors ${
+                      isActive
+                        ? 'bg-surface-2 text-accent font-medium'
+                        : 'text-ink hover:bg-surface-2 hover:text-accent'
+                    }`
+                  }
+                >
+                  Archive
+                </NavLink>
+              </li>
             </ul>
           </nav>
           <main className="flex-1 min-w-0">

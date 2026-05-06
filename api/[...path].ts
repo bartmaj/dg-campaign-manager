@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { serveCampaignArchive } from './_handlers/archive.js'
 import { bondDamageApply, bondDelete, bondGet, bondsCreate, bondsList } from './_handlers/bonds.js'
 import {
   clueDelete,
@@ -184,6 +185,11 @@ const routes: Route[] = [
   r0('POST', '/edges', edgesCreate),
   r1('GET', '/edges/:id', edgeGet),
   r1('DELETE', '/edges/:id', edgeDelete),
+
+  // archive (#029) — campaign-wide Markdown ZIP. `id === 'all'` dumps
+  // every campaign in the DB (single-campaign UI prerequisite for
+  // per-campaign archives).
+  r1('GET', '/campaigns/:id/archive', serveCampaignArchive),
 
   // import
   r0('POST', '/import/scenario', importScenario),

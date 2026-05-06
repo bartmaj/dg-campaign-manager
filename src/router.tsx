@@ -28,6 +28,7 @@ const NewPcPage = lazy(() => import('./pages/pcs/NewPcPage'))
 const PcDetailPage = lazy(() => import('./pages/pcs/PcDetailPage'))
 const PcListPage = lazy(() => import('./pages/pcs/PcListPage'))
 const ImportPage = lazy(() => import('./pages/import/ImportPage'))
+const ArchivePage = lazy(() => import('./pages/archive/ArchivePage'))
 const NewScenarioPage = lazy(() => import('./pages/scenarios/NewScenarioPage'))
 const ScenarioDetailPage = lazy(() => import('./pages/scenarios/ScenarioDetailPage'))
 const ScenarioListPage = lazy(() => import('./pages/scenarios/ScenarioListPage'))
@@ -134,6 +135,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: HomePage },
       { path: 'import', element: withSuspense(ImportPage) },
+      { path: 'archive', element: withSuspense(ArchivePage) },
       ...entityRoutes,
     ],
   },
