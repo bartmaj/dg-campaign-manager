@@ -297,6 +297,30 @@ export const sanChangeEvents = sqliteTable('san_change_events', {
     .default(sql`(unixepoch())`),
 })
 
+// `clue_delivery_events` (#025): append-only log of clue delivery state.
+// Each row records that a clue was either delivered or un-delivered (the
+// corrective event) for a given session and recipient PCs. The current
+// delivery state is computed by folding the event history (see
+// domain/clueDelivery.ts#computeDeliveryState). NEVER mutate or delete a
+// past event — un-delivery creates a `kind: 'undelivered'` row.
+export const clueDeliveryEvents = sqliteTable('clue_delivery_events', {
+  id: id(),
+  clueId: text('clue_id')
+    .notNull()
+    .references(() => clues.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => sessions.id, { onDelete: 'cascade' }),
+  // 'delivered' | 'undelivered'. Validated in domain/clueDelivery.ts.
+  kind: text('kind').notNull(),
+  // Recipient PCs (PC ids). Empty for `undelivered`. Validated downstream.
+  pcIds: text('pc_ids', { mode: 'json' }).$type<string[]>().notNull(),
+  note: text('note'),
+  appliedAt: integer('applied_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
 export const bondDamageEvents = sqliteTable('bond_damage_events', {
   id: id(),
   bondId: text('bond_id')
@@ -368,6 +392,8 @@ export type SanChangeEvent = typeof sanChangeEvents.$inferSelect
 export type NewSanChangeEvent = typeof sanChangeEvents.$inferInsert
 export type FactionStatusEvent = typeof factionStatusEvents.$inferSelect
 export type NewFactionStatusEvent = typeof factionStatusEvents.$inferInsert
+export type ClueDeliveryEvent = typeof clueDeliveryEvents.$inferSelect
+export type NewClueDeliveryEvent = typeof clueDeliveryEvents.$inferInsert
 export type Edge = typeof edges.$inferSelect
 export type NewEdge = typeof edges.$inferInsert
 export type Meta = typeof meta.$inferSelect

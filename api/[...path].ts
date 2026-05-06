@@ -1,6 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { bondDamageApply, bondDelete, bondGet, bondsCreate, bondsList } from './_handlers/bonds.js'
-import { clueDelete, clueExport, clueGet, cluesCreate, cluesList } from './_handlers/clues.js'
+import {
+  clueDelete,
+  clueDeliveryCreate,
+  clueDeliveryList,
+  clueExport,
+  clueGet,
+  cluesCreate,
+  cluesList,
+} from './_handlers/clues.js'
 import { edgeDelete, edgeGet, edgesCreate, edgesList } from './_handlers/edges.js'
 import {
   factionDelete,
@@ -44,6 +52,7 @@ import { namesLookup } from './_handlers/names.js'
 import { searchIndex } from './_handlers/search.js'
 import {
   sessionDelete,
+  sessionDeliveredClues,
   sessionExport,
   sessionGet,
   sessionsCreate,
@@ -93,6 +102,8 @@ const routes: Route[] = [
   r1('GET', '/clues/:id', clueGet),
   r1('DELETE', '/clues/:id', clueDelete),
   r1('GET', '/clues/:id/export', clueExport),
+  r1('GET', '/clues/:id/delivery', clueDeliveryList),
+  r1('POST', '/clues/:id/delivery', clueDeliveryCreate),
 
   // factions
   r0('GET', '/factions', factionsList),
@@ -127,6 +138,7 @@ const routes: Route[] = [
   r1('GET', '/sessions/:id', sessionGet),
   r1('DELETE', '/sessions/:id', sessionDelete),
   r1('GET', '/sessions/:id/export', sessionExport),
+  r1('GET', '/sessions/:id/delivered-clues', sessionDeliveredClues),
 
   // scenarios
   r0('GET', '/scenarios', scenariosList),

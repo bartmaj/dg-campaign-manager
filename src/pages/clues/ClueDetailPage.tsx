@@ -19,10 +19,14 @@ import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
 import { useClue } from '../../hooks/useClues'
+import { useClueDelivery, useCreateClueDeliveryEvent } from '../../hooks/useClueDelivery'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
 import { useDeleteClue } from '../../hooks/useDeleteClue'
 import { useDeleteEdge } from '../../hooks/useDeleteEdge'
 import { useOutgoingEdges } from '../../hooks/useEdges'
+import { useEntityNames } from '../../hooks/useEntityNames'
+import { useSessions } from '../../hooks/useSessions'
+import { usePcs } from '../../hooks/usePcs'
 
 // Target types for which at least one rule has source='clue'.
 const CLUE_TARGET_TYPES: readonly EntityType[] = ENTITY_TYPES.filter((t) =>
@@ -235,9 +239,181 @@ function ClueDetailPage() {
         </Card>
       </EditOnly>
 
+      {id && <DeliverySection clueId={id} />}
+
       {id && <EntityRelationships entityType="clue" entityId={id} />}
       {id && <EntityRecentActivity entityType="clue" entityId={id} />}
     </Stack>
+  )
+}
+
+function DeliverySection({ clueId }: { clueId: string }) {
+  const { data, isLoading } = useClueDelivery(clueId)
+  const events = useMemo(() => data?.events ?? [], [data])
+
+  // Resolve session and pc names for display.
+  const sessionIds = useMemo(() => [...new Set(events.map((e) => e.sessionId))], [events])
+  const pcIdSet = useMemo(() => {
+    const s = new Set<string>()
+    for (const e of events) for (const p of e.pcIds) s.add(p)
+    return [...s]
+  }, [events])
+  const sessionNamesQ = useEntityNames('session', sessionIds)
+  const pcNamesQ = useEntityNames('pc', pcIdSet)
+  const sessionNameMap = useMemo(
+    () => new Map((sessionNamesQ.data?.items ?? []).map((r) => [r.id, r.name])),
+    [sessionNamesQ.data],
+  )
+  const pcNameMap = useMemo(
+    () => new Map((pcNamesQ.data?.items ?? []).map((r) => [r.id, r.name])),
+    [pcNamesQ.data],
+  )
+  const sessionName = (id: string) => sessionNameMap.get(id) ?? id
+  const pcName = (id: string) => pcNameMap.get(id) ?? id
+
+  return (
+    <>
+      <Card>
+        <Stack gap="sm">
+          <Heading level={2}>Delivery</Heading>
+          {isLoading ? (
+            <p>Loading…</p>
+          ) : events.length === 0 ? (
+            <p>
+              <em>No delivery events recorded yet.</em>
+            </p>
+          ) : (
+            <Stack gap="xs">
+              {events.map((e) => (
+                <Card key={e.id}>
+                  <Stack gap="xs">
+                    <Inline gap="sm">
+                      <strong>{e.kind}</strong>
+                      <span>
+                        in <Link to={`/sessions/${e.sessionId}`}>{sessionName(e.sessionId)}</Link>
+                      </span>
+                      <span>{new Date(e.appliedAt).toISOString().slice(0, 10)}</span>
+                    </Inline>
+                    {e.pcIds.length > 0 && (
+                      <p>
+                        Recipients:{' '}
+                        {e.pcIds.map((pid, i) => (
+                          <span key={pid}>
+                            {i > 0 ? ', ' : ''}
+                            <Link to={`/pcs/${pid}`}>{pcName(pid)}</Link>
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                    {e.note && <Prose>{e.note}</Prose>}
+                  </Stack>
+                </Card>
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      </Card>
+
+      <EditOnly>
+        <DeliveryForm clueId={clueId} />
+      </EditOnly>
+    </>
+  )
+}
+
+function DeliveryForm({ clueId }: { clueId: string }) {
+  const sessionsQ = useSessions('realWorld')
+  const pcsQ = usePcs()
+  const createDelivery = useCreateClueDeliveryEvent(clueId)
+  const [kind, setKind] = useState<'delivered' | 'undelivered'>('delivered')
+  const [sessionId, setSessionId] = useState('')
+  const [pcIds, setPcIds] = useState<string[]>([])
+  const [note, setNote] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  function togglePc(pcId: string) {
+    setPcIds((prev) => (prev.includes(pcId) ? prev.filter((p) => p !== pcId) : [...prev, pcId]))
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!sessionId) {
+      setError('Pick a session.')
+      return
+    }
+    if (kind === 'delivered' && pcIds.length === 0) {
+      setError('Delivered events need at least one recipient PC.')
+      return
+    }
+    try {
+      await createDelivery.mutateAsync({
+        sessionId,
+        kind,
+        pcIds: kind === 'undelivered' ? [] : pcIds,
+        note: note.trim() === '' ? null : note.trim(),
+      })
+      setPcIds([])
+      setNote('')
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <Heading level={2}>Record delivery event</Heading>
+        <form onSubmit={(e) => void onSubmit(e)}>
+          <Stack gap="sm">
+            <Field label="Kind">
+              <Select
+                value={kind}
+                onChange={(e) => setKind(e.target.value as 'delivered' | 'undelivered')}
+              >
+                <option value="delivered">Mark delivered</option>
+                <option value="undelivered">Mark undelivered (corrective)</option>
+              </Select>
+            </Field>
+            <Field label="Session">
+              <Select value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
+                <option value="">— pick a session —</option>
+                {(sessionsQ.data ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {kind === 'delivered' && (
+              <Field label="Recipient PCs">
+                <Stack gap="xs">
+                  {(pcsQ.data ?? []).map((p) => (
+                    <label key={p.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={pcIds.includes(p.id)}
+                        onChange={() => togglePc(p.id)}
+                      />
+                      <span>{p.name}</span>
+                    </label>
+                  ))}
+                </Stack>
+              </Field>
+            )}
+            <Field label="Note (optional)">
+              <Input type="text" value={note} onChange={(e) => setNote(e.target.value)} />
+            </Field>
+            {error && <p>{error}</p>}
+            <Toolbar align="start">
+              <Button type="submit" variant="primary" disabled={createDelivery.isPending}>
+                {createDelivery.isPending ? 'Saving…' : 'Record event'}
+              </Button>
+            </Toolbar>
+          </Stack>
+        </form>
+      </Stack>
+    </Card>
   )
 }
 

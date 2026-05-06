@@ -18,11 +18,10 @@ import { useIsPlayMode } from '../../lib/mode'
 import { useCurrentSessionId } from '../../lib/currentSession'
 import { usePcs } from '../../hooks/usePcs'
 import { useClues } from '../../hooks/useClues'
-import { useScenes } from '../../hooks/useScenes'
 import { useAllBonds } from '../../hooks/useBonds'
 import { useApplySanityChange } from '../../hooks/useApplySanityChange'
 import { useApplyBondDamage } from '../../hooks/useApplyBondDamage'
-import { useCreateEdge } from '../../hooks/useCreateEdge'
+import { useCreateClueDeliveryEvent } from '../../hooks/useClueDelivery'
 import { requestOpenPalette } from '../CmdK/openPalette'
 import Button from '../ui/Button'
 import Stack from '../ui/Stack'
@@ -167,36 +166,46 @@ function PopoverShell({
 function ClueDeliveredPopover({ onClose }: { onClose: () => void }) {
   const { value: currentSessionId } = useCurrentSessionId()
   const cluesQ = useClues()
-  const scenesQ = useScenes()
-  const createEdge = useCreateEdge()
+  const pcsQ = usePcs()
   const [clueId, setClueId] = useState('')
-  const [sceneId, setSceneId] = useState('')
+  const [pcIds, setPcIds] = useState<string[]>([])
+  const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const createDelivery = useCreateClueDeliveryEvent(clueId || undefined)
+
+  function togglePc(pcId: string) {
+    setPcIds((prev) => (prev.includes(pcId) ? prev.filter((p) => p !== pcId) : [...prev, pcId]))
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!clueId || !sceneId) {
-      setError('Pick a clue and a scene.')
+    if (!clueId) {
+      setError('Pick a clue.')
       return
     }
-    // TODO(#025): replace this raw delivered_in edge with the full
-    // clue-delivery state machine (track delivered/undelivered, who
-    // delivered it, link the SAN/bond fallout, etc.).
+    if (!currentSessionId) {
+      setError('No current session — set one first.')
+      return
+    }
+    if (pcIds.length === 0) {
+      setError('Pick at least one PC.')
+      return
+    }
     try {
-      await createEdge.mutateAsync({
-        sourceType: 'clue',
-        sourceId: clueId,
-        targetType: 'scene',
-        targetId: sceneId,
-        kind: 'delivered_in',
-        notes: currentSessionId ? `session:${currentSessionId}` : null,
+      await createDelivery.mutateAsync({
+        sessionId: currentSessionId,
+        kind: 'delivered',
+        pcIds,
+        note: note.trim() === '' ? null : note.trim(),
       })
       onClose()
     } catch (err) {
       setError((err as Error).message)
     }
   }
+
+  const submitDisabled = createDelivery.isPending || !currentSessionId
 
   return (
     <PopoverShell title="Mark clue delivered" onClose={onClose}>
@@ -212,20 +221,37 @@ function ClueDeliveredPopover({ onClose }: { onClose: () => void }) {
               ))}
             </Select>
           </Field>
-          <Field label="Scene">
-            <Select value={sceneId} onChange={(e) => setSceneId(e.target.value)}>
-              <option value="">— pick a scene —</option>
-              {(scenesQ.data ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
+          <Field label="Recipient PCs">
+            <Stack gap="xs">
+              {(pcsQ.data ?? []).map((p) => (
+                <label key={p.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={pcIds.includes(p.id)}
+                    onChange={() => togglePc(p.id)}
+                  />
+                  <span>{p.name}</span>
+                </label>
               ))}
-            </Select>
+            </Stack>
           </Field>
+          <Field label="Note (optional)">
+            <Input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Found at the alley"
+            />
+          </Field>
+          {!currentSessionId && (
+            <p className="text-xs text-danger">
+              No current session set — open a Session and choose “Set as current session”.
+            </p>
+          )}
           {error && <p className="text-xs text-danger">{error}</p>}
           <Inline gap="sm">
-            <Button type="submit" variant="primary" disabled={createEdge.isPending}>
-              {createEdge.isPending ? 'Marking…' : 'Mark delivered'}
+            <Button type="submit" variant="primary" disabled={submitDisabled}>
+              {createDelivery.isPending ? 'Marking…' : 'Mark delivered'}
             </Button>
             <Button onClick={onClose}>Cancel</Button>
           </Inline>

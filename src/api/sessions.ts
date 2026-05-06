@@ -76,6 +76,21 @@ export function createSession(input: SessionInput): Promise<SessionRow> {
   })
 }
 
+export type DeliveredClueRow = {
+  clueId: string
+  clueName: string
+  pcIds: string[]
+  appliedAt: string
+}
+
+export function getSessionDeliveredClues(
+  sessionId: string,
+): Promise<{ items: DeliveredClueRow[] }> {
+  return fetchJson<{ items: DeliveredClueRow[] }>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/delivered-clues`,
+  )
+}
+
 export async function deleteSession(id: string): Promise<void> {
   const res = await fetch(`/api/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

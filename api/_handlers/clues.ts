@@ -1,7 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client.js'
 import { clueInputSchema } from '../../domain/clue.js'
+import {
+  clueDeliveryInputSchema,
+  computeDeliveryState,
+  type DeliveryEvent,
+} from '../../domain/clueDelivery.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
@@ -98,4 +103,90 @@ export async function clueDelete(_req: VercelRequest, res: VercelResponse, id: s
     return res.status(404).json({ error: 'Clue not found' })
   }
   return res.status(204).end()
+}
+
+// ─── Clue delivery (#025) ────────────────────────────────────────────────────
+// Append-only event log. NEVER expose a DELETE — un-delivery is recorded as
+// a `kind: 'undelivered'` event so the history is preserved.
+
+function serializeDeliveryEvent(row: typeof schema.clueDeliveryEvents.$inferSelect) {
+  return {
+    id: row.id,
+    clueId: row.clueId,
+    sessionId: row.sessionId,
+    kind: row.kind as 'delivered' | 'undelivered',
+    pcIds: row.pcIds ?? [],
+    note: row.note,
+    appliedAt:
+      row.appliedAt instanceof Date ? row.appliedAt.toISOString() : (row.appliedAt as string),
+  }
+}
+
+export async function clueDeliveryList(_req: VercelRequest, res: VercelResponse, clueId: string) {
+  const rows = await db
+    .select()
+    .from(schema.clueDeliveryEvents)
+    .where(eq(schema.clueDeliveryEvents.clueId, clueId))
+    .orderBy(asc(schema.clueDeliveryEvents.appliedAt), asc(schema.clueDeliveryEvents.id))
+    .limit(500)
+
+  const events = rows.map(serializeDeliveryEvent)
+  const state = computeDeliveryState(
+    events.map<DeliveryEvent>((e) => ({
+      sessionId: e.sessionId,
+      kind: e.kind,
+      pcIds: e.pcIds,
+      appliedAt: e.appliedAt,
+    })),
+  )
+  const currentState = {
+    isDelivered: state.isDelivered,
+    sessions: [...state.delivered.entries()].map(([sessionId, cur]) => ({
+      sessionId,
+      pcIds: cur.pcIds,
+      appliedAt: cur.appliedAt.toISOString(),
+    })),
+  }
+
+  return res.status(200).json({ events, currentState })
+}
+
+export async function clueDeliveryCreate(req: VercelRequest, res: VercelResponse, clueId: string) {
+  const body = (req.body ?? {}) as Record<string, unknown>
+  const parsed = clueDeliveryInputSchema.safeParse({ ...body, clueId })
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid clue delivery input', issues: parsed.error.issues })
+  }
+  const input = parsed.data
+
+  // Verify referenced clue and session exist (FKs would catch this too, but
+  // a 404 is friendlier than a SQLite constraint error).
+  const [clue] = await db
+    .select({ id: schema.clues.id })
+    .from(schema.clues)
+    .where(eq(schema.clues.id, input.clueId))
+    .limit(1)
+  if (!clue) return res.status(404).json({ error: 'Clue not found' })
+
+  const [session] = await db
+    .select({ id: schema.sessions.id })
+    .from(schema.sessions)
+    .where(eq(schema.sessions.id, input.sessionId))
+    .limit(1)
+  if (!session) return res.status(404).json({ error: 'Session not found' })
+
+  const [row] = await db
+    .insert(schema.clueDeliveryEvents)
+    .values({
+      clueId: input.clueId,
+      sessionId: input.sessionId,
+      kind: input.kind,
+      pcIds: input.pcIds,
+      note: input.note ?? null,
+    })
+    .returning()
+  if (!row) return res.status(500).json({ error: 'Failed to insert delivery event' })
+  return res.status(201).json(serializeDeliveryEvent(row))
 }

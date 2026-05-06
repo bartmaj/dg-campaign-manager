@@ -3,7 +3,9 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { ClueRow } from '../../api/clues'
+import type { ClueDeliveryResponse } from '../../api/clueDelivery'
 import type { EdgeRow } from '../../api/edges'
+import { clueDeliveryKeys } from '../../hooks/useClueDelivery'
 import { clueKeys } from '../../hooks/useClues'
 import { edgeKeys } from '../../hooks/useEdges'
 import { sessionKeys } from '../../hooks/useSessions'
@@ -38,7 +40,7 @@ function makeEdge(overrides: Partial<EdgeRow> = {}): EdgeRow {
   }
 }
 
-function renderPage(opts: { clue?: ClueRow; edges?: EdgeRow[] }) {
+function renderPage(opts: { clue?: ClueRow; edges?: EdgeRow[]; delivery?: ClueDeliveryResponse }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   if (opts.clue) {
     qc.setQueryData(clueKeys.detail(CLUE_ID), opts.clue)
@@ -47,6 +49,10 @@ function renderPage(opts: { clue?: ClueRow; edges?: EdgeRow[] }) {
   // EntityRelationships also queries incoming edges; seed empty.
   qc.setQueryData(edgeKeys.list({ targetType: 'clue', targetId: CLUE_ID }), [])
   qc.setQueryData(sessionKeys.list('realWorld', { involvesType: 'clue', involvesId: CLUE_ID }), [])
+  qc.setQueryData(
+    clueDeliveryKeys.detail(CLUE_ID),
+    opts.delivery ?? { events: [], currentState: { isDelivered: false, sessions: [] } },
+  )
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[`/clues/${CLUE_ID}`]}>
@@ -102,6 +108,34 @@ describe('ClueDetailPage', () => {
     renderPage({ clue: makeClue({ originScenarioId: 'scen-42' }), edges: [] })
     const link = screen.getByRole('link', { name: 'scen-42' })
     expect(link).toHaveAttribute('href', '/scenarios/scen-42')
+  })
+
+  it('renders delivery events from the delivery query', () => {
+    renderPage({
+      clue: makeClue(),
+      delivery: {
+        events: [
+          {
+            id: 'evt-1',
+            clueId: CLUE_ID,
+            sessionId: 'sess-7',
+            kind: 'delivered',
+            pcIds: ['pc-a', 'pc-b'],
+            note: 'Found in alley',
+            appliedAt: '2026-04-01T10:00:00Z',
+          },
+        ],
+        currentState: {
+          isDelivered: true,
+          sessions: [
+            { sessionId: 'sess-7', pcIds: ['pc-a', 'pc-b'], appliedAt: '2026-04-01T10:00:00Z' },
+          ],
+        },
+      },
+    })
+    expect(screen.getByRole('heading', { name: /^Delivery$/i })).toBeInTheDocument()
+    expect(screen.getByText('delivered')).toBeInTheDocument()
+    expect(screen.getByText(/Found in alley/i)).toBeInTheDocument()
   })
 
   it('renders the Delete button in the toolbar', () => {

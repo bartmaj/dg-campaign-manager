@@ -24,6 +24,8 @@ import { useDeleteEdge } from '../../hooks/useDeleteEdge'
 import { useDeleteSession } from '../../hooks/useDeleteSession'
 import { useIncomingEdges, useOutgoingEdges } from '../../hooks/useEdges'
 import { useSession } from '../../hooks/useSessions'
+import { useSessionDeliveredClues } from '../../hooks/useSessionDeliveredClues'
+import { useEntityNames } from '../../hooks/useEntityNames'
 
 const SESSION_TARGET_TYPES: readonly EntityType[] = ENTITY_TYPES.filter((t) =>
   EDGE_RULES.some((r) => r.source === 'session' && r.target === t),
@@ -296,8 +298,58 @@ function SessionDetailPage() {
         </Stack>
       </Card>
 
+      {id && <DeliveredCluesCard sessionId={id} />}
+
       {id && <EntityRelationships entityType="session" entityId={id} />}
     </Stack>
+  )
+}
+
+function DeliveredCluesCard({ sessionId }: { sessionId: string }) {
+  const { data, isLoading } = useSessionDeliveredClues(sessionId)
+  const items = useMemo(() => data?.items ?? [], [data])
+  const pcIds = useMemo(() => {
+    const s = new Set<string>()
+    for (const it of items) for (const p of it.pcIds) s.add(p)
+    return [...s]
+  }, [items])
+  const pcNamesQ = useEntityNames('pc', pcIds)
+  const pcNameMap = useMemo(
+    () => new Map((pcNamesQ.data?.items ?? []).map((r) => [r.id, r.name])),
+    [pcNamesQ.data],
+  )
+  const pcName = (id: string) => pcNameMap.get(id) ?? id
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <Heading level={2}>Delivered clues</Heading>
+        {isLoading ? (
+          <p>Loading…</p>
+        ) : items.length === 0 ? (
+          <p>No clues delivered in this session yet.</p>
+        ) : (
+          <ul>
+            {items.map((it) => (
+              <li key={it.clueId}>
+                <Link to={`/clues/${it.clueId}`}>{it.clueName}</Link>
+                {' — '}
+                {it.pcIds.length === 0
+                  ? '(no recipients)'
+                  : it.pcIds.map((pid, i) => (
+                      <span key={pid}>
+                        {i > 0 ? ', ' : ''}
+                        <Link to={`/pcs/${pid}`}>{pcName(pid)}</Link>
+                      </span>
+                    ))}
+                {' · '}
+                <span>{new Date(it.appliedAt).toISOString().slice(0, 10)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Stack>
+    </Card>
   )
 }
 

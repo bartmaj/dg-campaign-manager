@@ -220,6 +220,70 @@ export async function sessionExport(_req: VercelRequest, res: VercelResponse, id
  * UI gracefully skips unresolved names. TODO: add a sweep job that
  * cleans up orphaned edges referencing deleted entities.
  */
+/**
+ * Lists clues currently delivered in a given session (#025).
+ *
+ * Folds the delivery event log per (clueId, sessionId) — only entries
+ * that survive the fold (last event for that pair was `delivered`)
+ * appear in the response.
+ */
+export async function sessionDeliveredClues(
+  _req: VercelRequest,
+  res: VercelResponse,
+  sessionId: string,
+) {
+  // Pull every delivery event whose sessionId matches; we need siblings
+  // for the same (clueId, sessionId) so we know whether `delivered` is
+  // the latest event.
+  const rows = await db
+    .select()
+    .from(schema.clueDeliveryEvents)
+    .where(eq(schema.clueDeliveryEvents.sessionId, sessionId))
+    .orderBy(asc(schema.clueDeliveryEvents.appliedAt), asc(schema.clueDeliveryEvents.id))
+
+  // Group by clueId; the last event in each group wins.
+  const byClue = new Map<
+    string,
+    { kind: 'delivered' | 'undelivered'; pcIds: string[]; appliedAt: Date }
+  >()
+  for (const r of rows) {
+    const at =
+      r.appliedAt instanceof Date ? r.appliedAt : new Date(r.appliedAt as unknown as string)
+    byClue.set(r.clueId, {
+      kind: r.kind as 'delivered' | 'undelivered',
+      pcIds: (r.pcIds ?? []) as string[],
+      appliedAt: at,
+    })
+  }
+
+  const liveClueIds = [...byClue.entries()]
+    .filter(([, v]) => v.kind === 'delivered')
+    .map(([id]) => id)
+
+  if (liveClueIds.length === 0) {
+    return res.status(200).json({ items: [] })
+  }
+
+  const clueRows = await db
+    .select({ id: schema.clues.id, name: schema.clues.name })
+    .from(schema.clues)
+    .where(inArray(schema.clues.id, liveClueIds))
+
+  const nameById = new Map(clueRows.map((c) => [c.id, c.name]))
+
+  const items = liveClueIds.map((clueId) => {
+    const cur = byClue.get(clueId)!
+    return {
+      clueId,
+      clueName: nameById.get(clueId) ?? clueId,
+      pcIds: cur.pcIds,
+      appliedAt: cur.appliedAt.toISOString(),
+    }
+  })
+
+  return res.status(200).json({ items })
+}
+
 export async function sessionDelete(_req: VercelRequest, res: VercelResponse, id: string) {
   const [row] = await db.delete(schema.sessions).where(eq(schema.sessions.id, id)).returning()
   if (!row) {
