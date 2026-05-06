@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, asc, desc, eq, inArray, like, or, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { ENTITY_TYPES, type EntityType } from '../../db/schema.js'
 import { serializeEntity } from '../../domain/mdExport.js'
@@ -336,4 +337,229 @@ export async function sessionDelete(_req: VercelRequest, res: VercelResponse, id
     return res.status(404).json({ error: 'Session not found' })
   }
   return res.status(204).end()
+}
+
+const sessionPatchSchema = z
+  .object({
+    notes: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    name: z.string().min(1).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Empty patch' })
+
+/**
+ * Patch a session — partial update for `notes`, `description`, `name`.
+ * Mirrors the narrow PATCH on PCs (see pcs.ts#pcPatch).
+ */
+export async function sessionPatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = sessionPatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid session patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  const [row] = await db
+    .update(schema.sessions)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.sessions.id, id))
+    .returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Session not found' })
+  }
+  return res.status(200).json(row)
+}
+
+// ─── Session report (#027) ──────────────────────────────────────────────────
+// Aggregates the four session-scoped event tables into a single chronological
+// log. Names are batch-resolved server-side so the wire payload is
+// self-contained — the UI never has to round-trip names per row.
+
+type ReportPcIds = readonly string[]
+
+export type SessionReportItem =
+  | {
+      kind: 'clue_delivered'
+      appliedAt: string
+      clueId: string
+      clueName: string
+      pcIds: ReportPcIds
+      note: string | null
+    }
+  | {
+      kind: 'clue_undelivered'
+      appliedAt: string
+      clueId: string
+      clueName: string
+      pcIds: ReportPcIds
+      note: string | null
+    }
+  | {
+      kind: 'npc_encountered'
+      appliedAt: string
+      npcId: string
+      npcName: string
+      note: string | null
+    }
+  | {
+      kind: 'bond_damage'
+      appliedAt: string
+      bondId: string
+      bondName: string
+      pcId: string
+      delta: number
+      reason: string | null
+    }
+  | {
+      kind: 'san_change'
+      appliedAt: string
+      pcId: string
+      pcName: string
+      delta: number
+      source: string
+      crossedThresholds: number[]
+    }
+
+export type SessionReport = {
+  sessionId: string
+  items: SessionReportItem[]
+  generatedAt: string
+}
+
+function toIso(v: Date | string | number): string {
+  if (v instanceof Date) return v.toISOString()
+  if (typeof v === 'number') return new Date(v).toISOString()
+  return v
+}
+
+export async function sessionReport(_req: VercelRequest, res: VercelResponse, sessionId: string) {
+  // Confirm session exists; mirrors sessionGet behavior.
+  const [session] = await db
+    .select({ id: schema.sessions.id })
+    .from(schema.sessions)
+    .where(eq(schema.sessions.id, sessionId))
+    .limit(1)
+  if (!session) return res.status(404).json({ error: 'Session not found' })
+
+  // Run the four event-table queries in parallel.
+  const [clueRows, npcRows, sanRows] = await Promise.all([
+    db
+      .select()
+      .from(schema.clueDeliveryEvents)
+      .where(eq(schema.clueDeliveryEvents.sessionId, sessionId)),
+    db
+      .select()
+      .from(schema.npcEncounterEvents)
+      .where(eq(schema.npcEncounterEvents.sessionId, sessionId)),
+    db.select().from(schema.sanChangeEvents).where(eq(schema.sanChangeEvents.sessionId, sessionId)),
+  ])
+
+  // Bond damage events: filter by sessionId then join with bonds for the bond name.
+  const bondDamageRows = await db
+    .select()
+    .from(schema.bondDamageEvents)
+    .where(eq(schema.bondDamageEvents.sessionId, sessionId))
+
+  // Batch-resolve names. Bonds need a separate query (no name in events).
+  const clueIds = [...new Set(clueRows.map((r) => r.clueId))]
+  const npcIds = [...new Set(npcRows.map((r) => r.npcId))]
+  const sanPcIds = [...new Set(sanRows.map((r) => r.pcId))]
+  const bondIds = [...new Set(bondDamageRows.map((r) => r.bondId))]
+
+  const [clueNameRows, npcNameRows, pcNameRows, bondInfoRows] = await Promise.all([
+    clueIds.length === 0
+      ? Promise.resolve([] as { id: string; name: string }[])
+      : db
+          .select({ id: schema.clues.id, name: schema.clues.name })
+          .from(schema.clues)
+          .where(inArray(schema.clues.id, clueIds)),
+    npcIds.length === 0
+      ? Promise.resolve([] as { id: string; name: string }[])
+      : db
+          .select({ id: schema.npcs.id, name: schema.npcs.name })
+          .from(schema.npcs)
+          .where(inArray(schema.npcs.id, npcIds)),
+    sanPcIds.length === 0
+      ? Promise.resolve([] as { id: string; name: string }[])
+      : db
+          .select({ id: schema.pcs.id, name: schema.pcs.name })
+          .from(schema.pcs)
+          .where(inArray(schema.pcs.id, sanPcIds)),
+    bondIds.length === 0
+      ? Promise.resolve([] as { id: string; name: string; pcId: string }[])
+      : db
+          .select({ id: schema.bonds.id, name: schema.bonds.name, pcId: schema.bonds.pcId })
+          .from(schema.bonds)
+          .where(inArray(schema.bonds.id, bondIds)),
+  ])
+
+  const clueName = new Map(clueNameRows.map((r) => [r.id, r.name]))
+  const npcName = new Map(npcNameRows.map((r) => [r.id, r.name]))
+  const pcName = new Map(pcNameRows.map((r) => [r.id, r.name]))
+  const bondInfo = new Map(bondInfoRows.map((r) => [r.id, r]))
+
+  const items: SessionReportItem[] = []
+
+  for (const r of clueRows) {
+    const k = r.kind === 'undelivered' ? 'clue_undelivered' : 'clue_delivered'
+    items.push({
+      kind: k,
+      appliedAt: toIso(r.appliedAt as Date | string),
+      clueId: r.clueId,
+      clueName: clueName.get(r.clueId) ?? r.clueId,
+      pcIds: (r.pcIds ?? []) as string[],
+      note: r.note ?? null,
+    })
+  }
+
+  for (const r of npcRows) {
+    items.push({
+      kind: 'npc_encountered',
+      appliedAt: toIso(r.appliedAt as Date | string),
+      npcId: r.npcId,
+      npcName: npcName.get(r.npcId) ?? r.npcId,
+      note: r.note ?? null,
+    })
+  }
+
+  for (const r of bondDamageRows) {
+    const info = bondInfo.get(r.bondId)
+    items.push({
+      kind: 'bond_damage',
+      appliedAt: toIso(r.appliedAt as Date | string),
+      bondId: r.bondId,
+      bondName: info?.name ?? r.bondId,
+      pcId: info?.pcId ?? '',
+      delta: r.delta,
+      reason: r.reason ?? null,
+    })
+  }
+
+  for (const r of sanRows) {
+    items.push({
+      kind: 'san_change',
+      appliedAt: toIso(r.appliedAt as Date | string),
+      pcId: r.pcId,
+      pcName: pcName.get(r.pcId) ?? r.pcId,
+      delta: r.delta,
+      source: r.source,
+      crossedThresholds: (r.crossedThresholds ?? []) as number[],
+    })
+  }
+
+  // Chronological — ascending appliedAt. Stable secondary by kind for
+  // ties (the four event tables share unixepoch precision).
+  items.sort((a, b) => {
+    const ta = Date.parse(a.appliedAt)
+    const tb = Date.parse(b.appliedAt)
+    if (ta !== tb) return ta - tb
+    return a.kind.localeCompare(b.kind)
+  })
+
+  const payload: SessionReport = {
+    sessionId,
+    items,
+    generatedAt: new Date().toISOString(),
+  }
+  return res.status(200).json(payload)
 }

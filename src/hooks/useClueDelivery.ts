@@ -7,6 +7,7 @@ import {
   type ClueDeliveryResponse,
 } from '../api/clueDelivery'
 import { sessionDeliveredCluesKeys } from './useSessionDeliveredClues'
+import { sessionReportKeys } from './useSessionReport'
 import { useStampSessionId } from './usePlayModeStamp'
 
 export const clueDeliveryKeys = {
@@ -39,6 +40,7 @@ export function useCreateClueDeliveryEvent(clueId: string | undefined) {
       qc.invalidateQueries({
         queryKey: sessionDeliveredCluesKeys.detail(event.sessionId),
       })
+      qc.invalidateQueries({ queryKey: sessionReportKeys.detail(event.sessionId) })
     },
   })
 }

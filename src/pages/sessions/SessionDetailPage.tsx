@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import { ENTITY_TYPES, type EntityType } from '../../../db/schema'
 import { EDGE_RULES, kindsForSource } from '../../../domain/edges'
 import type { EdgeRow } from '../../api/edges'
+import type { SessionReportItem } from '../../api/sessions'
 import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
@@ -16,6 +17,7 @@ import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
 import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
+import Textarea from '../../components/ui/Textarea'
 import Toolbar from '../../components/ui/Toolbar'
 import Badge from '../../components/ui/Badge'
 import { useCurrentSessionId } from '../../lib/currentSession'
@@ -24,9 +26,8 @@ import { useDeleteEdge } from '../../hooks/useDeleteEdge'
 import { useDeleteSession } from '../../hooks/useDeleteSession'
 import { useIncomingEdges, useOutgoingEdges } from '../../hooks/useEdges'
 import { useSession } from '../../hooks/useSessions'
-import { useSessionDeliveredClues } from '../../hooks/useSessionDeliveredClues'
-import { useSessionEncounteredNpcs } from '../../hooks/useNpcEncounters'
-import { useEntityNames } from '../../hooks/useEntityNames'
+import { useSessionReport } from '../../hooks/useSessionReport'
+import { usePatchSession } from '../../hooks/usePatchSession'
 
 const SESSION_TARGET_TYPES: readonly EntityType[] = ENTITY_TYPES.filter((t) =>
   EDGE_RULES.some((r) => r.source === 'session' && r.target === t),
@@ -274,80 +275,122 @@ function SessionDetailPage() {
         </Stack>
       </Card>
 
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Bonds damaged this session</Heading>
-          <p>
-            <em>
-              TODO (#013 follow-up): surface bond_damage_events filtered by sessionId. The
-              bond_damage_events table already carries a loose sessionId; a follow-up issue will
-              extend GET /api/bonds/:id and add a session-scoped query.
-            </em>
-          </p>
-        </Stack>
-      </Card>
+      {id && <EventLogCard sessionId={id} />}
 
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Sanity changes this session</Heading>
-          <p>
-            <em>
-              TODO (#013 follow-up): surface san_change_events filtered by sessionId (loose ref
-              already stored).
-            </em>
-          </p>
-        </Stack>
-      </Card>
-
-      {id && <DeliveredCluesCard sessionId={id} />}
-
-      {id && <EncounteredNpcsCard sessionId={id} />}
+      {id && (
+        <NotesCard sessionId={id} initialNotes={session.notes ?? null} key={session.updatedAt} />
+      )}
 
       {id && <EntityRelationships entityType="session" entityId={id} />}
     </Stack>
   )
 }
 
-function DeliveredCluesCard({ sessionId }: { sessionId: string }) {
-  const { data, isLoading } = useSessionDeliveredClues(sessionId)
-  const items = useMemo(() => data?.items ?? [], [data])
-  const pcIds = useMemo(() => {
-    const s = new Set<string>()
-    for (const it of items) for (const p of it.pcIds) s.add(p)
-    return [...s]
-  }, [items])
-  const pcNamesQ = useEntityNames('pc', pcIds)
-  const pcNameMap = useMemo(
-    () => new Map((pcNamesQ.data?.items ?? []).map((r) => [r.id, r.name])),
-    [pcNamesQ.data],
-  )
-  const pcName = (id: string) => pcNameMap.get(id) ?? id
+const KIND_LABEL: Record<SessionReportItem['kind'], string> = {
+  clue_delivered: 'Clue delivered',
+  clue_undelivered: 'Clue un-delivered',
+  npc_encountered: 'NPC',
+  bond_damage: 'Bond',
+  san_change: 'SAN',
+}
 
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString()
+}
+
+function deltaLabel(d: number): string {
+  return d < 0 ? `− ${Math.abs(d)}` : `+ ${d}`
+}
+
+function EventLogRow({ item }: { item: SessionReportItem }) {
+  const time = formatTime(item.appliedAt)
+  switch (item.kind) {
+    case 'clue_delivered':
+    case 'clue_undelivered': {
+      const recipients =
+        item.pcIds.length === 0
+          ? '(no recipients)'
+          : item.pcIds.map((pid, i) => (
+              <span key={pid}>
+                {i > 0 ? ', ' : ''}
+                <Link to={`/pcs/${pid}`}>{pid}</Link>
+              </span>
+            ))
+      return (
+        <li>
+          <Inline gap="sm">
+            <Badge>{KIND_LABEL[item.kind]}</Badge>
+            <span>{time}</span>
+            <span>·</span>
+            <Link to={`/clues/${item.clueId}`}>{item.clueName}</Link>
+            <span>→</span>
+            <span>{recipients}</span>
+            {item.note ? <span>(note: {item.note})</span> : null}
+          </Inline>
+        </li>
+      )
+    }
+    case 'npc_encountered':
+      return (
+        <li>
+          <Inline gap="sm">
+            <Badge>{KIND_LABEL[item.kind]}</Badge>
+            <span>{time}</span>
+            <span>·</span>
+            <Link to={`/npcs/${item.npcId}`}>{item.npcName}</Link>
+            {item.note ? <span>(note: {item.note})</span> : null}
+          </Inline>
+        </li>
+      )
+    case 'bond_damage':
+      return (
+        <li>
+          <Inline gap="sm">
+            <Badge>{KIND_LABEL[item.kind]}</Badge>
+            <span>{time}</span>
+            <span>·</span>
+            <span>{item.bondName}</span>
+            <span>{deltaLabel(item.delta)}</span>
+            {item.reason ? <span>(reason: {item.reason})</span> : null}
+          </Inline>
+        </li>
+      )
+    case 'san_change':
+      return (
+        <li>
+          <Inline gap="sm">
+            <Badge>{KIND_LABEL[item.kind]}</Badge>
+            <span>{time}</span>
+            <span>·</span>
+            <Link to={`/pcs/${item.pcId}`}>{item.pcName}</Link>
+            <span>{deltaLabel(item.delta)}</span>
+            <span>(source: {item.source})</span>
+          </Inline>
+        </li>
+      )
+  }
+}
+
+function EventLogCard({ sessionId }: { sessionId: string }) {
+  const { data, isLoading } = useSessionReport(sessionId)
+  const items = useMemo(() => data?.items ?? [], [data])
   return (
     <Card>
       <Stack gap="sm">
-        <Heading level={2}>Delivered clues</Heading>
+        <Heading level={2}>Event log</Heading>
         {isLoading ? (
           <p>Loading…</p>
         ) : items.length === 0 ? (
-          <p>No clues delivered in this session yet.</p>
+          <p>
+            No tagged events yet — open Cmd-K (or use the play-mode toolbar) and start logging
+            during the session.
+          </p>
         ) : (
           <ul>
-            {items.map((it) => (
-              <li key={it.clueId}>
-                <Link to={`/clues/${it.clueId}`}>{it.clueName}</Link>
-                {' — '}
-                {it.pcIds.length === 0
-                  ? '(no recipients)'
-                  : it.pcIds.map((pid, i) => (
-                      <span key={pid}>
-                        {i > 0 ? ', ' : ''}
-                        <Link to={`/pcs/${pid}`}>{pcName(pid)}</Link>
-                      </span>
-                    ))}
-                {' · '}
-                <span>{new Date(it.appliedAt).toISOString().slice(0, 10)}</span>
-              </li>
+            {items.map((item, i) => (
+              <EventLogRow key={`${item.kind}-${item.appliedAt}-${i}`} item={item} />
             ))}
           </ul>
         )}
@@ -356,30 +399,61 @@ function DeliveredCluesCard({ sessionId }: { sessionId: string }) {
   )
 }
 
-function EncounteredNpcsCard({ sessionId }: { sessionId: string }) {
-  const { data, isLoading } = useSessionEncounteredNpcs(sessionId)
-  const items = useMemo(() => data?.items ?? [], [data])
+function NotesCard({
+  sessionId,
+  initialNotes,
+}: {
+  sessionId: string
+  initialNotes: string | null
+}) {
+  // Parent keys this card by `session.updatedAt`, so a server-confirmed
+  // mutation remounts the card and re-seeds local state from the prop. No
+  // useEffect needed.
+  const [value, setValue] = useState<string>(initialNotes ?? '')
+  const patch = usePatchSession()
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+
+  async function onSave() {
+    const next = value.trim() === '' ? null : value
+    await patch.mutateAsync({ id: sessionId, patch: { notes: next } })
+    setSavedAt(new Date().toLocaleTimeString())
+  }
 
   return (
     <Card>
       <Stack gap="sm">
-        <Heading level={2}>NPCs encountered</Heading>
-        {isLoading ? (
-          <p>Loading…</p>
-        ) : items.length === 0 ? (
-          <p>No NPC encounters logged in this session yet.</p>
-        ) : (
-          <ul>
-            {items.map((evt) => (
-              <li key={evt.id}>
-                <Link to={`/npcs/${evt.npcId}`}>{evt.npcName}</Link>
-                {' · '}
-                <span>{new Date(evt.appliedAt).toISOString().slice(0, 10)}</span>
-                {evt.note ? ` — ${evt.note}` : null}
-              </li>
-            ))}
-          </ul>
-        )}
+        <Heading level={2}>Notes</Heading>
+        <EditOnly
+          fallback={
+            value.trim() === '' ? (
+              <p>
+                <em>No notes yet.</em>
+              </p>
+            ) : (
+              <Prose>{value}</Prose>
+            )
+          }
+        >
+          <Stack gap="sm">
+            <Textarea
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Long-form session recap. Saved separately from the structured event log above."
+              aria-label="Session notes"
+            />
+            <Toolbar align="start">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => void onSave()}
+                disabled={patch.isPending}
+              >
+                {patch.isPending ? 'Saving…' : 'Save notes'}
+              </Button>
+              {savedAt && !patch.isPending ? <span>Saved at {savedAt}</span> : null}
+            </Toolbar>
+          </Stack>
+        </EditOnly>
       </Stack>
     </Card>
   )

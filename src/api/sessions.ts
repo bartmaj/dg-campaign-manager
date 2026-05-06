@@ -13,8 +13,64 @@ export type SessionRow = {
   inGameDate: string | null
   inGameDateEnd: string | null
   realWorldDate: string | null
+  notes: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type SessionReportItem =
+  | {
+      kind: 'clue_delivered'
+      appliedAt: string
+      clueId: string
+      clueName: string
+      pcIds: string[]
+      note: string | null
+    }
+  | {
+      kind: 'clue_undelivered'
+      appliedAt: string
+      clueId: string
+      clueName: string
+      pcIds: string[]
+      note: string | null
+    }
+  | {
+      kind: 'npc_encountered'
+      appliedAt: string
+      npcId: string
+      npcName: string
+      note: string | null
+    }
+  | {
+      kind: 'bond_damage'
+      appliedAt: string
+      bondId: string
+      bondName: string
+      pcId: string
+      delta: number
+      reason: string | null
+    }
+  | {
+      kind: 'san_change'
+      appliedAt: string
+      pcId: string
+      pcName: string
+      delta: number
+      source: string
+      crossedThresholds: number[]
+    }
+
+export type SessionReport = {
+  sessionId: string
+  items: SessionReportItem[]
+  generatedAt: string
+}
+
+export type SessionPatch = {
+  notes?: string | null
+  description?: string | null
+  name?: string
 }
 
 export type SessionOrderBy = 'inGame' | 'realWorld'
@@ -89,6 +145,17 @@ export function getSessionDeliveredClues(
   return fetchJson<{ items: DeliveredClueRow[] }>(
     `/api/sessions/${encodeURIComponent(sessionId)}/delivered-clues`,
   )
+}
+
+export function getSessionReport(sessionId: string): Promise<SessionReport> {
+  return fetchJson<SessionReport>(`/api/sessions/${encodeURIComponent(sessionId)}/report`)
+}
+
+export function patchSession(id: string, patch: SessionPatch): Promise<SessionRow> {
+  return fetchJson<SessionRow>(`/api/sessions/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
 }
 
 export async function deleteSession(id: string): Promise<void> {

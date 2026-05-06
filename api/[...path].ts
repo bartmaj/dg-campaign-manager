@@ -64,6 +64,8 @@ import {
   sessionEncounteredNpcs,
   sessionExport,
   sessionGet,
+  sessionPatch,
+  sessionReport,
   sessionsCreate,
   sessionsList,
 } from './_handlers/sessions.js'
@@ -147,10 +149,12 @@ const routes: Route[] = [
   r0('GET', '/sessions', sessionsList),
   r0('POST', '/sessions', sessionsCreate),
   r1('GET', '/sessions/:id', sessionGet),
+  r1('PATCH', '/sessions/:id', sessionPatch),
   r1('DELETE', '/sessions/:id', sessionDelete),
   r1('GET', '/sessions/:id/export', sessionExport),
   r1('GET', '/sessions/:id/delivered-clues', sessionDeliveredClues),
   r1('GET', '/sessions/:id/encountered-npcs', sessionEncounteredNpcs),
+  r1('GET', '/sessions/:id/report', sessionReport),
 
   // scenarios
   r0('GET', '/scenarios', scenariosList),

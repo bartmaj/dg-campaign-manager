@@ -6,6 +6,7 @@ import { useStampSessionId } from './usePlayModeStamp'
 import { sanityKeys } from './useSanity'
 import { searchIndexQueryKey } from './useSearchIndex'
 import { sessionKeys } from './useSessions'
+import { sessionReportKeys } from './useSessionReport'
 
 type Args = { pcId: string; input: SanChangeInput }
 
@@ -27,6 +28,7 @@ export function useApplySanityChange() {
       qc.invalidateQueries({ queryKey: searchIndexQueryKey })
       if (event?.sessionId) {
         qc.invalidateQueries({ queryKey: sessionKeys.lists() })
+        qc.invalidateQueries({ queryKey: sessionReportKeys.detail(event.sessionId) })
       }
     },
   })

@@ -8,6 +8,7 @@ import {
   type NpcEncounterEvent,
 } from '../api/npcEncounters'
 import { sessionKeys } from './useSessions'
+import { sessionReportKeys } from './useSessionReport'
 import { useStampSessionId } from './usePlayModeStamp'
 
 export const npcEncounterKeys = {
@@ -48,6 +49,7 @@ export function useCreateNpcEncounter(npcId: string | undefined) {
     onSuccess: (event) => {
       qc.invalidateQueries({ queryKey: npcEncounterKeys.list(event.npcId) })
       qc.invalidateQueries({ queryKey: npcEncounterKeys.bySession(event.sessionId) })
+      qc.invalidateQueries({ queryKey: sessionReportKeys.detail(event.sessionId) })
       // Session-involves rollup keys vary by orderBy/filter; invalidate the
       // top-level lists() so any session list with this NPC refetches.
       qc.invalidateQueries({ queryKey: sessionKeys.lists() })

@@ -5,6 +5,7 @@ import { bondKeys } from './useBonds'
 import { useStampSessionId } from './usePlayModeStamp'
 import { searchIndexQueryKey } from './useSearchIndex'
 import { sessionKeys } from './useSessions'
+import { sessionReportKeys } from './useSessionReport'
 
 type Args = { bondId: string; input: BondDamageInput }
 
@@ -23,6 +24,7 @@ export function useApplyBondDamage() {
       // rollup should pick this up.
       if (event.sessionId) {
         qc.invalidateQueries({ queryKey: sessionKeys.lists() })
+        qc.invalidateQueries({ queryKey: sessionReportKeys.detail(event.sessionId) })
       }
     },
   })

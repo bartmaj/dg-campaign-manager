@@ -232,6 +232,10 @@ export const sessions = sqliteTable('sessions', {
   inGameDate: text('in_game_date'),
   inGameDateEnd: text('in_game_date_end'),
   realWorldDate: integer('real_world_date', { mode: 'timestamp' }),
+  // Long-form session-recap freeform notes (#027). Distinct from
+  // `description` (which remains a one-line summary set on create).
+  // Persisted independently from the auto-derived structured event log.
+  notes: text('notes'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })

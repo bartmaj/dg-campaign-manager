@@ -163,6 +163,7 @@ function makeSession(overrides: Partial<SessionRow> = {}): SessionRow {
     inGameDate: '1995-03-12',
     inGameDateEnd: null,
     realWorldDate: '2026-04-01T00:00:00Z',
+    notes: null,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
