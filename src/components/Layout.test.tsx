@@ -29,4 +29,33 @@ describe('Layout', () => {
     await user.keyboard('{Meta>}k{/Meta}')
     expect(screen.getByRole('dialog', { name: /global search/i })).toBeInTheDocument()
   })
+
+  it('renders the prep/play mode toggle in the header', async () => {
+    const user = userEvent.setup()
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    qc.setQueryData(searchIndexQueryKey, { items: [] })
+    window.localStorage.clear()
+
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<div>home</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const prep = screen.getByRole('button', { name: 'Prep' })
+    const play = screen.getByRole('button', { name: 'Play' })
+    expect(prep).toBeInTheDocument()
+    expect(play).toBeInTheDocument()
+    expect(screen.queryByText('Editing dimmed')).not.toBeInTheDocument()
+
+    await user.click(play)
+    expect(screen.getByText('Editing dimmed')).toBeInTheDocument()
+    expect(window.localStorage.getItem('dg.mode')).toBe('play')
+  })
 })

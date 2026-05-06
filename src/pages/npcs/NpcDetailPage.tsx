@@ -6,6 +6,7 @@ import EntityRelationships from '../../components/EntityRelationships/EntityRela
 import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import DescriptionList from '../../components/ui/DescriptionList'
+import EditOnly from '../../components/ui/EditOnly'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
@@ -52,12 +53,14 @@ function NpcDetailPage() {
           <LinkButton href={`/api/npcs/${npc.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteNpc.mutateAsync(npc.id).then(() => undefined)}
-            entityLabel="NPC"
-            entityName={npc.name}
-            redirectTo="/npcs"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteNpc.mutateAsync(npc.id).then(() => undefined)}
+              entityLabel="NPC"
+              entityName={npc.name}
+              redirectTo="/npcs"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 

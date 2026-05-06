@@ -3,6 +3,7 @@ import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntity
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import LocationContext from '../../components/LocationContext/LocationContext'
 import Card from '../../components/ui/Card'
+import EditOnly from '../../components/ui/EditOnly'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
@@ -32,12 +33,14 @@ function LocationDetailPage() {
           <LinkButton href={`/api/locations/${location.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteLocation.mutateAsync(location.id).then(() => undefined)}
-            entityLabel="location"
-            entityName={location.name}
-            redirectTo="/locations"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteLocation.mutateAsync(location.id).then(() => undefined)}
+              entityLabel="location"
+              entityName={location.name}
+              redirectTo="/locations"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 

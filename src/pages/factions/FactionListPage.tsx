@@ -6,6 +6,7 @@ import FilterBar, {
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
 import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EditOnly from '../../components/ui/EditOnly'
 import EmptyState from '../../components/ui/EmptyState'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -45,9 +46,11 @@ function FactionListPage() {
     <Stack gap="md">
       <Toolbar align="between">
         <Heading level={1}>Factions</Heading>
-        <LinkButton to="/factions/new" variant="primary">
-          + New Faction
-        </LinkButton>
+        <EditOnly>
+          <LinkButton to="/factions/new" variant="primary">
+            + New Faction
+          </LinkButton>
+        </EditOnly>
       </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}

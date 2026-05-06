@@ -3,6 +3,7 @@ import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntity
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Card from '../../components/ui/Card'
+import EditOnly from '../../components/ui/EditOnly'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
@@ -32,12 +33,14 @@ function ItemDetailPage() {
           <LinkButton href={`/api/items/${item.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteItem.mutateAsync(item.id).then(() => undefined)}
-            entityLabel="item"
-            entityName={item.name}
-            redirectTo="/items"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteItem.mutateAsync(item.id).then(() => undefined)}
+              entityLabel="item"
+              entityName={item.name}
+              redirectTo="/items"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 

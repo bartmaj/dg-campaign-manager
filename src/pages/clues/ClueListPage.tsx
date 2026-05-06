@@ -8,6 +8,7 @@ import FilterBar, {
 import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
 import EmptyState from '../../components/ui/EmptyState'
 import Heading from '../../components/ui/Heading'
+import EditOnly from '../../components/ui/EditOnly'
 import LinkButton from '../../components/ui/LinkButton'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
@@ -67,9 +68,11 @@ function ClueListPage() {
     <Stack gap="md">
       <Toolbar align="between">
         <Heading level={1}>Clues</Heading>
-        <LinkButton to="/clues/new" variant="primary">
-          + New Clue
-        </LinkButton>
+        <EditOnly>
+          <LinkButton to="/clues/new" variant="primary">
+            + New Clue
+          </LinkButton>
+        </EditOnly>
       </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}

@@ -7,6 +7,7 @@ import FilterBar, {
 } from '../../components/FilterBar/FilterBar'
 import Button from '../../components/ui/Button'
 import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EditOnly from '../../components/ui/EditOnly'
 import EmptyState from '../../components/ui/EmptyState'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
@@ -65,9 +66,11 @@ function SessionListPage() {
     <Stack gap="md">
       <Toolbar align="between">
         <Heading level={1}>Sessions</Heading>
-        <LinkButton to="/sessions/new" variant="primary">
-          + New session
-        </LinkButton>
+        <EditOnly>
+          <LinkButton to="/sessions/new" variant="primary">
+            + New session
+          </LinkButton>
+        </EditOnly>
       </Toolbar>
 
       <Inline gap="sm">

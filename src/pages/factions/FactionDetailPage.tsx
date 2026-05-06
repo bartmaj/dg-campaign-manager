@@ -4,6 +4,7 @@ import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRe
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import FactionContext from '../../components/FactionContext/FactionContext'
 import Card from '../../components/ui/Card'
+import EditOnly from '../../components/ui/EditOnly'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
@@ -33,12 +34,14 @@ function FactionDetailPage() {
           <LinkButton href={`/api/factions/${faction.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteFaction.mutateAsync(faction.id).then(() => undefined)}
-            entityLabel="faction"
-            entityName={faction.name}
-            redirectTo="/factions"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteFaction.mutateAsync(faction.id).then(() => undefined)}
+              entityLabel="faction"
+              entityName={faction.name}
+              redirectTo="/factions"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 

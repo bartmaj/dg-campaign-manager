@@ -16,6 +16,7 @@ import { useNpcs } from '../../hooks/useNpcs'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
+import EditOnly from '../ui/EditOnly'
 import EmptyState from '../ui/EmptyState'
 import Field from '../ui/Field'
 import Heading from '../ui/Heading'
@@ -101,53 +102,57 @@ function StatusTimelinePanel({ factionId }: { factionId: string }) {
                   <Badge>{formatDate(ev.occurredAt)}</Badge>
                   <Prose>{ev.note}</Prose>
                   {ev.sessionId ? <Link to={`/sessions/${ev.sessionId}`}>session</Link> : null}
-                  <IconButton
-                    aria-label={`Remove status note from ${formatDate(ev.occurredAt)}`}
-                    onClick={() => deleteStatus.mutate(ev.id)}
-                  >
-                    ✕
-                  </IconButton>
+                  <EditOnly>
+                    <IconButton
+                      aria-label={`Remove status note from ${formatDate(ev.occurredAt)}`}
+                      onClick={() => deleteStatus.mutate(ev.id)}
+                    >
+                      ✕
+                    </IconButton>
+                  </EditOnly>
                 </Inline>
               </li>
             ))}
           </ul>
         )}
-        <form onSubmit={handleSubmit}>
-          <Stack gap="sm">
-            <Heading level={3}>Add status note</Heading>
-            <Field label="Date">
-              <Input
-                type="date"
-                value={occurredAt}
-                onChange={(e) => setOccurredAt(e.target.value)}
-              />
-            </Field>
-            <Field label="Note">
-              <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="What happened?"
-              />
-            </Field>
-            <Field label="Session id (optional)">
-              <Input
-                type="text"
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
-                placeholder="UUID of the session if relevant"
-              />
-            </Field>
-            <Inline>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!canSubmit || createStatus.isPending}
-              >
-                Add
-              </Button>
-            </Inline>
-          </Stack>
-        </form>
+        <EditOnly>
+          <form onSubmit={handleSubmit}>
+            <Stack gap="sm">
+              <Heading level={3}>Add status note</Heading>
+              <Field label="Date">
+                <Input
+                  type="date"
+                  value={occurredAt}
+                  onChange={(e) => setOccurredAt(e.target.value)}
+                />
+              </Field>
+              <Field label="Note">
+                <Textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="What happened?"
+                />
+              </Field>
+              <Field label="Session id (optional)">
+                <Input
+                  type="text"
+                  value={sessionId}
+                  onChange={(e) => setSessionId(e.target.value)}
+                  placeholder="UUID of the session if relevant"
+                />
+              </Field>
+              <Inline>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!canSubmit || createStatus.isPending}
+                >
+                  Add
+                </Button>
+              </Inline>
+            </Stack>
+          </form>
+        </EditOnly>
       </Stack>
     </Card>
   )

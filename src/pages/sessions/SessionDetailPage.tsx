@@ -7,6 +7,7 @@ import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntity
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
+import EditOnly from '../../components/ui/EditOnly'
 import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
@@ -120,12 +121,14 @@ function SessionDetailPage() {
           <LinkButton href={`/api/sessions/${session.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteSession.mutateAsync(session.id).then(() => undefined)}
-            entityLabel="session"
-            entityName={session.name}
-            redirectTo="/sessions"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteSession.mutateAsync(session.id).then(() => undefined)}
+              entityLabel="session"
+              entityName={session.name}
+              redirectTo="/sessions"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 

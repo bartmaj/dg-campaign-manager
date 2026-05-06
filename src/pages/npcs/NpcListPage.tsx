@@ -8,6 +8,7 @@ import FilterBar, {
 import { NPC_STATUSES, type NpcStatus } from '../../../domain/npc'
 import Badge from '../../components/ui/Badge'
 import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EditOnly from '../../components/ui/EditOnly'
 import EmptyState from '../../components/ui/EmptyState'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -94,9 +95,11 @@ function NpcListPage() {
     <Stack gap="md">
       <Toolbar align="between">
         <Heading level={1}>NPCs</Heading>
-        <LinkButton to="/npcs/new" variant="primary">
-          + New NPC
-        </LinkButton>
+        <EditOnly>
+          <LinkButton to="/npcs/new" variant="primary">
+            + New NPC
+          </LinkButton>
+        </EditOnly>
       </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}

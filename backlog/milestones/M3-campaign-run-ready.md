@@ -1,6 +1,6 @@
 # M3 — Campaign-Run-Ready
 
-**Status:** Not Started
+**Status:** In Progress (1/10 done)
 **Target:** Weekend W6 (+ live-session run-through)
 **Effort:** ~1.5 PWE
 
@@ -20,7 +20,7 @@ M1 (entities) + M2 (sessions, edges, exports, mechanics).
 
 ## Issues
 
-- [ ] [#023 Implement distinct prep and play modes](../issues/023-implement-distinct-prep-and-play-modes.md)
+- [x] [#023 Implement distinct prep and play modes](../issues/023-implement-distinct-prep-and-play-modes.md)
 - [ ] [#024 Implement the play-mode primary actions toolbar](../issues/024-implement-the-play-mode-primary-actions-toolbar.md)
 - [ ] [#025 Implement the clue delivery flow](../issues/025-implement-the-clue-delivery-flow.md)
 - [ ] [#026 Implement implicit event tagging during play mode](../issues/026-implement-implicit-event-tagging-during-play-mo.md)

@@ -8,6 +8,7 @@ import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRe
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
+import EditOnly from '../../components/ui/EditOnly'
 import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
@@ -117,12 +118,14 @@ function ClueDetailPage() {
           <LinkButton href={`/api/clues/${clue.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteClue.mutateAsync(clue.id).then(() => undefined)}
-            entityLabel="clue"
-            entityName={clue.name}
-            redirectTo="/clues"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteClue.mutateAsync(clue.id).then(() => undefined)}
+              entityLabel="clue"
+              entityName={clue.name}
+              redirectTo="/clues"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 
@@ -182,53 +185,55 @@ function ClueDetailPage() {
         </Stack>
       </Card>
 
-      <Card>
-        <Stack gap="sm">
-          <Heading level={2}>Add edge</Heading>
-          <form onSubmit={(e) => void onAddEdge(e)}>
-            <Stack gap="sm">
-              <Field label="Target type">
-                <Select
-                  value={targetType}
-                  onChange={(e) => onTargetTypeChange(e.target.value as EntityType)}
-                >
-                  {CLUE_TARGET_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {TARGET_TYPE_LABELS[t]}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Kind">
-                <Select value={kind} onChange={(e) => setKind(e.target.value)}>
-                  {availableKinds.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Target ID">
-                <Input
-                  type="text"
-                  value={targetId}
-                  onChange={(e) => setTargetId(e.target.value)}
-                  placeholder="UUID"
-                />
-              </Field>
-              <Field label="Notes (optional)">
-                <Input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} />
-              </Field>
-              <Toolbar align="start">
-                <Button type="submit" variant="primary" disabled={createEdge.isPending}>
-                  {createEdge.isPending ? 'Adding…' : 'Add edge'}
-                </Button>
-              </Toolbar>
-              {formError && <p>{formError}</p>}
-            </Stack>
-          </form>
-        </Stack>
-      </Card>
+      <EditOnly>
+        <Card>
+          <Stack gap="sm">
+            <Heading level={2}>Add edge</Heading>
+            <form onSubmit={(e) => void onAddEdge(e)}>
+              <Stack gap="sm">
+                <Field label="Target type">
+                  <Select
+                    value={targetType}
+                    onChange={(e) => onTargetTypeChange(e.target.value as EntityType)}
+                  >
+                    {CLUE_TARGET_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {TARGET_TYPE_LABELS[t]}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Kind">
+                  <Select value={kind} onChange={(e) => setKind(e.target.value)}>
+                    {availableKinds.map((k) => (
+                      <option key={k} value={k}>
+                        {k}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Target ID">
+                  <Input
+                    type="text"
+                    value={targetId}
+                    onChange={(e) => setTargetId(e.target.value)}
+                    placeholder="UUID"
+                  />
+                </Field>
+                <Field label="Notes (optional)">
+                  <Input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                </Field>
+                <Toolbar align="start">
+                  <Button type="submit" variant="primary" disabled={createEdge.isPending}>
+                    {createEdge.isPending ? 'Adding…' : 'Add edge'}
+                  </Button>
+                </Toolbar>
+                {formError && <p>{formError}</p>}
+              </Stack>
+            </form>
+          </Stack>
+        </Card>
+      </EditOnly>
 
       {id && <EntityRelationships entityType="clue" entityId={id} />}
       {id && <EntityRecentActivity entityType="clue" entityId={id} />}

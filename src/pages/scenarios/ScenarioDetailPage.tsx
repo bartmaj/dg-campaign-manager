@@ -3,6 +3,7 @@ import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntity
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Card from '../../components/ui/Card'
+import EditOnly from '../../components/ui/EditOnly'
 import Heading from '../../components/ui/Heading'
 import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
@@ -36,12 +37,14 @@ function ScenarioDetailPage() {
           <LinkButton href={`/api/scenarios/${scenario.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteScenario.mutateAsync(scenario.id).then(() => undefined)}
-            entityLabel="scenario"
-            entityName={scenario.name}
-            redirectTo="/scenarios"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteScenario.mutateAsync(scenario.id).then(() => undefined)}
+              entityLabel="scenario"
+              entityName={scenario.name}
+              redirectTo="/scenarios"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 

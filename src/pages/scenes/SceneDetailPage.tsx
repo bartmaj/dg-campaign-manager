@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
+import EditOnly from '../../components/ui/EditOnly'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
@@ -172,12 +173,14 @@ function SceneDetailPage() {
           <LinkButton href={`/api/scenes/${scene.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deleteScene.mutateAsync(scene.id).then(() => undefined)}
-            entityLabel="scene"
-            entityName={scene.name}
-            redirectTo="/scenes"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deleteScene.mutateAsync(scene.id).then(() => undefined)}
+              entityLabel="scene"
+              entityName={scene.name}
+              redirectTo="/scenes"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 
@@ -226,21 +229,25 @@ function SceneDetailPage() {
       </Card>
 
       {id && (
-        <Card>
-          <Stack gap="sm">
-            <Heading level={2}>Add NPC</Heading>
-            <AddNpcAtSceneForm sceneId={id} />
-          </Stack>
-        </Card>
+        <EditOnly>
+          <Card>
+            <Stack gap="sm">
+              <Heading level={2}>Add NPC</Heading>
+              <AddNpcAtSceneForm sceneId={id} />
+            </Stack>
+          </Card>
+        </EditOnly>
       )}
 
       {id && (
-        <Card>
-          <Stack gap="sm">
-            <Heading level={2}>Add clue</Heading>
-            <AddClueAtSceneForm sceneId={id} scenarioId={scene.scenarioId ?? null} />
-          </Stack>
-        </Card>
+        <EditOnly>
+          <Card>
+            <Stack gap="sm">
+              <Heading level={2}>Add clue</Heading>
+              <AddClueAtSceneForm sceneId={id} scenarioId={scene.scenarioId ?? null} />
+            </Stack>
+          </Card>
+        </EditOnly>
       )}
 
       {id && <EntityRelationships entityType="scene" entityId={id} />}

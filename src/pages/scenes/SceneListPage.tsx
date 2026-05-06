@@ -6,6 +6,7 @@ import FilterBar, {
   type FilterValues,
 } from '../../components/FilterBar/FilterBar'
 import DataTable, { type DataTableColumn } from '../../components/ui/DataTable'
+import EditOnly from '../../components/ui/EditOnly'
 import EmptyState from '../../components/ui/EmptyState'
 import Heading from '../../components/ui/Heading'
 import LinkButton from '../../components/ui/LinkButton'
@@ -57,9 +58,11 @@ function SceneListPage() {
     <Stack gap="md">
       <Toolbar align="between">
         <Heading level={1}>Scenes</Heading>
-        <LinkButton to="/scenes/new" variant="primary">
-          + New scene
-        </LinkButton>
+        <EditOnly>
+          <LinkButton to="/scenes/new" variant="primary">
+            + New scene
+          </LinkButton>
+        </EditOnly>
       </Toolbar>
       <FilterBar fields={fields} values={filterValues} onChange={setFilterValues} />
       {isLoading && <p>Loading…</p>}

@@ -10,6 +10,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import DescriptionList from '../../components/ui/DescriptionList'
+import EditOnly from '../../components/ui/EditOnly'
 import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
 import IconButton from '../../components/ui/IconButton'
@@ -91,48 +92,50 @@ function BondRowView({ bond }: { bond: BondRow }) {
           ) : null}
         </p>
         {bond.description ? <p>{bond.description}</p> : null}
-        <form onSubmit={(e) => void onApply(e, -1)}>
-          <Inline gap="sm">
-            <Input
-              type="number"
-              min="1"
-              step="1"
-              value={delta}
-              onChange={(e) => setDelta(e.target.value)}
-              placeholder="amount"
-              aria-label="Damage amount"
-            />
-            <Input
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="reason"
-              aria-label="Reason"
-            />
-            <Input
-              type="text"
-              value={sessionId}
-              onChange={(e) => setSessionId(e.target.value)}
-              placeholder="session id (optional)"
-              aria-label="Session ID"
-            />
-            <Button type="submit" disabled={apply.isPending}>
-              Damage
-            </Button>
-            <Button type="button" disabled={apply.isPending} onClick={(e) => void onApply(e, 1)}>
-              Repair
-            </Button>
-            <Button
-              type="button"
-              variant="danger"
-              onClick={() => void remove.mutateAsync(bond.id)}
-              disabled={remove.isPending}
-            >
-              ✕ Delete bond
-            </Button>
-          </Inline>
-        </form>
-        {formError && <p>{formError}</p>}
+        <EditOnly>
+          <form onSubmit={(e) => void onApply(e, -1)}>
+            <Inline gap="sm">
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                value={delta}
+                onChange={(e) => setDelta(e.target.value)}
+                placeholder="amount"
+                aria-label="Damage amount"
+              />
+              <Input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="reason"
+                aria-label="Reason"
+              />
+              <Input
+                type="text"
+                value={sessionId}
+                onChange={(e) => setSessionId(e.target.value)}
+                placeholder="session id (optional)"
+                aria-label="Session ID"
+              />
+              <Button type="submit" disabled={apply.isPending}>
+                Damage
+              </Button>
+              <Button type="button" disabled={apply.isPending} onClick={(e) => void onApply(e, 1)}>
+                Repair
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => void remove.mutateAsync(bond.id)}
+                disabled={remove.isPending}
+              >
+                ✕ Delete bond
+              </Button>
+            </Inline>
+          </form>
+          {formError && <p>{formError}</p>}
+        </EditOnly>
         <details>
           <summary>History {isLoading ? '(loading…)' : `(${events.length})`}</summary>
           {events.length === 0 ? (
@@ -311,13 +314,15 @@ function SanityListEditor({
                 ))}
               </ul>
             )}
-            <IconButton aria-label={`Edit ${label}`} onClick={start}>
-              ✎
-            </IconButton>
+            <EditOnly>
+              <IconButton aria-label={`Edit ${label}`} onClick={start}>
+                ✎
+              </IconButton>
+            </EditOnly>
           </>
         )}
         {editing && (
-          <>
+          <EditOnly>
             <Input
               type="text"
               value={text}
@@ -332,7 +337,7 @@ function SanityListEditor({
               Cancel
             </Button>
             {err && <span>{err}</span>}
-          </>
+          </EditOnly>
         )}
       </Inline>
     </div>
@@ -478,43 +483,49 @@ function SanitySection({ pc }: { pc: PcRow }) {
           />
         </Stack>
 
-        <Heading level={3}>Apply SAN change</Heading>
-        <form onSubmit={(e) => void onSubmit(e, -1)}>
-          <Stack gap="sm">
-            <Inline gap="sm">
-              <Input
-                type="number"
-                min="1"
-                step="1"
-                value={magnitude}
-                onChange={(e) => setMagnitude(e.target.value)}
-                placeholder="amount"
-                aria-label="SAN amount"
-              />
-              <Input
-                type="text"
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                placeholder="source (required)"
-                aria-label="Source"
-              />
-              <Input
-                type="text"
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
-                placeholder="session id (optional)"
-                aria-label="Session ID"
-              />
-              <Button type="submit" disabled={apply.isPending}>
-                Loss
-              </Button>
-              <Button type="button" disabled={apply.isPending} onClick={(e) => void onSubmit(e, 1)}>
-                Gain
-              </Button>
-            </Inline>
-          </Stack>
-        </form>
-        {formError && <p>{formError}</p>}
+        <EditOnly>
+          <Heading level={3}>Apply SAN change</Heading>
+          <form onSubmit={(e) => void onSubmit(e, -1)}>
+            <Stack gap="sm">
+              <Inline gap="sm">
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={magnitude}
+                  onChange={(e) => setMagnitude(e.target.value)}
+                  placeholder="amount"
+                  aria-label="SAN amount"
+                />
+                <Input
+                  type="text"
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  placeholder="source (required)"
+                  aria-label="Source"
+                />
+                <Input
+                  type="text"
+                  value={sessionId}
+                  onChange={(e) => setSessionId(e.target.value)}
+                  placeholder="session id (optional)"
+                  aria-label="Session ID"
+                />
+                <Button type="submit" disabled={apply.isPending}>
+                  Loss
+                </Button>
+                <Button
+                  type="button"
+                  disabled={apply.isPending}
+                  onClick={(e) => void onSubmit(e, 1)}
+                >
+                  Gain
+                </Button>
+              </Inline>
+            </Stack>
+          </form>
+          {formError && <p>{formError}</p>}
+        </EditOnly>
         {breakingPoints.length === 0 && (
           <p>
             <em>No breaking points configured. Add some above to enable threshold detection.</em>
@@ -565,12 +576,14 @@ function PcDetailPage() {
           <LinkButton href={`/api/pcs/${pc.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
-          <DeleteEntityButton
-            onConfirm={() => deletePc.mutateAsync(pc.id).then(() => undefined)}
-            entityLabel="PC"
-            entityName={pc.name}
-            redirectTo="/pcs"
-          />
+          <EditOnly>
+            <DeleteEntityButton
+              onConfirm={() => deletePc.mutateAsync(pc.id).then(() => undefined)}
+              entityLabel="PC"
+              entityName={pc.name}
+              redirectTo="/pcs"
+            />
+          </EditOnly>
         </Inline>
       </Toolbar>
 
@@ -657,8 +670,10 @@ function PcDetailPage() {
               ))}
             </ul>
           )}
-          <Heading level={3}>Add Bond</Heading>
-          {id && <AddBondForm pcId={id} />}
+          <EditOnly>
+            <Heading level={3}>Add Bond</Heading>
+            {id && <AddBondForm pcId={id} />}
+          </EditOnly>
         </Stack>
       </Card>
 
