@@ -1,9 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import type { NpcStatus } from '../../domain/npc.js'
 import { NPC_STATUSES, npcInputSchema } from '../../domain/npc.js'
+import { npcEncounterInputSchema } from '../../domain/npcEncounter.js'
 import { deriveAttributes } from '../../domain/pc.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
@@ -173,4 +174,73 @@ export async function npcDelete(_req: VercelRequest, res: VercelResponse, id: st
     return res.status(404).json({ error: 'NPC not found' })
   }
   return res.status(204).end()
+}
+
+function serializeEncounter(row: typeof schema.npcEncounterEvents.$inferSelect) {
+  return {
+    id: row.id,
+    npcId: row.npcId,
+    sessionId: row.sessionId,
+    note: row.note,
+    appliedAt:
+      row.appliedAt instanceof Date
+        ? row.appliedAt.toISOString()
+        : new Date(row.appliedAt as unknown as string).toISOString(),
+  }
+}
+
+/**
+ * Append an NPC-encounter event for the given NPC (#026). Body is
+ * validated against `npcEncounterInputSchema`; sessionId is required.
+ * Returns the inserted row.
+ */
+export async function npcEncounterCreate(req: VercelRequest, res: VercelResponse, npcId: string) {
+  const body = (req.body ?? {}) as Record<string, unknown>
+  const parsed = npcEncounterInputSchema.safeParse({ ...body, npcId })
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid NPC encounter input', issues: parsed.error.issues })
+  }
+  const input = parsed.data
+
+  // Verify the referenced npc and session exist (FK violations would also
+  // catch this, but a 404 is friendlier than a SQLite constraint error).
+  const [npc] = await db
+    .select({ id: schema.npcs.id })
+    .from(schema.npcs)
+    .where(eq(schema.npcs.id, input.npcId))
+    .limit(1)
+  if (!npc) return res.status(404).json({ error: 'NPC not found' })
+
+  const [session] = await db
+    .select({ id: schema.sessions.id })
+    .from(schema.sessions)
+    .where(eq(schema.sessions.id, input.sessionId))
+    .limit(1)
+  if (!session) return res.status(404).json({ error: 'Session not found' })
+
+  const [row] = await db
+    .insert(schema.npcEncounterEvents)
+    .values({
+      npcId: input.npcId,
+      sessionId: input.sessionId,
+      note: input.note ?? null,
+    })
+    .returning()
+  if (!row) return res.status(500).json({ error: 'Failed to insert encounter event' })
+  return res.status(201).json(serializeEncounter(row))
+}
+
+/**
+ * List encounter events for an NPC, ordered most recent first.
+ */
+export async function npcEncounterList(_req: VercelRequest, res: VercelResponse, npcId: string) {
+  const rows = await db
+    .select()
+    .from(schema.npcEncounterEvents)
+    .where(eq(schema.npcEncounterEvents.npcId, npcId))
+    .orderBy(desc(schema.npcEncounterEvents.appliedAt), asc(schema.npcEncounterEvents.id))
+    .limit(500)
+  return res.status(200).json({ items: rows.map(serializeEncounter) })
 }

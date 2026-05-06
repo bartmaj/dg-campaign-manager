@@ -67,6 +67,14 @@ async function sessionIdsInvolving(type: EntityType, id: string): Promise<string
     for (const r of sanRows) if (r.sessionId) ids.add(r.sessionId)
   }
 
+  if (type === 'npc') {
+    const encounterRows = await db
+      .select({ sessionId: schema.npcEncounterEvents.sessionId })
+      .from(schema.npcEncounterEvents)
+      .where(eq(schema.npcEncounterEvents.npcId, id))
+    for (const r of encounterRows) if (r.sessionId) ids.add(r.sessionId)
+  }
+
   return [...ids]
 }
 
@@ -281,6 +289,44 @@ export async function sessionDeliveredClues(
     }
   })
 
+  return res.status(200).json({ items })
+}
+
+/**
+ * Lists NPCs encountered in a given session (#026). One row per encounter
+ * event — same shape as `sessionDeliveredClues`. NPCs are looked up so the
+ * response carries display names directly.
+ */
+export async function sessionEncounteredNpcs(
+  _req: VercelRequest,
+  res: VercelResponse,
+  sessionId: string,
+) {
+  const rows = await db
+    .select()
+    .from(schema.npcEncounterEvents)
+    .where(eq(schema.npcEncounterEvents.sessionId, sessionId))
+    .orderBy(asc(schema.npcEncounterEvents.appliedAt), asc(schema.npcEncounterEvents.id))
+
+  if (rows.length === 0) return res.status(200).json({ items: [] })
+
+  const npcIds = [...new Set(rows.map((r) => r.npcId))]
+  const npcRows = await db
+    .select({ id: schema.npcs.id, name: schema.npcs.name })
+    .from(schema.npcs)
+    .where(inArray(schema.npcs.id, npcIds))
+  const nameById = new Map(npcRows.map((n) => [n.id, n.name]))
+
+  const items = rows.map((r) => ({
+    id: r.id,
+    npcId: r.npcId,
+    npcName: nameById.get(r.npcId) ?? r.npcId,
+    note: r.note,
+    appliedAt:
+      r.appliedAt instanceof Date
+        ? r.appliedAt.toISOString()
+        : new Date(r.appliedAt as unknown as string).toISOString(),
+  }))
   return res.status(200).json({ items })
 }
 

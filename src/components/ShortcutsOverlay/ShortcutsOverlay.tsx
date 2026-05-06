@@ -21,6 +21,7 @@ const SHORTCUTS: readonly Shortcut[] = [
   { keys: 'D', label: 'Mark clue delivered (play mode)' },
   { keys: 'S', label: 'Log SAN change (play mode)' },
   { keys: 'B', label: 'Log Bond damage (play mode)' },
+  { keys: 'E', label: 'Encounter NPC (play mode)' },
   { keys: 'J', label: 'Jump to current session (play mode)' },
   { keys: '?', label: 'Open this shortcuts overlay' },
   { keys: 'Esc', label: 'Close popover/modal' },

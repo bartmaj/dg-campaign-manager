@@ -337,6 +337,25 @@ export const bondDamageEvents = sqliteTable('bond_damage_events', {
     .default(sql`(unixepoch())`),
 })
 
+// `npc_encounter_events` (#026): per-NPC log of session-scoped encounters.
+// Created when the GM logs an NPC encounter from play-mode toolbar (or via
+// any session-aware mutation). Matches the bond/SAN/clue-delivery event
+// pattern; both FKs cascade so encounters disappear when an NPC or session
+// is deleted.
+export const npcEncounterEvents = sqliteTable('npc_encounter_events', {
+  id: id(),
+  npcId: text('npc_id')
+    .notNull()
+    .references(() => npcs.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => sessions.id, { onDelete: 'cascade' }),
+  note: text('note'),
+  appliedAt: integer('applied_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
 // ─── Polymorphic edges (ADR-002) ────────────────────────────────────────────
 // One row per typed relationship. Source/target are (entity_type, entity_id)
 // pairs — referential integrity is enforced at the application layer, not
@@ -394,6 +413,8 @@ export type FactionStatusEvent = typeof factionStatusEvents.$inferSelect
 export type NewFactionStatusEvent = typeof factionStatusEvents.$inferInsert
 export type ClueDeliveryEvent = typeof clueDeliveryEvents.$inferSelect
 export type NewClueDeliveryEvent = typeof clueDeliveryEvents.$inferInsert
+export type NpcEncounterEvent = typeof npcEncounterEvents.$inferSelect
+export type NewNpcEncounterEvent = typeof npcEncounterEvents.$inferInsert
 export type Edge = typeof edges.$inferSelect
 export type NewEdge = typeof edges.$inferInsert
 export type Meta = typeof meta.$inferSelect

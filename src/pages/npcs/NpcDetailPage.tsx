@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link, useParams } from 'react-router'
 import type { NpcStatus } from '../../../domain/npc'
 import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
@@ -15,7 +16,9 @@ import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
 import { useIncomingBonds } from '../../hooks/useBonds'
 import { useDeleteNpc } from '../../hooks/useDeleteNpc'
+import { useEntityNames } from '../../hooks/useEntityNames'
 import { useNpc } from '../../hooks/useNpcs'
+import { useNpcEncounters } from '../../hooks/useNpcEncounters'
 
 // Status -> Badge variant mapping (also used in NpcListPage).
 // alive -> ok, missing -> warn, turned -> danger, dead -> neutral.
@@ -145,9 +148,48 @@ function NpcDetailPage() {
         </Stack>
       </Card>
 
+      {id && <EncounterHistoryCard npcId={id} />}
+
       {id && <EntityRelationships entityType="npc" entityId={id} />}
       {id && <EntityRecentActivity entityType="npc" entityId={id} />}
     </Stack>
+  )
+}
+
+function EncounterHistoryCard({ npcId }: { npcId: string }) {
+  const { data, isLoading } = useNpcEncounters(npcId)
+  const items = useMemo(() => data?.items ?? [], [data])
+  const sessionIds = useMemo(() => [...new Set(items.map((i) => i.sessionId))], [items])
+  const sessionNamesQ = useEntityNames('session', sessionIds)
+  const nameById = useMemo(
+    () => new Map((sessionNamesQ.data?.items ?? []).map((r) => [r.id, r.name])),
+    [sessionNamesQ.data],
+  )
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <Heading level={2}>Encounter history</Heading>
+        {isLoading ? (
+          <p>Loading…</p>
+        ) : items.length === 0 ? (
+          <p>No encounters logged yet.</p>
+        ) : (
+          <ul>
+            {items.map((evt) => (
+              <li key={evt.id}>
+                <Link to={`/sessions/${evt.sessionId}`}>
+                  {nameById.get(evt.sessionId) ?? evt.sessionId}
+                </Link>
+                {' · '}
+                <span>{new Date(evt.appliedAt).toISOString().slice(0, 10)}</span>
+                {evt.note ? ` — ${evt.note}` : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Stack>
+    </Card>
   )
 }
 

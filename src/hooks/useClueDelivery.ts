@@ -7,6 +7,7 @@ import {
   type ClueDeliveryResponse,
 } from '../api/clueDelivery'
 import { sessionDeliveredCluesKeys } from './useSessionDeliveredClues'
+import { useStampSessionId } from './usePlayModeStamp'
 
 export const clueDeliveryKeys = {
   all: ['clueDelivery'] as const,
@@ -23,10 +24,16 @@ export function useClueDelivery(clueId: string | undefined) {
 
 type CreateInput = Omit<ClueDeliveryInput, 'clueId'>
 
+/**
+ * Append a clue-delivery event. In play mode + currentSession, auto-stamps
+ * `sessionId` so existing call sites that already pass `sessionId`
+ * continue to work unchanged (#026).
+ */
 export function useCreateClueDeliveryEvent(clueId: string | undefined) {
   const qc = useQueryClient()
+  const stamp = useStampSessionId<CreateInput>()
   return useMutation<ClueDeliveryEventRow, Error, CreateInput>({
-    mutationFn: (input) => createClueDeliveryEvent(clueId as string, input),
+    mutationFn: (input) => createClueDeliveryEvent(clueId as string, stamp(input)),
     onSuccess: (event) => {
       qc.invalidateQueries({ queryKey: clueDeliveryKeys.detail(event.clueId) })
       qc.invalidateQueries({

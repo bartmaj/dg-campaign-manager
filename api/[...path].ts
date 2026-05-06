@@ -29,7 +29,15 @@ import {
   locationsCreate,
   locationsList,
 } from './_handlers/locations.js'
-import { npcDelete, npcExport, npcGet, npcsCreate, npcsList } from './_handlers/npcs.js'
+import {
+  npcDelete,
+  npcEncounterCreate,
+  npcEncounterList,
+  npcExport,
+  npcGet,
+  npcsCreate,
+  npcsList,
+} from './_handlers/npcs.js'
 import {
   pcDelete,
   pcExport,
@@ -53,6 +61,7 @@ import { searchIndex } from './_handlers/search.js'
 import {
   sessionDelete,
   sessionDeliveredClues,
+  sessionEncounteredNpcs,
   sessionExport,
   sessionGet,
   sessionsCreate,
@@ -95,6 +104,8 @@ const routes: Route[] = [
   r1('GET', '/npcs/:id', npcGet),
   r1('DELETE', '/npcs/:id', npcDelete),
   r1('GET', '/npcs/:id/export', npcExport),
+  r1('GET', '/npcs/:id/encounters', npcEncounterList),
+  r1('POST', '/npcs/:id/encounter', npcEncounterCreate),
 
   // clues
   r0('GET', '/clues', cluesList),
@@ -139,6 +150,7 @@ const routes: Route[] = [
   r1('DELETE', '/sessions/:id', sessionDelete),
   r1('GET', '/sessions/:id/export', sessionExport),
   r1('GET', '/sessions/:id/delivered-clues', sessionDeliveredClues),
+  r1('GET', '/sessions/:id/encountered-npcs', sessionEncounteredNpcs),
 
   // scenarios
   r0('GET', '/scenarios', scenariosList),

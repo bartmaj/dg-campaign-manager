@@ -25,6 +25,7 @@ import { useDeleteSession } from '../../hooks/useDeleteSession'
 import { useIncomingEdges, useOutgoingEdges } from '../../hooks/useEdges'
 import { useSession } from '../../hooks/useSessions'
 import { useSessionDeliveredClues } from '../../hooks/useSessionDeliveredClues'
+import { useSessionEncounteredNpcs } from '../../hooks/useNpcEncounters'
 import { useEntityNames } from '../../hooks/useEntityNames'
 
 const SESSION_TARGET_TYPES: readonly EntityType[] = ENTITY_TYPES.filter((t) =>
@@ -300,6 +301,8 @@ function SessionDetailPage() {
 
       {id && <DeliveredCluesCard sessionId={id} />}
 
+      {id && <EncounteredNpcsCard sessionId={id} />}
+
       {id && <EntityRelationships entityType="session" entityId={id} />}
     </Stack>
   )
@@ -344,6 +347,35 @@ function DeliveredCluesCard({ sessionId }: { sessionId: string }) {
                     ))}
                 {' · '}
                 <span>{new Date(it.appliedAt).toISOString().slice(0, 10)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Stack>
+    </Card>
+  )
+}
+
+function EncounteredNpcsCard({ sessionId }: { sessionId: string }) {
+  const { data, isLoading } = useSessionEncounteredNpcs(sessionId)
+  const items = useMemo(() => data?.items ?? [], [data])
+
+  return (
+    <Card>
+      <Stack gap="sm">
+        <Heading level={2}>NPCs encountered</Heading>
+        {isLoading ? (
+          <p>Loading…</p>
+        ) : items.length === 0 ? (
+          <p>No NPC encounters logged in this session yet.</p>
+        ) : (
+          <ul>
+            {items.map((evt) => (
+              <li key={evt.id}>
+                <Link to={`/npcs/${evt.npcId}`}>{evt.npcName}</Link>
+                {' · '}
+                <span>{new Date(evt.appliedAt).toISOString().slice(0, 10)}</span>
+                {evt.note ? ` — ${evt.note}` : null}
               </li>
             ))}
           </ul>

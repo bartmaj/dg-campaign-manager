@@ -11,7 +11,13 @@ vi.mock('../../api/clueDelivery', () => ({
   createClueDeliveryEvent: vi.fn(),
   getClueDelivery: vi.fn(),
 }))
+vi.mock('../../api/npcEncounters', () => ({
+  createNpcEncounter: vi.fn(),
+  listNpcEncounters: vi.fn(),
+  getSessionEncounteredNpcs: vi.fn(),
+}))
 import { createClueDeliveryEvent } from '../../api/clueDelivery'
+import { createNpcEncounter } from '../../api/npcEncounters'
 
 function renderToolbar(initialEntries: string[]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -20,6 +26,7 @@ function renderToolbar(initialEntries: string[]) {
   qc.setQueryData(['clues', 'list', {}], [])
   qc.setQueryData(['scenes', 'list', {}], [])
   qc.setQueryData(['bonds', 'list', {}], [])
+  qc.setQueryData(['npcs', 'list', {}], [])
 
   return render(
     <QueryClientProvider client={qc}>
@@ -57,12 +64,13 @@ describe('PlayActionsToolbar', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders all five buttons in play mode', () => {
+  it('renders all six buttons in play mode', () => {
     renderToolbar(['/?mode=play'])
     expect(screen.getByRole('button', { name: /Cmd-K palette/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Clue delivered/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Log SAN change/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Log Bond damage/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Encounter NPC/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Jump to current session/i })).toBeInTheDocument()
   })
 
@@ -122,6 +130,55 @@ describe('PlayActionsToolbar', () => {
         sessionId: 'sess-42',
         kind: 'delivered',
         pcIds: ['pc-1'],
+        note: null,
+      })
+    })
+  })
+
+  it('logs an NPC encounter with auto-stamped sessionId from current session', async () => {
+    window.localStorage.setItem('dg.currentSessionId', 'sess-42')
+    const mockCreate = vi.mocked(createNpcEncounter)
+    mockCreate.mockResolvedValue({
+      id: 'enc-1',
+      npcId: 'npc-1',
+      sessionId: 'sess-42',
+      note: null,
+      appliedAt: '2026-04-30T10:00:00Z',
+    })
+    const user = userEvent.setup()
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    qc.setQueryData(['pcs', 'list', {}], [])
+    qc.setQueryData(['clues', 'list', {}], [])
+    qc.setQueryData(['scenes', 'list', {}], [])
+    qc.setQueryData(['bonds', 'list', {}], [])
+    qc.setQueryData(['npcs', 'list', {}], [{ id: 'npc-1', name: 'Mr. Verity' }])
+
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/?mode=play']}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <AppModeProvider>
+                  <PlayActionsToolbar />
+                </AppModeProvider>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /Encounter NPC/i }))
+    const dialog = await screen.findByRole('dialog', { name: /Encounter NPC/i })
+    const select = dialog.querySelector('select') as HTMLSelectElement
+    await user.selectOptions(select, 'npc-1')
+    await user.click(screen.getByRole('button', { name: /Log encounter/i }))
+
+    await waitFor(() => {
+      expect(mockCreate).toHaveBeenCalledWith('npc-1', {
+        sessionId: 'sess-42',
         note: null,
       })
     })

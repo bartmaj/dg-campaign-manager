@@ -19,9 +19,11 @@ import { useCurrentSessionId } from '../../lib/currentSession'
 import { usePcs } from '../../hooks/usePcs'
 import { useClues } from '../../hooks/useClues'
 import { useAllBonds } from '../../hooks/useBonds'
+import { useNpcs } from '../../hooks/useNpcs'
 import { useApplySanityChange } from '../../hooks/useApplySanityChange'
 import { useApplyBondDamage } from '../../hooks/useApplyBondDamage'
 import { useCreateClueDeliveryEvent } from '../../hooks/useClueDelivery'
+import { useCreateNpcEncounter } from '../../hooks/useNpcEncounters'
 import { requestOpenPalette } from '../CmdK/openPalette'
 import Button from '../ui/Button'
 import Stack from '../ui/Stack'
@@ -32,7 +34,7 @@ import Input from '../ui/Input'
 import Select from '../ui/Select'
 import Heading from '../ui/Heading'
 
-type PopoverKey = 'clue' | 'san' | 'bond' | null
+type PopoverKey = 'clue' | 'san' | 'bond' | 'npc' | null
 
 export function PlayActionsToolbar() {
   const isPlayMode = useIsPlayMode()
@@ -55,6 +57,7 @@ export function PlayActionsToolbar() {
   useHotkeys('d', () => openPopover('clue'), hotkeyOpts, [isPlayMode])
   useHotkeys('s', () => openPopover('san'), hotkeyOpts, [isPlayMode])
   useHotkeys('b', () => openPopover('bond'), hotkeyOpts, [isPlayMode])
+  useHotkeys('e', () => openPopover('npc'), hotkeyOpts, [isPlayMode])
   useHotkeys('j', jumpToSession, hotkeyOpts, [isPlayMode, currentSessionId])
 
   if (!isPlayMode) return null
@@ -68,12 +71,14 @@ export function PlayActionsToolbar() {
       {popover === 'clue' && <ClueDeliveredPopover onClose={close} />}
       {popover === 'san' && <LogSanPopover onClose={close} />}
       {popover === 'bond' && <LogBondPopover onClose={close} />}
+      {popover === 'npc' && <EncounterNpcPopover onClose={close} />}
 
       <div className="flex flex-col gap-1.5 rounded-md border border-border bg-surface p-2 shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
         <ToolbarButton label="Cmd-K palette" hint="K" onClick={openPalette} />
         <ToolbarButton label="Clue delivered" hint="D" onClick={() => openPopover('clue')} />
         <ToolbarButton label="Log SAN change" hint="S" onClick={() => openPopover('san')} />
         <ToolbarButton label="Log Bond damage" hint="B" onClick={() => openPopover('bond')} />
+        <ToolbarButton label="Encounter NPC" hint="E" onClick={() => openPopover('npc')} />
         <ToolbarButton
           label="Jump to current session"
           hint="J"
@@ -417,6 +422,83 @@ function LogBondPopover({ onClose }: { onClose: () => void }) {
           <Inline gap="sm">
             <Button type="submit" variant="danger" disabled={applyBondDamage.isPending}>
               {applyBondDamage.isPending ? 'Logging…' : 'Log damage'}
+            </Button>
+            <Button onClick={onClose}>Cancel</Button>
+          </Inline>
+        </Stack>
+      </form>
+    </PopoverShell>
+  )
+}
+
+// ─── Encounter NPC ─────────────────────────────────────────────────────────
+
+function EncounterNpcPopover({ onClose }: { onClose: () => void }) {
+  const { value: currentSessionId } = useCurrentSessionId()
+  const npcsQ = useNpcs()
+  const [npcId, setNpcId] = useState('')
+  const [note, setNote] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const createEncounter = useCreateNpcEncounter(npcId || undefined)
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!npcId) {
+      setError('Pick an NPC.')
+      return
+    }
+    if (!currentSessionId) {
+      setError('No current session — set one first.')
+      return
+    }
+    try {
+      // sessionId is auto-stamped by the hook in play mode + currentSession.
+      // We pass it explicitly here for symmetry with the other popovers and
+      // resilience if play mode is ever bypassed.
+      await createEncounter.mutateAsync({
+        sessionId: currentSessionId,
+        note: note.trim() === '' ? null : note.trim(),
+      })
+      onClose()
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }
+
+  const submitDisabled = createEncounter.isPending || !currentSessionId
+
+  return (
+    <PopoverShell title="Encounter NPC" onClose={onClose}>
+      <form onSubmit={(e) => void onSubmit(e)}>
+        <Stack gap="sm">
+          <Field label="NPC">
+            <Select value={npcId} onChange={(e) => setNpcId(e.target.value)}>
+              <option value="">— pick an NPC —</option>
+              {(npcsQ.data ?? []).map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Note (optional)">
+            <Input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Met at the docks"
+            />
+          </Field>
+          {!currentSessionId && (
+            <p className="text-xs text-danger">
+              No current session set — open a Session and choose “Set as current session”.
+            </p>
+          )}
+          {error && <p className="text-xs text-danger">{error}</p>}
+          <Inline gap="sm">
+            <Button type="submit" variant="primary" disabled={submitDisabled}>
+              {createEncounter.isPending ? 'Logging…' : 'Log encounter'}
             </Button>
             <Button onClick={onClose}>Cancel</Button>
           </Inline>
