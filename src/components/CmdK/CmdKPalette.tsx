@@ -4,6 +4,7 @@ import { searchMatch, type SearchMatchResult } from '../../../domain/searchMatch
 import { useSearchIndex } from '../../hooks/useSearchIndex'
 import Badge from '../ui/Badge'
 import { ENTITY_TYPE_LABEL, resolveResultPath } from './entityRoutes'
+import { subscribeOpenPalette } from './openPalette'
 import { useCmdKShortcut } from './useCmdKShortcut'
 
 const MIN_QUERY_LENGTH = 3
@@ -17,6 +18,9 @@ const RESULT_LIMIT = 50
 export function CmdKPalette() {
   const [isOpen, setIsOpen] = useState(false)
   useCmdKShortcut(() => setIsOpen((v) => !v))
+  // The play-mode toolbar (#024) and any other UI surface can open the
+  // palette via the openPalette event bus without coupling to this hook.
+  useEffect(() => subscribeOpenPalette(() => setIsOpen(true)), [])
   if (!isOpen) return null
   return <PaletteDialog onClose={() => setIsOpen(false)} />
 }

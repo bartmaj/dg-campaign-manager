@@ -17,6 +17,8 @@ import Prose from '../../components/ui/Prose'
 import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
+import Badge from '../../components/ui/Badge'
+import { useCurrentSessionId } from '../../lib/currentSession'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
 import { useDeleteEdge } from '../../hooks/useDeleteEdge'
 import { useDeleteSession } from '../../hooks/useDeleteSession'
@@ -118,6 +120,7 @@ function SessionDetailPage() {
       <Toolbar align="between">
         <Heading level={1}>{session.name}</Heading>
         <Inline gap="sm">
+          <CurrentSessionControl sessionId={session.id} />
           <LinkButton href={`/api/sessions/${session.id}/export`} variant="ghost" download>
             Download as Markdown
           </LinkButton>
@@ -295,6 +298,26 @@ function SessionDetailPage() {
 
       {id && <EntityRelationships entityType="session" entityId={id} />}
     </Stack>
+  )
+}
+
+function CurrentSessionControl({ sessionId }: { sessionId: string }) {
+  const { value, set } = useCurrentSessionId()
+  const isCurrent = value === sessionId
+  if (isCurrent) {
+    return (
+      <Inline gap="sm">
+        <Badge variant="accent">Current session</Badge>
+        <Button size="sm" variant="ghost" onClick={() => set(null)}>
+          Stop tracking
+        </Button>
+      </Inline>
+    )
+  }
+  return (
+    <Button size="sm" variant="secondary" onClick={() => set(sessionId)}>
+      Set as current session
+    </Button>
   )
 }
 

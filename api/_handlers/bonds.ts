@@ -33,8 +33,16 @@ export async function bondsList(req: VercelRequest, res: VercelResponse) {
   if (targetType) conditions.push(eq(schema.bonds.targetType, targetType))
   if (targetId) conditions.push(eq(schema.bonds.targetId, targetId))
 
+  // No filters: return all bonds (capped). Powers the play-mode primary
+  // actions toolbar (#024) where the GM picks any bond at the table
+  // without first navigating to a PC.
   if (conditions.length === 0) {
-    return res.status(200).json([])
+    const rows = await db
+      .select()
+      .from(schema.bonds)
+      .orderBy(desc(schema.bonds.updatedAt))
+      .limit(500)
+    return res.status(200).json(rows)
   }
 
   const rows = await db

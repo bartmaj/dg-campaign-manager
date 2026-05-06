@@ -1,5 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router'
 import { CmdKPalette } from './CmdK/CmdKPalette'
+import { PlayActionsToolbar } from './PlayActionsToolbar/PlayActionsToolbar'
+import { ShortcutsOverlay } from './ShortcutsOverlay/ShortcutsOverlay'
 import { ENTITIES } from '../entities'
 import { AppModeProvider, useAppMode } from '../lib/mode'
 import Button from './ui/Button'
@@ -43,10 +45,10 @@ function Layout() {
           >
             Delta Green Campaign Manager
           </Link>
-          {/* Primary-actions toolbar (mark clue delivered / log SAN / log Bond damage / Cmd-K / jump to current session) lands in #024. */}
           <Inline gap="md">
             <ModeToggle />
             <KbdHint>⌘K</KbdHint>
+            <ShortcutsOverlay />
           </Inline>
         </header>
         <div className="flex flex-1">
@@ -91,6 +93,7 @@ function Layout() {
           </main>
         </div>
         <CmdKPalette />
+        <PlayActionsToolbar />
       </div>
     </AppModeProvider>
   )

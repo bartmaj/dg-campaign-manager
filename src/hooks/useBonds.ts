@@ -15,6 +15,17 @@ export const bondKeys = {
   detail: (id: string) => [...bondKeys.all, 'detail', id] as const,
 }
 
+/**
+ * Lists all bonds (capped server-side). Used by the play-mode primary
+ * actions toolbar (#024) where the GM picks any bond at the table.
+ */
+export function useAllBonds() {
+  return useQuery<BondRow[]>({
+    queryKey: bondKeys.list({}),
+    queryFn: () => listBonds({}),
+  })
+}
+
 export function useBondsForPc(pcId: string | undefined) {
   return useQuery<BondRow[]>({
     queryKey: bondKeys.list({ pcId: pcId ?? '' }),
