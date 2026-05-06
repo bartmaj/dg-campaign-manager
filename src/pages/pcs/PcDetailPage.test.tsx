@@ -94,10 +94,12 @@ describe('PcDetailPage', () => {
     expect(screen.getByRole('heading', { name: /^bonds$/i })).toBeInTheDocument()
     expect(screen.getByText(/Sister Mary/)).toBeInTheDocument()
     expect(screen.getByText(/9 \/ 12/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /npc: npc-target/i })).toHaveAttribute(
-      'href',
-      '/npcs/npc-target',
-    )
+    // Target NPC name resolves via useEntityNames; falls back to "(unnamed NPC)"
+    // when the lookup hasn't seeded data — both forms link to /npcs/:id.
+    const targetLink = screen
+      .getAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/npcs/npc-target')
+    expect(targetLink).toBeDefined()
   })
 
   it('renders an empty state when the PC has no bonds', () => {
@@ -109,7 +111,8 @@ describe('PcDetailPage', () => {
     renderPage({ pc: makePc(), bonds: [] })
     expect(screen.getByRole('button', { name: /add bond/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/^name$/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/target id/i)).toBeInTheDocument()
+    // Target type field removed — bonds are always to NPCs.
+    expect(screen.getByLabelText(/bonded npc/i)).toBeInTheDocument()
   })
 
   it('renders incoming bonds (PC↔PC) under "Bonds with this character"', () => {

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import type { BondTargetType } from '../../../domain/bonds'
 import type { BondRow } from '../../api/bonds'
 import type { PcRow } from '../../api/pcs'
 import type { SanChangeEvent } from '../../api/sanity'
@@ -26,6 +25,8 @@ import { useApplySanityChange } from '../../hooks/useApplySanityChange'
 import { useBond, useBondsForPc, useIncomingBonds } from '../../hooks/useBonds'
 import { useCreateBond } from '../../hooks/useCreateBond'
 import { useDeleteBond } from '../../hooks/useDeleteBond'
+import { useEntityNames } from '../../hooks/useEntityNames'
+import { useNpcs } from '../../hooks/useNpcs'
 import { usePatchPcSanityLists } from '../../hooks/usePatchPcSanityLists'
 import { usePc } from '../../hooks/usePcs'
 import { useSanEvents } from '../../hooks/useSanity'
@@ -33,6 +34,10 @@ import { useSanEvents } from '../../hooks/useSanity'
 function BondRowView({ bond }: { bond: BondRow }) {
   const { data, isLoading } = useBond(bond.id)
   const apply = useApplyBondDamage()
+  // Resolve the bonded NPC's name. The PC who owns the bond is implicit on
+  // this page, so only the *target* needs a human-readable label.
+  const namesQuery = useEntityNames('npc', bond.targetType === 'npc' ? [bond.targetId] : [])
+  const targetName = namesQuery.data?.items.find((n) => n.id === bond.targetId)?.name
   const remove = useDeleteBond()
   const [delta, setDelta] = useState('')
   const [reason, setReason] = useState('')
@@ -76,10 +81,12 @@ function BondRowView({ bond }: { bond: BondRow }) {
       <Stack gap="xs">
         <p>
           <strong>{bond.name}</strong> — {current} / {max}
-          {' · '}
-          <Link to={`/${bond.targetType}s/${bond.targetId}`}>
-            {bond.targetType}: {bond.targetId}
-          </Link>
+          {bond.targetType === 'npc' && bond.targetId ? (
+            <>
+              {' · '}
+              <Link to={`/npcs/${bond.targetId}`}>{targetName ?? '(unnamed NPC)'}</Link>
+            </>
+          ) : null}
         </p>
         {bond.description ? <p>{bond.description}</p> : null}
         <form onSubmit={(e) => void onApply(e, -1)}>
@@ -156,8 +163,9 @@ function BondRowView({ bond }: { bond: BondRow }) {
 
 function AddBondForm({ pcId }: { pcId: string }) {
   const create = useCreateBond()
+  const npcsQuery = useNpcs()
+  const npcs = npcsQuery.data ?? []
   const [name, setName] = useState('')
-  const [targetType, setTargetType] = useState<BondTargetType>('npc')
   const [targetId, setTargetId] = useState('')
   const [maxScore, setMaxScore] = useState('12')
   const [description, setDescription] = useState('')
@@ -172,14 +180,14 @@ function AddBondForm({ pcId }: { pcId: string }) {
       return
     }
     if (name.trim() === '' || targetId.trim() === '') {
-      setFormError('Name and target id are required.')
+      setFormError('Name and bonded NPC are required.')
       return
     }
     try {
       await create.mutateAsync({
         pcId,
         name: name.trim(),
-        targetType,
+        targetType: 'npc',
         targetId: targetId.trim(),
         maxScore: max,
         description: description.trim() === '' ? null : description.trim(),
@@ -204,22 +212,28 @@ function AddBondForm({ pcId }: { pcId: string }) {
             placeholder="e.g. Sister Mary"
           />
         </Field>
-        <Field label="Target type">
+        <Field
+          label="Bonded NPC"
+          helper={
+            npcsQuery.isLoading
+              ? 'Loading NPCs…'
+              : npcs.length === 0
+                ? 'No NPCs yet — create one first.'
+                : undefined
+          }
+        >
           <Select
-            value={targetType}
-            onChange={(e) => setTargetType(e.target.value as BondTargetType)}
-          >
-            <option value="npc">NPC</option>
-            <option value="pc">PC</option>
-          </Select>
-        </Field>
-        <Field label="Target ID">
-          <Input
-            type="text"
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            placeholder="UUID"
-          />
+            disabled={npcs.length === 0}
+          >
+            <option value="">— Select an NPC —</option>
+            {npcs.map((n) => (
+              <option key={n.id} value={n.id}>
+                {n.name}
+              </option>
+            ))}
+          </Select>
         </Field>
         <Field label="Max score">
           <Input
