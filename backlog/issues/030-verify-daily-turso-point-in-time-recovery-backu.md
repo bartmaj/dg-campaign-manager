@@ -3,7 +3,7 @@ id: 030
 title: Verify daily Turso point-in-time recovery backup
 milestone: M3
 unit: M3 — Campaign-Run-Ready
-status: not-started
+status: done
 labels: [ops]
 req-ids: [REQ-N05]
 ---
@@ -30,6 +30,15 @@ And the recovery procedure is documented in the README
 ## Implementation Notes
 
 One-time verification at setup; revisit only on Turso platform changes.
+
+**Delivered**:
+- `docs/disaster-recovery.md` documents the backup model, recovery rehearsal, and the manual restore-to-production procedure.
+- `pnpm db:recovery-rehearsal` (script `scripts/db-recovery-rehearsal.ts`): forks production via `turso db create … --from-db dg-campaign-manager`, mints a fork token, counts every entity table on both prod and the fork, prints a side-by-side delta report, then tears the fork down (or keeps it via `KEEP_FORK=1`). Idempotent.
+- The script is the GM's one-button confidence check; the README appends a "last verified" line per run.
+
+**Open follow-ups**:
+- Run the rehearsal once and append the verification timestamp to `docs/disaster-recovery.md`.
+- Multi-campaign support would change the entity-count table list slightly; revisit if/when that lands.
 
 ## Dependencies
 
