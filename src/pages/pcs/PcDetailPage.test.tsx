@@ -175,4 +175,9 @@ describe('PcDetailPage', () => {
     expect(screen.getByText(/saw the deep one/)).toBeInTheDocument()
     expect(screen.getByText(/crossed 39/)).toBeInTheDocument()
   })
+
+  it('renders the Delete button in the toolbar', () => {
+    renderPage({ pc: makePc() })
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+  })
 })

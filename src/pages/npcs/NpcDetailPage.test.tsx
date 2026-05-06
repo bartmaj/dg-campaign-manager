@@ -113,4 +113,9 @@ describe('NpcDetailPage', () => {
       '/sessions/sess-1',
     )
   })
+
+  it('renders the Delete button in the toolbar', () => {
+    renderPage(makeNpc())
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+  })
 })

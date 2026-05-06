@@ -75,3 +75,11 @@ export function createSession(input: SessionInput): Promise<SessionRow> {
     body: JSON.stringify(body),
   })
 }
+
+export async function deleteSession(id: string): Promise<void> {
+  const res = await fetch(`/api/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

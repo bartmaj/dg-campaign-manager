@@ -52,3 +52,11 @@ export function createClue(input: ClueInput): Promise<ClueRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteClue(id: string): Promise<void> {
+  const res = await fetch(`/api/clues/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

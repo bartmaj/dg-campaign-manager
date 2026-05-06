@@ -239,3 +239,19 @@ export async function pcSanityEvents(_req: VercelRequest, res: VercelResponse, i
 
   return res.status(200).json(events)
 }
+
+/**
+ * Delete a PC by id. Bonds and sanity_change_events cascade via FK
+ * onDelete: 'cascade' in the schema.
+ *
+ * NOTE: Polymorphic edges that reference this PC become dangling. The UI
+ * gracefully skips unresolved names. TODO: add a sweep job that cleans
+ * up orphaned edges referencing deleted entities.
+ */
+export async function pcDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.pcs).where(eq(schema.pcs.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'PC not found' })
+  }
+  return res.status(204).end()
+}

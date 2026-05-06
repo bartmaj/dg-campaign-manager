@@ -50,3 +50,11 @@ export function createFaction(input: FactionInput): Promise<FactionRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteFaction(id: string): Promise<void> {
+  const res = await fetch(`/api/factions/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

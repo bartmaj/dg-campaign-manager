@@ -1,18 +1,22 @@
 import { Link, useParams } from 'react-router'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import FactionContext from '../../components/FactionContext/FactionContext'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
+import { useDeleteFaction } from '../../hooks/useDeleteFaction'
 import { useFaction } from '../../hooks/useFactions'
 
 function FactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: faction, isLoading, error } = useFaction(id)
+  const deleteFaction = useDeleteFaction()
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
@@ -25,9 +29,17 @@ function FactionDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{faction.name}</Heading>
-        <LinkButton href={`/api/factions/${faction.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/factions/${faction.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteFaction.mutateAsync(faction.id).then(() => undefined)}
+            entityLabel="faction"
+            entityName={faction.name}
+            redirectTo="/factions"
+          />
+        </Inline>
       </Toolbar>
 
       <Card>

@@ -159,3 +159,18 @@ export async function npcExport(_req: VercelRequest, res: VercelResponse, id: st
 
   return sendMarkdown(res, md, exportFilename('npc', npc.name))
 }
+
+/**
+ * Delete an NPC by id.
+ *
+ * NOTE: Polymorphic edges referencing this NPC become dangling. The UI
+ * gracefully skips unresolved names. TODO: add a sweep job that cleans
+ * up orphaned edges referencing deleted entities.
+ */
+export async function npcDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.npcs).where(eq(schema.npcs.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'NPC not found' })
+  }
+  return res.status(204).end()
+}

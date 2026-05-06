@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import type { BondRow } from '../../api/bonds'
 import type { PcRow } from '../../api/pcs'
 import type { SanChangeEvent } from '../../api/sanity'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Badge from '../../components/ui/Badge'
@@ -25,6 +26,7 @@ import { useApplySanityChange } from '../../hooks/useApplySanityChange'
 import { useBond, useBondsForPc, useIncomingBonds } from '../../hooks/useBonds'
 import { useCreateBond } from '../../hooks/useCreateBond'
 import { useDeleteBond } from '../../hooks/useDeleteBond'
+import { useDeletePc } from '../../hooks/useDeletePc'
 import { useEntityNames } from '../../hooks/useEntityNames'
 import { useNpcs } from '../../hooks/useNpcs'
 import { usePatchPcSanityLists } from '../../hooks/usePatchPcSanityLists'
@@ -546,6 +548,7 @@ function PcDetailPage() {
   const { data: pc, isLoading, error } = usePc(id)
   const { data: bonds = [] } = useBondsForPc(id)
   const { data: incomingBonds = [] } = useIncomingBonds('pc', id)
+  const deletePc = useDeletePc()
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
@@ -558,9 +561,17 @@ function PcDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{pc.name}</Heading>
-        <LinkButton href={`/api/pcs/${pc.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/pcs/${pc.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deletePc.mutateAsync(pc.id).then(() => undefined)}
+            entityLabel="PC"
+            entityName={pc.name}
+            redirectTo="/pcs"
+          />
+        </Inline>
       </Toolbar>
 
       {pc.profession && <p>Profession: {pc.profession}</p>}

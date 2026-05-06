@@ -84,3 +84,18 @@ export async function clueExport(_req: VercelRequest, res: VercelResponse, id: s
 
   return sendMarkdown(res, md, exportFilename('clue', clue.name))
 }
+
+/**
+ * Delete a clue by id.
+ *
+ * NOTE: Polymorphic edges referencing this clue become dangling. The UI
+ * gracefully skips unresolved names. TODO: add a sweep job that cleans
+ * up orphaned edges referencing deleted entities.
+ */
+export async function clueDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.clues).where(eq(schema.clues.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Clue not found' })
+  }
+  return res.status(204).end()
+}

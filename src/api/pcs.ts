@@ -69,3 +69,11 @@ export function createPc(input: PcInput): Promise<PcRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deletePc(id: string): Promise<void> {
+  const res = await fetch(`/api/pcs/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

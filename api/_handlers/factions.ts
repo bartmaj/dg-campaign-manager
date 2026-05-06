@@ -137,3 +137,18 @@ export async function factionStatusDelete(
   }
   return res.status(200).json(row)
 }
+
+/**
+ * Delete a faction by id. faction_status_events cascade via FK.
+ *
+ * NOTE: Polymorphic edges referencing this faction become dangling. The
+ * UI gracefully skips unresolved names. TODO: add a sweep job that
+ * cleans up orphaned edges referencing deleted entities.
+ */
+export async function factionDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.factions).where(eq(schema.factions.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Faction not found' })
+  }
+  return res.status(204).end()
+}

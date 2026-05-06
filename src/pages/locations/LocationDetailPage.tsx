@@ -1,17 +1,21 @@
 import { Link, useParams } from 'react-router'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import LocationContext from '../../components/LocationContext/LocationContext'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
+import { useDeleteLocation } from '../../hooks/useDeleteLocation'
 import { useLocation } from '../../hooks/useLocations'
 
 function LocationDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: location, isLoading, error } = useLocation(id)
+  const deleteLocation = useDeleteLocation()
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
@@ -24,9 +28,17 @@ function LocationDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{location.name}</Heading>
-        <LinkButton href={`/api/locations/${location.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/locations/${location.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteLocation.mutateAsync(location.id).then(() => undefined)}
+            entityLabel="location"
+            entityName={location.name}
+            redirectTo="/locations"
+          />
+        </Inline>
       </Toolbar>
 
       <Card>

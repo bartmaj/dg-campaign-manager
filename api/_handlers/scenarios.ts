@@ -92,3 +92,18 @@ export async function scenarioExport(_req: VercelRequest, res: VercelResponse, i
 
   return sendMarkdown(res, md, exportFilename('scenario', scenario.name))
 }
+
+/**
+ * Delete a scenario by id. Scenes cascade via FK onDelete: 'cascade'.
+ *
+ * NOTE: Polymorphic edges referencing this scenario become dangling. The
+ * UI gracefully skips unresolved names. TODO: add a sweep job that
+ * cleans up orphaned edges referencing deleted entities.
+ */
+export async function scenarioDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.scenarios).where(eq(schema.scenarios.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Scenario not found' })
+  }
+  return res.status(204).end()
+}

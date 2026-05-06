@@ -103,4 +103,9 @@ describe('ClueDetailPage', () => {
     const link = screen.getByRole('link', { name: 'scen-42' })
     expect(link).toHaveAttribute('href', '/scenarios/scen-42')
   })
+
+  it('renders the Delete button in the toolbar', () => {
+    renderPage({ clue: makeClue() })
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+  })
 })

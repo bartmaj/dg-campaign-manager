@@ -71,3 +71,11 @@ export function createNpc(input: NpcInput): Promise<NpcRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteNpc(id: string): Promise<void> {
+  const res = await fetch(`/api/npcs/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

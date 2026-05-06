@@ -98,3 +98,18 @@ export async function itemExport(_req: VercelRequest, res: VercelResponse, id: s
 
   return sendMarkdown(res, md, exportFilename('item', item.name))
 }
+
+/**
+ * Delete an item by id.
+ *
+ * NOTE: Polymorphic edges referencing this item become dangling. The UI
+ * gracefully skips unresolved names. TODO: add a sweep job that cleans
+ * up orphaned edges referencing deleted entities.
+ */
+export async function itemDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.items).where(eq(schema.items.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Item not found' })
+  }
+  return res.status(204).end()
+}

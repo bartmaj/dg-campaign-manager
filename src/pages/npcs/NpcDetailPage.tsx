@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 import type { NpcStatus } from '../../../domain/npc'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Badge from '../../components/ui/Badge'
@@ -12,6 +13,7 @@ import Prose from '../../components/ui/Prose'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
 import { useIncomingBonds } from '../../hooks/useBonds'
+import { useDeleteNpc } from '../../hooks/useDeleteNpc'
 import { useNpc } from '../../hooks/useNpcs'
 
 // Status -> Badge variant mapping (also used in NpcListPage).
@@ -27,6 +29,7 @@ function NpcDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: npc, isLoading, error } = useNpc(id)
   const { data: incomingBonds = [] } = useIncomingBonds('npc', id)
+  const deleteNpc = useDeleteNpc()
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
@@ -45,9 +48,17 @@ function NpcDetailPage() {
           {/* Continuity dimension #4: Status */}
           <Badge variant={statusVariant(npc.status)}>{npc.status}</Badge>
         </Inline>
-        <LinkButton href={`/api/npcs/${npc.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/npcs/${npc.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteNpc.mutateAsync(npc.id).then(() => undefined)}
+            entityLabel="NPC"
+            entityName={npc.name}
+            redirectTo="/npcs"
+          />
+        </Inline>
       </Toolbar>
 
       {npc.profession && <p>Profession: {npc.profession}</p>}

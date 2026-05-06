@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
@@ -15,6 +17,7 @@ import Toolbar from '../../components/ui/Toolbar'
 import { useCreateClue } from '../../hooks/useCreateClue'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
 import { useCreateNpc } from '../../hooks/useCreateNpc'
+import { useDeleteScene } from '../../hooks/useDeleteScene'
 import { useIncomingEdges } from '../../hooks/useEdges'
 import { useScene } from '../../hooks/useScenes'
 
@@ -152,6 +155,7 @@ function SceneDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: scene, isLoading, error } = useScene(id)
   const { data: incoming = [] } = useIncomingEdges('scene', id)
+  const deleteScene = useDeleteScene()
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
@@ -164,9 +168,17 @@ function SceneDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{scene.name}</Heading>
-        <LinkButton href={`/api/scenes/${scene.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/scenes/${scene.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteScene.mutateAsync(scene.id).then(() => undefined)}
+            entityLabel="scene"
+            entityName={scene.name}
+            redirectTo="/scenes"
+          />
+        </Inline>
       </Toolbar>
 
       <Card>

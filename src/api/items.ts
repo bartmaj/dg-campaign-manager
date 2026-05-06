@@ -56,3 +56,11 @@ export function createItem(input: ItemInput): Promise<ItemRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteItem(id: string): Promise<void> {
+  const res = await fetch(`/api/items/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

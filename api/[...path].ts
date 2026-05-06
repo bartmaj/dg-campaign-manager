@@ -1,8 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { bondDamageApply, bondDelete, bondGet, bondsCreate, bondsList } from './_handlers/bonds.js'
-import { clueExport, clueGet, cluesCreate, cluesList } from './_handlers/clues.js'
+import { clueDelete, clueExport, clueGet, cluesCreate, cluesList } from './_handlers/clues.js'
 import { edgeDelete, edgeGet, edgesCreate, edgesList } from './_handlers/edges.js'
 import {
+  factionDelete,
   factionExport,
   factionGet,
   factionsCreate,
@@ -12,15 +13,17 @@ import {
   factionStatusList,
 } from './_handlers/factions.js'
 import { importScenario } from './_handlers/import.js'
-import { itemExport, itemGet, itemsCreate, itemsList } from './_handlers/items.js'
+import { itemDelete, itemExport, itemGet, itemsCreate, itemsList } from './_handlers/items.js'
 import {
+  locationDelete,
   locationExport,
   locationGet,
   locationsCreate,
   locationsList,
 } from './_handlers/locations.js'
-import { npcExport, npcGet, npcsCreate, npcsList } from './_handlers/npcs.js'
+import { npcDelete, npcExport, npcGet, npcsCreate, npcsList } from './_handlers/npcs.js'
 import {
+  pcDelete,
   pcExport,
   pcGet,
   pcPatch,
@@ -30,15 +33,22 @@ import {
   pcSanityEvents,
 } from './_handlers/pcs.js'
 import {
+  scenarioDelete,
   scenarioExport,
   scenarioGet,
   scenariosCreate,
   scenariosList,
 } from './_handlers/scenarios.js'
-import { sceneExport, sceneGet, scenesCreate, scenesList } from './_handlers/scenes.js'
+import { sceneDelete, sceneExport, sceneGet, scenesCreate, scenesList } from './_handlers/scenes.js'
 import { namesLookup } from './_handlers/names.js'
 import { searchIndex } from './_handlers/search.js'
-import { sessionExport, sessionGet, sessionsCreate, sessionsList } from './_handlers/sessions.js'
+import {
+  sessionDelete,
+  sessionExport,
+  sessionGet,
+  sessionsCreate,
+  sessionsList,
+} from './_handlers/sessions.js'
 
 type Handler0 = (req: VercelRequest, res: VercelResponse) => unknown | Promise<unknown>
 type Handler1 = (req: VercelRequest, res: VercelResponse, id: string) => unknown | Promise<unknown>
@@ -65,6 +75,7 @@ const routes: Route[] = [
   r0('POST', '/pcs', pcsCreate),
   r1('GET', '/pcs/:id', pcGet),
   r1('PATCH', '/pcs/:id', pcPatch),
+  r1('DELETE', '/pcs/:id', pcDelete),
   r1('GET', '/pcs/:id/export', pcExport),
   r1('POST', '/pcs/:id/sanity', pcSanityApply),
   r1('GET', '/pcs/:id/sanity-events', pcSanityEvents),
@@ -73,18 +84,21 @@ const routes: Route[] = [
   r0('GET', '/npcs', npcsList),
   r0('POST', '/npcs', npcsCreate),
   r1('GET', '/npcs/:id', npcGet),
+  r1('DELETE', '/npcs/:id', npcDelete),
   r1('GET', '/npcs/:id/export', npcExport),
 
   // clues
   r0('GET', '/clues', cluesList),
   r0('POST', '/clues', cluesCreate),
   r1('GET', '/clues/:id', clueGet),
+  r1('DELETE', '/clues/:id', clueDelete),
   r1('GET', '/clues/:id/export', clueExport),
 
   // factions
   r0('GET', '/factions', factionsList),
   r0('POST', '/factions', factionsCreate),
   r1('GET', '/factions/:id', factionGet),
+  r1('DELETE', '/factions/:id', factionDelete),
   r1('GET', '/factions/:id/export', factionExport),
   // Faction status timeline (#020). Note: DELETE uses eventId — routed
   // under a separate top-level path because the router only supports a
@@ -97,30 +111,35 @@ const routes: Route[] = [
   r0('GET', '/locations', locationsList),
   r0('POST', '/locations', locationsCreate),
   r1('GET', '/locations/:id', locationGet),
+  r1('DELETE', '/locations/:id', locationDelete),
   r1('GET', '/locations/:id/export', locationExport),
 
   // items
   r0('GET', '/items', itemsList),
   r0('POST', '/items', itemsCreate),
   r1('GET', '/items/:id', itemGet),
+  r1('DELETE', '/items/:id', itemDelete),
   r1('GET', '/items/:id/export', itemExport),
 
   // sessions
   r0('GET', '/sessions', sessionsList),
   r0('POST', '/sessions', sessionsCreate),
   r1('GET', '/sessions/:id', sessionGet),
+  r1('DELETE', '/sessions/:id', sessionDelete),
   r1('GET', '/sessions/:id/export', sessionExport),
 
   // scenarios
   r0('GET', '/scenarios', scenariosList),
   r0('POST', '/scenarios', scenariosCreate),
   r1('GET', '/scenarios/:id', scenarioGet),
+  r1('DELETE', '/scenarios/:id', scenarioDelete),
   r1('GET', '/scenarios/:id/export', scenarioExport),
 
   // scenes
   r0('GET', '/scenes', scenesList),
   r0('POST', '/scenes', scenesCreate),
   r1('GET', '/scenes/:id', sceneGet),
+  r1('DELETE', '/scenes/:id', sceneDelete),
   r1('GET', '/scenes/:id/export', sceneExport),
 
   // bonds

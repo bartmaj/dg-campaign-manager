@@ -94,3 +94,18 @@ export async function sceneExport(_req: VercelRequest, res: VercelResponse, id: 
 
   return sendMarkdown(res, md, exportFilename('scene', scene.name))
 }
+
+/**
+ * Delete a scene by id.
+ *
+ * NOTE: Polymorphic edges referencing this scene become dangling. The UI
+ * gracefully skips unresolved names. TODO: add a sweep job that cleans
+ * up orphaned edges referencing deleted entities.
+ */
+export async function sceneDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.scenes).where(eq(schema.scenes.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Scene not found' })
+  }
+  return res.status(204).end()
+}

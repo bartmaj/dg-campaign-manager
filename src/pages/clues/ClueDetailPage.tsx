@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router'
 import { ENTITY_TYPES, type EntityType } from '../../../db/schema'
 import { EDGE_RULES, kindsForSource } from '../../../domain/edges'
 import type { EdgeRow } from '../../api/edges'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
@@ -17,6 +19,7 @@ import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
 import { useClue } from '../../hooks/useClues'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
+import { useDeleteClue } from '../../hooks/useDeleteClue'
 import { useDeleteEdge } from '../../hooks/useDeleteEdge'
 import { useOutgoingEdges } from '../../hooks/useEdges'
 
@@ -56,6 +59,7 @@ function ClueDetailPage() {
 
   const createEdge = useCreateEdge()
   const deleteEdge = useDeleteEdge()
+  const deleteClue = useDeleteClue()
 
   const [targetType, setTargetType] = useState<EntityType>(CLUE_TARGET_TYPES[0] ?? 'npc')
   const [kind, setKind] = useState<string>(
@@ -109,9 +113,17 @@ function ClueDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{clue.name}</Heading>
-        <LinkButton href={`/api/clues/${clue.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/clues/${clue.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteClue.mutateAsync(clue.id).then(() => undefined)}
+            entityLabel="clue"
+            entityName={clue.name}
+            redirectTo="/clues"
+          />
+        </Inline>
       </Toolbar>
 
       <Card>

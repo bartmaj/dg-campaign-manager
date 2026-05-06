@@ -138,4 +138,9 @@ describe('FactionDetailPage', () => {
       within(implicatingCard as HTMLElement).queryByRole('link', { name: 'npc-1' }),
     ).not.toBeInTheDocument()
   })
+
+  it('renders the Delete button in the toolbar', () => {
+    renderPage({ faction: makeFaction() })
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+  })
 })

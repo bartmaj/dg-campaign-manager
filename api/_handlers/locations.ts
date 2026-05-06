@@ -91,3 +91,18 @@ export async function locationExport(_req: VercelRequest, res: VercelResponse, i
 
   return sendMarkdown(res, md, exportFilename('location', location.name))
 }
+
+/**
+ * Delete a location by id.
+ *
+ * NOTE: Polymorphic edges referencing this location become dangling. The
+ * UI gracefully skips unresolved names. TODO: add a sweep job that
+ * cleans up orphaned edges referencing deleted entities.
+ */
+export async function locationDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.locations).where(eq(schema.locations.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Location not found' })
+  }
+  return res.status(204).end()
+}

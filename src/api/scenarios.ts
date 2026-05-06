@@ -46,3 +46,11 @@ export function createScenario(input: ScenarioInput): Promise<ScenarioRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteScenario(id: string): Promise<void> {
+  const res = await fetch(`/api/scenarios/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

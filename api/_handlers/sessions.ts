@@ -212,3 +212,18 @@ export async function sessionExport(_req: VercelRequest, res: VercelResponse, id
 
   return sendMarkdown(res, md, exportFilename('session', session.name))
 }
+
+/**
+ * Delete a session by id.
+ *
+ * NOTE: Polymorphic edges referencing this session become dangling. The
+ * UI gracefully skips unresolved names. TODO: add a sweep job that
+ * cleans up orphaned edges referencing deleted entities.
+ */
+export async function sessionDelete(_req: VercelRequest, res: VercelResponse, id: string) {
+  const [row] = await db.delete(schema.sessions).where(eq(schema.sessions.id, id)).returning()
+  if (!row) {
+    return res.status(404).json({ error: 'Session not found' })
+  }
+  return res.status(204).end()
+}

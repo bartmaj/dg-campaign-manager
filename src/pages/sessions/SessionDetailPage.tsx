@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router'
 import { ENTITY_TYPES, type EntityType } from '../../../db/schema'
 import { EDGE_RULES, kindsForSource } from '../../../domain/edges'
 import type { EdgeRow } from '../../api/edges'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
@@ -16,6 +18,7 @@ import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
 import { useDeleteEdge } from '../../hooks/useDeleteEdge'
+import { useDeleteSession } from '../../hooks/useDeleteSession'
 import { useIncomingEdges, useOutgoingEdges } from '../../hooks/useEdges'
 import { useSession } from '../../hooks/useSessions'
 
@@ -61,6 +64,7 @@ function SessionDetailPage() {
 
   const createEdge = useCreateEdge()
   const deleteEdge = useDeleteEdge()
+  const deleteSession = useDeleteSession()
 
   const initialTarget = SESSION_TARGET_TYPES[0] ?? 'scenario'
   const [targetType, setTargetType] = useState<EntityType>(initialTarget)
@@ -112,9 +116,17 @@ function SessionDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{session.name}</Heading>
-        <LinkButton href={`/api/sessions/${session.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/sessions/${session.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteSession.mutateAsync(session.id).then(() => undefined)}
+            entityLabel="session"
+            entityName={session.name}
+            redirectTo="/sessions"
+          />
+        </Inline>
       </Toolbar>
 
       <Card>

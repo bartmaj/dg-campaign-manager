@@ -1,17 +1,21 @@
 import { Link, useParams } from 'react-router'
+import DeleteEntityButton from '../../components/DeleteEntityButton/DeleteEntityButton'
 import EntityRecentActivity from '../../components/EntityRecentActivity/EntityRecentActivity'
 import EntityRelationships from '../../components/EntityRelationships/EntityRelationships'
 import Card from '../../components/ui/Card'
 import Heading from '../../components/ui/Heading'
+import Inline from '../../components/ui/Inline'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
+import { useDeleteItem } from '../../hooks/useDeleteItem'
 import { useItem } from '../../hooks/useItems'
 
 function ItemDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: item, isLoading, error } = useItem(id)
+  const deleteItem = useDeleteItem()
 
   if (isLoading) return <p>Loading…</p>
   if (error) return <p>Failed to load: {error.message}</p>
@@ -24,9 +28,17 @@ function ItemDetailPage() {
       </p>
       <Toolbar align="between">
         <Heading level={1}>{item.name}</Heading>
-        <LinkButton href={`/api/items/${item.id}/export`} variant="ghost" download>
-          Download as Markdown
-        </LinkButton>
+        <Inline gap="sm">
+          <LinkButton href={`/api/items/${item.id}/export`} variant="ghost" download>
+            Download as Markdown
+          </LinkButton>
+          <DeleteEntityButton
+            onConfirm={() => deleteItem.mutateAsync(item.id).then(() => undefined)}
+            entityLabel="item"
+            entityName={item.name}
+            redirectTo="/items"
+          />
+        </Inline>
       </Toolbar>
 
       <Card>

@@ -51,3 +51,11 @@ export function createScene(input: SceneInput): Promise<SceneRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteScene(id: string): Promise<void> {
+  const res = await fetch(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}

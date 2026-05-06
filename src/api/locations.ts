@@ -52,3 +52,11 @@ export function createLocation(input: LocationInput): Promise<LocationRow> {
     body: JSON.stringify(input),
   })
 }
+
+export async function deleteLocation(id: string): Promise<void> {
+  const res = await fetch(`/api/locations/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`HTTP ${res.status}: ${body}`)
+  }
+}
