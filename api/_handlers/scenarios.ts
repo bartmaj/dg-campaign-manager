@@ -3,6 +3,7 @@ import { asc, desc, eq, like } from 'drizzle-orm'
 import { db, schema } from '../../db/client.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import { scenarioInputSchema } from '../../domain/scenario.js'
+import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
@@ -101,9 +102,12 @@ export async function scenarioExport(_req: VercelRequest, res: VercelResponse, i
  * cleans up orphaned edges referencing deleted entities.
  */
 export async function scenarioDelete(_req: VercelRequest, res: VercelResponse, id: string) {
-  const [row] = await db.delete(schema.scenarios).where(eq(schema.scenarios.id, id)).returning()
-  if (!row) {
-    return res.status(404).json({ error: 'Scenario not found' })
-  }
+  const found = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(schema.scenarios).where(eq(schema.scenarios.id, id)).returning()
+    if (!row) return false
+    await deleteEntityEdges(tx, 'scenario', id)
+    return true
+  })
+  if (!found) return res.status(404).json({ error: 'Scenario not found' })
   return res.status(204).end()
 }

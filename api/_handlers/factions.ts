@@ -4,6 +4,7 @@ import { db, schema } from '../../db/client.js'
 import { factionInputSchema } from '../../domain/faction.js'
 import { factionStatusEventInputSchema } from '../../domain/factionStatus.js'
 import { serializeEntity } from '../../domain/mdExport.js'
+import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
@@ -146,9 +147,12 @@ export async function factionStatusDelete(
  * cleans up orphaned edges referencing deleted entities.
  */
 export async function factionDelete(_req: VercelRequest, res: VercelResponse, id: string) {
-  const [row] = await db.delete(schema.factions).where(eq(schema.factions.id, id)).returning()
-  if (!row) {
-    return res.status(404).json({ error: 'Faction not found' })
-  }
+  const found = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(schema.factions).where(eq(schema.factions.id, id)).returning()
+    if (!row) return false
+    await deleteEntityEdges(tx, 'faction', id)
+    return true
+  })
+  if (!found) return res.status(404).json({ error: 'Faction not found' })
   return res.status(204).end()
 }

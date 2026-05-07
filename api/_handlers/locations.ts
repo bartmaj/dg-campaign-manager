@@ -3,6 +3,7 @@ import { and, desc, eq, like, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client.js'
 import { locationInputSchema } from '../../domain/location.js'
 import { serializeEntity } from '../../domain/mdExport.js'
+import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
@@ -100,9 +101,12 @@ export async function locationExport(_req: VercelRequest, res: VercelResponse, i
  * cleans up orphaned edges referencing deleted entities.
  */
 export async function locationDelete(_req: VercelRequest, res: VercelResponse, id: string) {
-  const [row] = await db.delete(schema.locations).where(eq(schema.locations.id, id)).returning()
-  if (!row) {
-    return res.status(404).json({ error: 'Location not found' })
-  }
+  const found = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(schema.locations).where(eq(schema.locations.id, id)).returning()
+    if (!row) return false
+    await deleteEntityEdges(tx, 'location', id)
+    return true
+  })
+  if (!found) return res.status(404).json({ error: 'Location not found' })
   return res.status(204).end()
 }

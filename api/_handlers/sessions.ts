@@ -5,6 +5,7 @@ import { db, schema } from '../../db/client.js'
 import { ENTITY_TYPES, type EntityType } from '../../db/schema.js'
 import { serializeEntity, serializeSessionHandout, slugifyName } from '../../domain/mdExport.js'
 import { sessionInputSchema } from '../../domain/session.js'
+import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 /**
@@ -332,10 +333,13 @@ export async function sessionEncounteredNpcs(
 }
 
 export async function sessionDelete(_req: VercelRequest, res: VercelResponse, id: string) {
-  const [row] = await db.delete(schema.sessions).where(eq(schema.sessions.id, id)).returning()
-  if (!row) {
-    return res.status(404).json({ error: 'Session not found' })
-  }
+  const found = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(schema.sessions).where(eq(schema.sessions.id, id)).returning()
+    if (!row) return false
+    await deleteEntityEdges(tx, 'session', id)
+    return true
+  })
+  if (!found) return res.status(404).json({ error: 'Session not found' })
   return res.status(204).end()
 }
 

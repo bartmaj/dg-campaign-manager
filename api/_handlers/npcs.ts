@@ -6,6 +6,7 @@ import type { NpcStatus } from '../../domain/npc.js'
 import { NPC_STATUSES, npcInputSchema } from '../../domain/npc.js'
 import { npcEncounterInputSchema } from '../../domain/npcEncounter.js'
 import { deriveAttributes } from '../../domain/pc.js'
+import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
@@ -169,10 +170,13 @@ export async function npcExport(_req: VercelRequest, res: VercelResponse, id: st
  * up orphaned edges referencing deleted entities.
  */
 export async function npcDelete(_req: VercelRequest, res: VercelResponse, id: string) {
-  const [row] = await db.delete(schema.npcs).where(eq(schema.npcs.id, id)).returning()
-  if (!row) {
-    return res.status(404).json({ error: 'NPC not found' })
-  }
+  const found = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(schema.npcs).where(eq(schema.npcs.id, id)).returning()
+    if (!row) return false
+    await deleteEntityEdges(tx, 'npc', id)
+    return true
+  })
+  if (!found) return res.status(404).json({ error: 'NPC not found' })
   return res.status(204).end()
 }
 

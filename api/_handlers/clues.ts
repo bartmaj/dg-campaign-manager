@@ -8,6 +8,7 @@ import {
   type DeliveryEvent,
 } from '../../domain/clueDelivery.js'
 import { serializeEntity } from '../../domain/mdExport.js'
+import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
 function singleParam(value: string | string[] | undefined): string | undefined {
@@ -98,10 +99,13 @@ export async function clueExport(_req: VercelRequest, res: VercelResponse, id: s
  * up orphaned edges referencing deleted entities.
  */
 export async function clueDelete(_req: VercelRequest, res: VercelResponse, id: string) {
-  const [row] = await db.delete(schema.clues).where(eq(schema.clues.id, id)).returning()
-  if (!row) {
-    return res.status(404).json({ error: 'Clue not found' })
-  }
+  const found = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(schema.clues).where(eq(schema.clues.id, id)).returning()
+    if (!row) return false
+    await deleteEntityEdges(tx, 'clue', id)
+    return true
+  })
+  if (!found) return res.status(404).json({ error: 'Clue not found' })
   return res.status(204).end()
 }
 
