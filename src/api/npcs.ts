@@ -1,4 +1,4 @@
-import type { NpcInput, NpcStatus } from '../../domain/npc'
+import type { NpcInput, NpcStatBlock, NpcStatus } from '../../domain/npc'
 
 /**
  * Wire-format NPC row returned by /api/npcs. Mirrors db/schema.ts npcs.
@@ -69,6 +69,27 @@ export function createNpc(input: NpcInput): Promise<NpcRow> {
   return fetchJson<NpcRow>('/api/npcs', {
     method: 'POST',
     body: JSON.stringify(input),
+  })
+}
+
+export type NpcPatch = {
+  name?: string
+  description?: string | null
+  profession?: string | null
+  status?: NpcStatus
+  factionId?: string | null
+  locationId?: string | null
+  statBlock?: NpcStatBlock
+  mannerisms?: string | null
+  voice?: string | null
+  secrets?: string | null
+  currentGoal?: string | null
+}
+
+export function updateNpc(id: string, patch: NpcPatch): Promise<NpcRow> {
+  return fetchJson<NpcRow>(`/api/npcs/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
   })
 }
 

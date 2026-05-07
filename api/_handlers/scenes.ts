@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, like, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import { sceneInputSchema } from '../../domain/scene.js'
@@ -94,6 +95,33 @@ export async function sceneExport(_req: VercelRequest, res: VercelResponse, id: 
   })
 
   return sendMarkdown(res, md, exportFilename('scene', scene.name))
+}
+
+const scenePatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    scenarioId: z.string().min(1).optional(),
+    orderIndex: z.number().int().nonnegative().optional(),
+  })
+  .strict()
+
+export async function scenePatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = scenePatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid scene patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+  const [row] = await db
+    .update(schema.scenes)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.scenes.id, id))
+    .returning()
+  if (!row) return res.status(404).json({ error: 'Scene not found' })
+  return res.status(200).json(row)
 }
 
 /**

@@ -47,6 +47,19 @@ export function createScenario(input: ScenarioInput): Promise<ScenarioRow> {
   })
 }
 
+export type ScenarioPatch = {
+  name?: string
+  description?: string | null
+  campaignId?: string | null
+}
+
+export function updateScenario(id: string, patch: ScenarioPatch): Promise<ScenarioRow> {
+  return fetchJson<ScenarioRow>(`/api/scenarios/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deleteScenario(id: string): Promise<void> {
   const res = await fetch(`/api/scenarios/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

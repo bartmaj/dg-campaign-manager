@@ -577,6 +577,11 @@ function PcDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/pcs/${pc.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deletePc.mutateAsync(pc.id).then(() => undefined)}
               entityLabel="PC"

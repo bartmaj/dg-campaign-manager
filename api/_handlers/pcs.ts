@@ -3,7 +3,13 @@ import { asc, desc, eq, like, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { serializeEntity } from '../../domain/mdExport.js'
-import { deriveAttributes, pcInputSchema } from '../../domain/pc.js'
+import {
+  deriveAttributes,
+  pcInputSchema,
+  pcSkillSchema,
+  STAT_MAX,
+  STAT_MIN,
+} from '../../domain/pc.js'
 import {
   applySanityChange,
   detectCrossedThresholds,
@@ -12,11 +18,36 @@ import {
 import { deleteEntityEdges } from '../_lib/cascade.js'
 import { exportFilename, loadEdgeContext, sendMarkdown, toExportEdges } from '../_lib/export.js'
 
-const pcSanityListsPatchSchema = z.object({
-  breakingPoints: z.array(z.number().int()).optional(),
-  sanityDisorders: z.array(z.string().min(1)).optional(),
-  adaptedTo: z.array(z.string().min(1)).optional(),
-})
+const statPatchSchema = z.number().int().min(STAT_MIN).max(STAT_MAX)
+
+/**
+ * Combined PATCH schema for a PC: accepts both the narrow sanity-list
+ * fields (kept for the existing per-section editors on PcDetailPage) and
+ * the broader Edit-form fields (basic biographical/stat columns). All
+ * fields are optional; any of `id`, `createdAt`, `updatedAt`,
+ * `campaignId`, `sanityCurrent`, etc. are rejected.
+ */
+const pcPatchSchema = z
+  .object({
+    // Narrow sanity-list editors.
+    breakingPoints: z.array(z.number().int()).optional(),
+    sanityDisorders: z.array(z.string().min(1)).optional(),
+    adaptedTo: z.array(z.string().min(1)).optional(),
+    // Edit form fields.
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    profession: z.string().min(1).nullable().optional(),
+    str: statPatchSchema.optional(),
+    con: statPatchSchema.optional(),
+    dex: statPatchSchema.optional(),
+    intelligence: statPatchSchema.optional(),
+    pow: statPatchSchema.optional(),
+    cha: statPatchSchema.optional(),
+    skills: z.array(pcSkillSchema).optional(),
+    motivations: z.array(z.string().min(1)).optional(),
+    backstoryHooks: z.string().optional(),
+  })
+  .strict()
 
 function singlePcParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0]
@@ -79,7 +110,7 @@ export async function pcGet(_req: VercelRequest, res: VercelResponse, id: string
 }
 
 export async function pcPatch(req: VercelRequest, res: VercelResponse, id: string) {
-  const parsed = pcSanityListsPatchSchema.safeParse(req.body)
+  const parsed = pcPatchSchema.safeParse(req.body)
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid PC patch input', issues: parsed.error.issues })
   }
@@ -87,9 +118,33 @@ export async function pcPatch(req: VercelRequest, res: VercelResponse, id: strin
   if (Object.keys(patch).length === 0) {
     return res.status(400).json({ error: 'Empty patch' })
   }
+
+  // Recompute derived attributes if any of the 6 base stats changed. Need
+  // the existing row to fill in unchanged stats.
+  const updates: Record<string, unknown> = { ...patch }
+  const statKeys = ['str', 'con', 'dex', 'intelligence', 'pow', 'cha'] as const
+  const touchesStats = statKeys.some((k) => patch[k] !== undefined)
+  if (touchesStats) {
+    const [existing] = await db.select().from(schema.pcs).where(eq(schema.pcs.id, id)).limit(1)
+    if (!existing) return res.status(404).json({ error: 'PC not found' })
+    const stats = {
+      str: patch.str ?? existing.str,
+      con: patch.con ?? existing.con,
+      dex: patch.dex ?? existing.dex,
+      intelligence: patch.intelligence ?? existing.intelligence,
+      pow: patch.pow ?? existing.pow,
+      cha: patch.cha ?? existing.cha,
+    }
+    const derived = deriveAttributes(stats)
+    updates.hp = derived.hp
+    updates.wp = derived.wp
+    updates.bp = derived.bp
+    updates.sanMax = derived.sanMax
+  }
+
   const [row] = await db
     .update(schema.pcs)
-    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .set({ ...updates, updatedAt: sql`(unixepoch())` })
     .where(eq(schema.pcs.id, id))
     .returning()
   if (!row) {

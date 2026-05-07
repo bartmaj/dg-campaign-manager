@@ -137,6 +137,11 @@ function SessionDetailPage() {
             Download handout
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/sessions/${session.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteSession.mutateAsync(session.id).then(() => undefined)}
               entityLabel="session"

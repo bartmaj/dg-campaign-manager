@@ -1,9 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, like, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import type { NpcStatus } from '../../domain/npc.js'
-import { NPC_STATUSES, npcInputSchema } from '../../domain/npc.js'
+import { NPC_STATUSES, npcInputSchema, npcStatBlockSchema } from '../../domain/npc.js'
 import { npcEncounterInputSchema } from '../../domain/npcEncounter.js'
 import { deriveAttributes } from '../../domain/pc.js'
 import { deleteEntityEdges } from '../_lib/cascade.js'
@@ -169,6 +170,70 @@ export async function npcExport(_req: VercelRequest, res: VercelResponse, id: st
  * gracefully skips unresolved names. TODO: add a sweep job that cleans
  * up orphaned edges referencing deleted entities.
  */
+const npcPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    profession: z.string().min(1).nullable().optional(),
+    status: z.enum(NPC_STATUSES).optional(),
+    factionId: z.string().min(1).nullable().optional(),
+    locationId: z.string().min(1).nullable().optional(),
+    statBlock: npcStatBlockSchema.optional(),
+    mannerisms: z.string().nullable().optional(),
+    voice: z.string().nullable().optional(),
+    secrets: z.string().nullable().optional(),
+    currentGoal: z.string().nullable().optional(),
+  })
+  .strict()
+
+export async function npcPatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = npcPatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid NPC patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+
+  const { statBlock, ...rest } = patch
+  const updates: Record<string, unknown> = { ...rest }
+
+  if (statBlock) {
+    if (statBlock.kind === 'full') {
+      const s = statBlock.stats
+      const derived = deriveAttributes(s)
+      updates.str = s.str
+      updates.con = s.con
+      updates.dex = s.dex
+      updates.intelligence = s.intelligence
+      updates.pow = s.pow
+      updates.cha = s.cha
+      updates.hp = derived.hp
+      updates.wp = derived.wp
+    } else {
+      updates.str = null
+      updates.con = null
+      updates.dex = null
+      updates.intelligence = null
+      updates.pow = null
+      updates.cha = null
+      updates.hp = statBlock.hp
+      updates.wp = statBlock.wp
+    }
+  }
+
+  const [row] = await db
+    .update(schema.npcs)
+    .set({ ...updates, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.npcs.id, id))
+    .returning()
+  if (!row) {
+    return res.status(404).json({ error: 'NPC not found' })
+  }
+  return res.status(200).json(row)
+}
+
 export async function npcDelete(_req: VercelRequest, res: VercelResponse, id: string) {
   const found = await db.transaction(async (tx) => {
     const [row] = await tx.delete(schema.npcs).where(eq(schema.npcs.id, id)).returning()

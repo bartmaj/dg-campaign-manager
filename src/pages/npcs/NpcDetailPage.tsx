@@ -57,6 +57,11 @@ function NpcDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/npcs/${npc.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteNpc.mutateAsync(npc.id).then(() => undefined)}
               entityLabel="NPC"

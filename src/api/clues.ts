@@ -53,6 +53,19 @@ export function createClue(input: ClueInput): Promise<ClueRow> {
   })
 }
 
+export type CluePatch = {
+  name?: string
+  description?: string | null
+  originScenarioId?: string | null
+}
+
+export function updateClue(id: string, patch: CluePatch): Promise<ClueRow> {
+  return fetchJson<ClueRow>(`/api/clues/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deleteClue(id: string): Promise<void> {
   const res = await fetch(`/api/clues/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

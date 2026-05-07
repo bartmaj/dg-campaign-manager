@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, desc, eq, like, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { locationInputSchema } from '../../domain/location.js'
 import { serializeEntity } from '../../domain/mdExport.js'
@@ -91,6 +92,38 @@ export async function locationExport(_req: VercelRequest, res: VercelResponse, i
   })
 
   return sendMarkdown(res, md, exportFilename('location', location.name))
+}
+
+const locationPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    parentLocationId: z.string().min(1).nullable().optional(),
+  })
+  .strict()
+
+export async function locationPatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = locationPatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid location patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+  // Guard against self-parenting (id === parentLocationId).
+  if (patch.parentLocationId !== undefined && patch.parentLocationId === id) {
+    return res.status(400).json({ error: 'Location cannot be its own parent' })
+  }
+  const [row] = await db
+    .update(schema.locations)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.locations.id, id))
+    .returning()
+  if (!row) return res.status(404).json({ error: 'Location not found' })
+  return res.status(200).json(row)
 }
 
 /**

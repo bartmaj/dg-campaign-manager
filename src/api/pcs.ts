@@ -70,6 +70,32 @@ export function createPc(input: PcInput): Promise<PcRow> {
   })
 }
 
+export type PcPatch = {
+  name?: string
+  description?: string | null
+  profession?: string | null
+  str?: number
+  con?: number
+  dex?: number
+  intelligence?: number
+  pow?: number
+  cha?: number
+  skills?: Array<{ name: string; rating: number }>
+  motivations?: string[]
+  backstoryHooks?: string
+  // Sanity-list editors (preserved from the existing narrow PATCH).
+  breakingPoints?: number[]
+  sanityDisorders?: string[]
+  adaptedTo?: string[]
+}
+
+export function updatePc(id: string, patch: PcPatch): Promise<PcRow> {
+  return fetchJson<PcRow>(`/api/pcs/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deletePc(id: string): Promise<void> {
   const res = await fetch(`/api/pcs/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

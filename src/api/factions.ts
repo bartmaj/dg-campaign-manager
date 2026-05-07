@@ -51,6 +51,19 @@ export function createFaction(input: FactionInput): Promise<FactionRow> {
   })
 }
 
+export type FactionPatch = {
+  name?: string
+  description?: string | null
+  agenda?: string | null
+}
+
+export function updateFaction(id: string, patch: FactionPatch): Promise<FactionRow> {
+  return fetchJson<FactionRow>(`/api/factions/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deleteFaction(id: string): Promise<void> {
   const res = await fetch(`/api/factions/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

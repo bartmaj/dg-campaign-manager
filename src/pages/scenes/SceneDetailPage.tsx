@@ -273,6 +273,11 @@ function SceneDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/scenes/${scene.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteScene.mutateAsync(scene.id).then(() => undefined)}
               entityLabel="scene"

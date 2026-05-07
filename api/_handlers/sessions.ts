@@ -343,13 +343,28 @@ export async function sessionDelete(_req: VercelRequest, res: VercelResponse, id
   return res.status(204).end()
 }
 
+const isoDateString = z
+  .string()
+  .min(1)
+  .refine((s) => !Number.isNaN(Date.parse(s)), 'must be a valid ISO date string')
+
 const sessionPatchSchema = z
   .object({
     notes: z.string().nullable().optional(),
     playerNotes: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     name: z.string().min(1).optional(),
+    inGameDate: isoDateString.nullable().optional(),
+    inGameDateEnd: isoDateString.nullable().optional(),
+    realWorldDate: z
+      .union([z.date(), isoDateString])
+      .nullable()
+      .optional()
+      .transform((v) =>
+        v === undefined ? undefined : v === null ? null : v instanceof Date ? v : new Date(v),
+      ),
   })
+  .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'Empty patch' })
 
 /**

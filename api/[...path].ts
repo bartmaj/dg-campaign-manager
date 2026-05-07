@@ -7,6 +7,7 @@ import {
   clueDeliveryList,
   clueExport,
   clueGet,
+  cluePatch,
   cluesCreate,
   cluesList,
 } from './_handlers/clues.js'
@@ -15,6 +16,7 @@ import {
   factionDelete,
   factionExport,
   factionGet,
+  factionPatch,
   factionsCreate,
   factionsList,
   factionStatusCreate,
@@ -22,11 +24,19 @@ import {
   factionStatusList,
 } from './_handlers/factions.js'
 import { importScenario } from './_handlers/import.js'
-import { itemDelete, itemExport, itemGet, itemsCreate, itemsList } from './_handlers/items.js'
+import {
+  itemDelete,
+  itemExport,
+  itemGet,
+  itemPatch,
+  itemsCreate,
+  itemsList,
+} from './_handlers/items.js'
 import {
   locationDelete,
   locationExport,
   locationGet,
+  locationPatch,
   locationsCreate,
   locationsList,
 } from './_handlers/locations.js'
@@ -36,6 +46,7 @@ import {
   npcEncounterList,
   npcExport,
   npcGet,
+  npcPatch,
   npcsCreate,
   npcsList,
 } from './_handlers/npcs.js'
@@ -53,10 +64,18 @@ import {
   scenarioDelete,
   scenarioExport,
   scenarioGet,
+  scenarioPatch,
   scenariosCreate,
   scenariosList,
 } from './_handlers/scenarios.js'
-import { sceneDelete, sceneExport, sceneGet, scenesCreate, scenesList } from './_handlers/scenes.js'
+import {
+  sceneDelete,
+  sceneExport,
+  sceneGet,
+  scenePatch,
+  scenesCreate,
+  scenesList,
+} from './_handlers/scenes.js'
 import { namesLookup } from './_handlers/names.js'
 import { searchIndex } from './_handlers/search.js'
 import {
@@ -106,6 +125,7 @@ const routes: Route[] = [
   r0('GET', '/npcs', npcsList),
   r0('POST', '/npcs', npcsCreate),
   r1('GET', '/npcs/:id', npcGet),
+  r1('PATCH', '/npcs/:id', npcPatch),
   r1('DELETE', '/npcs/:id', npcDelete),
   r1('GET', '/npcs/:id/export', npcExport),
   r1('GET', '/npcs/:id/encounters', npcEncounterList),
@@ -115,6 +135,7 @@ const routes: Route[] = [
   r0('GET', '/clues', cluesList),
   r0('POST', '/clues', cluesCreate),
   r1('GET', '/clues/:id', clueGet),
+  r1('PATCH', '/clues/:id', cluePatch),
   r1('DELETE', '/clues/:id', clueDelete),
   r1('GET', '/clues/:id/export', clueExport),
   r1('GET', '/clues/:id/delivery', clueDeliveryList),
@@ -124,6 +145,7 @@ const routes: Route[] = [
   r0('GET', '/factions', factionsList),
   r0('POST', '/factions', factionsCreate),
   r1('GET', '/factions/:id', factionGet),
+  r1('PATCH', '/factions/:id', factionPatch),
   r1('DELETE', '/factions/:id', factionDelete),
   r1('GET', '/factions/:id/export', factionExport),
   // Faction status timeline (#020). Note: DELETE uses eventId — routed
@@ -137,6 +159,7 @@ const routes: Route[] = [
   r0('GET', '/locations', locationsList),
   r0('POST', '/locations', locationsCreate),
   r1('GET', '/locations/:id', locationGet),
+  r1('PATCH', '/locations/:id', locationPatch),
   r1('DELETE', '/locations/:id', locationDelete),
   r1('GET', '/locations/:id/export', locationExport),
 
@@ -144,6 +167,7 @@ const routes: Route[] = [
   r0('GET', '/items', itemsList),
   r0('POST', '/items', itemsCreate),
   r1('GET', '/items/:id', itemGet),
+  r1('PATCH', '/items/:id', itemPatch),
   r1('DELETE', '/items/:id', itemDelete),
   r1('GET', '/items/:id/export', itemExport),
 
@@ -163,6 +187,7 @@ const routes: Route[] = [
   r0('GET', '/scenarios', scenariosList),
   r0('POST', '/scenarios', scenariosCreate),
   r1('GET', '/scenarios/:id', scenarioGet),
+  r1('PATCH', '/scenarios/:id', scenarioPatch),
   r1('DELETE', '/scenarios/:id', scenarioDelete),
   r1('GET', '/scenarios/:id/export', scenarioExport),
 
@@ -170,6 +195,7 @@ const routes: Route[] = [
   r0('GET', '/scenes', scenesList),
   r0('POST', '/scenes', scenesCreate),
   r1('GET', '/scenes/:id', sceneGet),
+  r1('PATCH', '/scenes/:id', scenePatch),
   r1('DELETE', '/scenes/:id', sceneDelete),
   r1('GET', '/scenes/:id/export', sceneExport),
 

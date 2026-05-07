@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { asc, desc, eq, like } from 'drizzle-orm'
+import { asc, desc, eq, like, sql } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { serializeEntity } from '../../domain/mdExport.js'
 import { scenarioInputSchema } from '../../domain/scenario.js'
@@ -92,6 +93,34 @@ export async function scenarioExport(_req: VercelRequest, res: VercelResponse, i
   })
 
   return sendMarkdown(res, md, exportFilename('scenario', scenario.name))
+}
+
+const scenarioPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    campaignId: z.string().min(1).nullable().optional(),
+  })
+  .strict()
+
+export async function scenarioPatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = scenarioPatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid scenario patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+  const [row] = await db
+    .update(schema.scenarios)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.scenarios.id, id))
+    .returning()
+  if (!row) return res.status(404).json({ error: 'Scenario not found' })
+  return res.status(200).json(row)
 }
 
 /**

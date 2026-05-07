@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, desc, eq, like, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { itemInputSchema } from '../../domain/item.js'
 import { serializeEntity } from '../../domain/mdExport.js'
@@ -98,6 +99,34 @@ export async function itemExport(_req: VercelRequest, res: VercelResponse, id: s
   })
 
   return sendMarkdown(res, md, exportFilename('item', item.name))
+}
+
+const itemPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    history: z.string().nullable().optional(),
+    ownerNpcId: z.string().min(1).nullable().optional(),
+    locationId: z.string().min(1).nullable().optional(),
+  })
+  .strict()
+
+export async function itemPatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = itemPatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid item patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+  const [row] = await db
+    .update(schema.items)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.items.id, id))
+    .returning()
+  if (!row) return res.status(404).json({ error: 'Item not found' })
+  return res.status(200).json(row)
 }
 
 /**

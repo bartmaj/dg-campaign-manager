@@ -53,6 +53,19 @@ export function createLocation(input: LocationInput): Promise<LocationRow> {
   })
 }
 
+export type LocationPatch = {
+  name?: string
+  description?: string | null
+  parentLocationId?: string | null
+}
+
+export function updateLocation(id: string, patch: LocationPatch): Promise<LocationRow> {
+  return fetchJson<LocationRow>(`/api/locations/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deleteLocation(id: string): Promise<void> {
   const res = await fetch(`/api/locations/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

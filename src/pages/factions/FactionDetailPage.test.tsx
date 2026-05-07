@@ -143,4 +143,11 @@ describe('FactionDetailPage', () => {
     renderPage({ faction: makeFaction() })
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
+
+  it('renders an Edit link to the edit page', () => {
+    renderPage({ faction: makeFaction() })
+    const link = screen.getByRole('link', { name: 'Edit' })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', `/factions/${FACTION_ID}/edit`)
+  })
 })

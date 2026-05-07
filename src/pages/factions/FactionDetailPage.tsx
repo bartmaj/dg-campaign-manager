@@ -35,6 +35,11 @@ function FactionDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/factions/${faction.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteFaction.mutateAsync(faction.id).then(() => undefined)}
               entityLabel="faction"

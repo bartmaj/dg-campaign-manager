@@ -73,6 +73,9 @@ export type SessionPatch = {
   playerNotes?: string | null
   description?: string | null
   name?: string
+  inGameDate?: string | null
+  inGameDateEnd?: string | null
+  realWorldDate?: string | Date | null
 }
 
 export type SessionOrderBy = 'inGame' | 'realWorld'
@@ -154,11 +157,20 @@ export function getSessionReport(sessionId: string): Promise<SessionReport> {
 }
 
 export function patchSession(id: string, patch: SessionPatch): Promise<SessionRow> {
+  // Normalize realWorldDate to ISO when sent — server accepts both
+  // strings and Dates, but JSON doesn't carry Date.
+  const body: Record<string, unknown> = { ...patch }
+  if (patch.realWorldDate instanceof Date) {
+    body.realWorldDate = patch.realWorldDate.toISOString()
+  }
   return fetchJson<SessionRow>(`/api/sessions/${encodeURIComponent(id)}`, {
     method: 'PATCH',
-    body: JSON.stringify(patch),
+    body: JSON.stringify(body),
   })
 }
+
+/** Alias for symmetry with other update{Entity} wrappers. */
+export const updateSession = patchSession
 
 export async function deleteSession(id: string): Promise<void> {
   const res = await fetch(`/api/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' })

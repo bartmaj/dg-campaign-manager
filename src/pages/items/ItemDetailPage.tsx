@@ -34,6 +34,11 @@ function ItemDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/items/${item.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteItem.mutateAsync(item.id).then(() => undefined)}
               entityLabel="item"

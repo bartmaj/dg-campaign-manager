@@ -57,6 +57,21 @@ export function createItem(input: ItemInput): Promise<ItemRow> {
   })
 }
 
+export type ItemPatch = {
+  name?: string
+  description?: string | null
+  history?: string | null
+  ownerNpcId?: string | null
+  locationId?: string | null
+}
+
+export function updateItem(id: string, patch: ItemPatch): Promise<ItemRow> {
+  return fetchJson<ItemRow>(`/api/items/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deleteItem(id: string): Promise<void> {
   const res = await fetch(`/api/items/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

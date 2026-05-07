@@ -38,6 +38,11 @@ function ScenarioDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/scenarios/${scenario.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteScenario.mutateAsync(scenario.id).then(() => undefined)}
               entityLabel="scenario"

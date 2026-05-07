@@ -34,6 +34,11 @@ function LocationDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/locations/${location.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteLocation.mutateAsync(location.id).then(() => undefined)}
               entityLabel="location"

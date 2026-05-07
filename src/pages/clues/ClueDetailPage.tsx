@@ -127,6 +127,11 @@ function ClueDetailPage() {
             Download as Markdown
           </LinkButton>
           <EditOnly>
+            <LinkButton to={`/clues/${clue.id}/edit`} variant="ghost">
+              Edit
+            </LinkButton>
+          </EditOnly>
+          <EditOnly>
             <DeleteEntityButton
               onConfirm={() => deleteClue.mutateAsync(clue.id).then(() => undefined)}
               entityLabel="clue"

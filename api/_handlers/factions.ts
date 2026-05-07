@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { asc, desc, eq, like } from 'drizzle-orm'
+import { asc, desc, eq, like, sql } from 'drizzle-orm'
+import { z } from 'zod'
 import { db, schema } from '../../db/client.js'
 import { factionInputSchema } from '../../domain/faction.js'
 import { factionStatusEventInputSchema } from '../../domain/factionStatus.js'
@@ -76,6 +77,34 @@ export async function factionExport(_req: VercelRequest, res: VercelResponse, id
   })
 
   return sendMarkdown(res, md, exportFilename('faction', faction.name))
+}
+
+const factionPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    agenda: z.string().nullable().optional(),
+  })
+  .strict()
+
+export async function factionPatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = factionPatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid faction patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+  const [row] = await db
+    .update(schema.factions)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.factions.id, id))
+    .returning()
+  if (!row) return res.status(404).json({ error: 'Faction not found' })
+  return res.status(200).json(row)
 }
 
 // ─── Faction status timeline (#020) ─────────────────────────────────────────

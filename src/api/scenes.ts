@@ -52,6 +52,20 @@ export function createScene(input: SceneInput): Promise<SceneRow> {
   })
 }
 
+export type ScenePatch = {
+  name?: string
+  description?: string | null
+  scenarioId?: string
+  orderIndex?: number
+}
+
+export function updateScene(id: string, patch: ScenePatch): Promise<SceneRow> {
+  return fetchJson<SceneRow>(`/api/scenes/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
 export async function deleteScene(id: string): Promise<void> {
   const res = await fetch(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!res.ok) {

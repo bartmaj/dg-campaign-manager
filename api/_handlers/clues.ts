@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, like, sql, type SQL } from 'drizzle-orm'
 import { db, schema } from '../../db/client.js'
+import { z } from 'zod'
 import { clueInputSchema } from '../../domain/clue.js'
 import {
   clueDeliveryInputSchema,
@@ -98,6 +99,32 @@ export async function clueExport(_req: VercelRequest, res: VercelResponse, id: s
  * gracefully skips unresolved names. TODO: add a sweep job that cleans
  * up orphaned edges referencing deleted entities.
  */
+const cluePatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    originScenarioId: z.string().min(1).nullable().optional(),
+  })
+  .strict()
+
+export async function cluePatch(req: VercelRequest, res: VercelResponse, id: string) {
+  const parsed = cluePatchSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid clue patch input', issues: parsed.error.issues })
+  }
+  const patch = parsed.data
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Empty patch' })
+  }
+  const [row] = await db
+    .update(schema.clues)
+    .set({ ...patch, updatedAt: sql`(unixepoch())` })
+    .where(eq(schema.clues.id, id))
+    .returning()
+  if (!row) return res.status(404).json({ error: 'Clue not found' })
+  return res.status(200).json(row)
+}
+
 export async function clueDelete(_req: VercelRequest, res: VercelResponse, id: string) {
   const found = await db.transaction(async (tx) => {
     const [row] = await tx.delete(schema.clues).where(eq(schema.clues.id, id)).returning()
