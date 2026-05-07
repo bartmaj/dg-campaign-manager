@@ -7,10 +7,13 @@ import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
+import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Textarea from '../../components/ui/Textarea'
 import Toolbar from '../../components/ui/Toolbar'
 import { useCreateItem } from '../../hooks/useCreateItem'
+import { useLocations } from '../../hooks/useLocations'
+import { useNpcs } from '../../hooks/useNpcs'
 
 type FormValues = {
   name: string
@@ -23,6 +26,10 @@ type FormValues = {
 function NewItemPage() {
   const navigate = useNavigate()
   const createItem = useCreateItem()
+  const npcsQuery = useNpcs()
+  const npcs = npcsQuery.data ?? []
+  const locationsQuery = useLocations()
+  const locations = locationsQuery.data ?? []
   const [error, setError] = useState<string | null>(null)
   const { register, handleSubmit } = useForm<FormValues>({
     defaultValues: {
@@ -71,11 +78,43 @@ function NewItemPage() {
           <Field label="History">
             <Textarea rows={3} {...register('history')} />
           </Field>
-          <Field label="Owner NPC ID">
-            <Input type="text" {...register('ownerNpcId')} />
+          <Field
+            label="Owner NPC"
+            helper={
+              npcsQuery.isLoading
+                ? 'Loading NPCs…'
+                : npcs.length === 0
+                  ? 'No NPCs yet — create one first.'
+                  : undefined
+            }
+          >
+            <Select {...register('ownerNpcId')}>
+              <option value="">— No owner —</option>
+              {npcs.map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.name}
+                </option>
+              ))}
+            </Select>
           </Field>
-          <Field label="Location ID">
-            <Input type="text" {...register('locationId')} />
+          <Field
+            label="Location"
+            helper={
+              locationsQuery.isLoading
+                ? 'Loading locations…'
+                : locations.length === 0
+                  ? 'No locations yet — create one first.'
+                  : undefined
+            }
+          >
+            <Select {...register('locationId')}>
+              <option value="">— No location —</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Toolbar align="start">
             <Button type="submit" variant="primary" disabled={createItem.isPending}>

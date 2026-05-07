@@ -21,7 +21,7 @@ describe('NewCluePage', () => {
     expect(screen.getByRole('heading', { name: /new clue/i })).toBeInTheDocument()
     expect(screen.getByLabelText('Name')).toBeInTheDocument()
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
-    expect(screen.getByLabelText('Origin Scenario ID')).toBeInTheDocument()
+    expect(screen.getByLabelText('Origin Scenario')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /create clue/i })).toBeInTheDocument()
   })
 })

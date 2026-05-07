@@ -21,7 +21,7 @@ describe('NewLocationPage', () => {
     expect(screen.getByRole('heading', { name: /new location/i })).toBeInTheDocument()
     expect(screen.getByLabelText('Name')).toBeInTheDocument()
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
-    expect(screen.getByLabelText('Parent Location ID')).toBeInTheDocument()
+    expect(screen.getByLabelText('Parent Location')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /create location/i })).toBeInTheDocument()
   })
 })

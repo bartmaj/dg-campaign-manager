@@ -3,7 +3,10 @@ import { useFieldArray, useForm, useWatch, type SubmitHandler } from 'react-hook
 import { deriveAttributes } from '../../../domain/pc'
 import { NPC_STATUSES, type NpcStatus } from '../../../domain/npc'
 import { SKILL_PACKAGES, applySkillPackage } from '../../../domain/skillPackages'
+import { useFactions } from '../../hooks/useFactions'
+import { useLocations } from '../../hooks/useLocations'
 import Button from '../ui/Button'
+import Field from '../ui/Field'
 import IconButton from '../ui/IconButton'
 import Inline from '../ui/Inline'
 import Input from '../ui/Input'
@@ -42,6 +45,8 @@ export type CharacterFormValues = {
   voice: string
   secrets: string
   currentGoal: string
+  factionId: string
+  locationId: string
 }
 
 const PC_DEFAULTS: CharacterFormValues = {
@@ -64,6 +69,8 @@ const PC_DEFAULTS: CharacterFormValues = {
   voice: '',
   secrets: '',
   currentGoal: '',
+  factionId: '',
+  locationId: '',
 }
 
 const CUSTOM_PROFESSION_VALUE = '__custom__'
@@ -97,6 +104,13 @@ function CharacterForm({
     setValue,
     formState: { errors, isSubmitting: formIsSubmitting },
   } = useForm<CharacterFormValues>({ defaultValues })
+
+  // Faction & Location lists are only shown for NPCs, but hooks must be
+  // called unconditionally — list fetches are lightweight and cached.
+  const factionsQuery = useFactions()
+  const factions = factionsQuery.data ?? []
+  const locationsQuery = useLocations()
+  const locations = locationsQuery.data ?? []
 
   const { fields, append, remove } = useFieldArray({ control, name: 'skills' })
 
@@ -192,6 +206,50 @@ function CharacterForm({
               ))}
             </Select>
           </Stack>
+        )}
+
+        {kind === 'npc' && (
+          <Field
+            label="Faction"
+            helper={
+              factionsQuery.isLoading
+                ? 'Loading factions…'
+                : factions.length === 0
+                  ? 'No factions yet — create one first.'
+                  : undefined
+            }
+          >
+            <Select {...register('factionId')}>
+              <option value="">— No faction —</option>
+              {factions.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+
+        {kind === 'npc' && (
+          <Field
+            label="Location"
+            helper={
+              locationsQuery.isLoading
+                ? 'Loading locations…'
+                : locations.length === 0
+                  ? 'No locations yet — create one first.'
+                  : undefined
+            }
+          >
+            <Select {...register('locationId')}>
+              <option value="">— No location —</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
         )}
 
         {kind === 'npc' && (

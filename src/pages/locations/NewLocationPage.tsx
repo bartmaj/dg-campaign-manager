@@ -7,10 +7,12 @@ import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
+import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Textarea from '../../components/ui/Textarea'
 import Toolbar from '../../components/ui/Toolbar'
 import { useCreateLocation } from '../../hooks/useCreateLocation'
+import { useLocations } from '../../hooks/useLocations'
 
 type FormValues = {
   name: string
@@ -21,6 +23,11 @@ type FormValues = {
 function NewLocationPage() {
   const navigate = useNavigate()
   const createLocation = useCreateLocation()
+  // No self-exclusion needed: this is the *new* location form, so the
+  // current location doesn't exist yet. An edit form would need to filter
+  // its own id out of the parent options.
+  const locationsQuery = useLocations()
+  const locations = locationsQuery.data ?? []
   const [error, setError] = useState<string | null>(null)
   const { register, handleSubmit } = useForm<FormValues>({
     defaultValues: { name: '', description: '', parentLocationId: '' },
@@ -59,8 +66,24 @@ function NewLocationPage() {
           <Field label="Description">
             <Textarea rows={4} {...register('description')} />
           </Field>
-          <Field label="Parent Location ID">
-            <Input type="text" {...register('parentLocationId')} />
+          <Field
+            label="Parent Location"
+            helper={
+              locationsQuery.isLoading
+                ? 'Loading locations…'
+                : locations.length === 0
+                  ? 'No locations yet — create one first.'
+                  : undefined
+            }
+          >
+            <Select {...register('parentLocationId')}>
+              <option value="">— No parent —</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Toolbar align="start">
             <Button type="submit" variant="primary" disabled={createLocation.isPending}>

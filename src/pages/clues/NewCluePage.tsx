@@ -7,10 +7,12 @@ import Field from '../../components/ui/Field'
 import Heading from '../../components/ui/Heading'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
+import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Textarea from '../../components/ui/Textarea'
 import Toolbar from '../../components/ui/Toolbar'
 import { useCreateClue } from '../../hooks/useCreateClue'
+import { useScenarios } from '../../hooks/useScenarios'
 
 type FormValues = {
   name: string
@@ -21,6 +23,8 @@ type FormValues = {
 function NewCluePage() {
   const navigate = useNavigate()
   const createClue = useCreateClue()
+  const scenariosQuery = useScenarios()
+  const scenarios = scenariosQuery.data ?? []
   const [error, setError] = useState<string | null>(null)
   const { register, handleSubmit } = useForm<FormValues>({
     defaultValues: { name: '', description: '', originScenarioId: '' },
@@ -59,12 +63,24 @@ function NewCluePage() {
           <Field label="Description">
             <Textarea rows={4} {...register('description')} />
           </Field>
-          <Field label="Origin Scenario ID">
-            <Input
-              type="text"
-              placeholder="(optional) scenario UUID"
-              {...register('originScenarioId')}
-            />
+          <Field
+            label="Origin Scenario"
+            helper={
+              scenariosQuery.isLoading
+                ? 'Loading scenarios…'
+                : scenarios.length === 0
+                  ? 'No scenarios yet — create one first.'
+                  : undefined
+            }
+          >
+            <Select {...register('originScenarioId')}>
+              <option value="">— No origin scenario —</option>
+              {scenarios.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Toolbar align="start">
             <Button type="submit" variant="primary" disabled={createClue.isPending}>

@@ -12,55 +12,73 @@ import Inline from '../../components/ui/Inline'
 import Input from '../../components/ui/Input'
 import LinkButton from '../../components/ui/LinkButton'
 import Prose from '../../components/ui/Prose'
+import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Textarea from '../../components/ui/Textarea'
 import Toolbar from '../../components/ui/Toolbar'
+import { useClues } from '../../hooks/useClues'
 import { useCreateClue } from '../../hooks/useCreateClue'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
 import { useCreateNpc } from '../../hooks/useCreateNpc'
 import { useDeleteScene } from '../../hooks/useDeleteScene'
 import { useIncomingEdges } from '../../hooks/useEdges'
+import { useNpcs } from '../../hooks/useNpcs'
 import { useScene } from '../../hooks/useScenes'
 
 type AddNpcAtSceneFormProps = { sceneId: string }
 function AddNpcAtSceneForm({ sceneId }: AddNpcAtSceneFormProps) {
+  const [mode, setMode] = useState<'existing' | 'new'>('existing')
   const [name, setName] = useState('')
+  const [npcId, setNpcId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const createNpc = useCreateNpc()
   const createEdge = useCreateEdge()
+  const npcsQuery = useNpcs()
+  const npcs = npcsQuery.data ?? []
   const submitting = createNpc.isPending || createEdge.isPending
 
   async function submit() {
     setError(null)
-    const trimmed = name.trim()
-    if (trimmed.length === 0) {
-      setError('NPC name is required.')
-      return
-    }
     try {
-      const npc = await createNpc.mutateAsync({
-        name: trimmed,
-        description: null,
-        profession: null,
-        statBlock: { kind: 'simplified', hp: 10, wp: 10 },
-        status: 'alive',
-        mannerisms: null,
-        voice: null,
-        secrets: null,
-        currentGoal: null,
-        factionId: null,
-        locationId: null,
-        campaignId: null,
-      })
+      let resolvedNpcId: string
+      if (mode === 'existing') {
+        if (npcId.trim() === '') {
+          setError('Pick an existing NPC.')
+          return
+        }
+        resolvedNpcId = npcId.trim()
+      } else {
+        const trimmed = name.trim()
+        if (trimmed.length === 0) {
+          setError('NPC name is required.')
+          return
+        }
+        const npc = await createNpc.mutateAsync({
+          name: trimmed,
+          description: null,
+          profession: null,
+          statBlock: { kind: 'simplified', hp: 10, wp: 10 },
+          status: 'alive',
+          mannerisms: null,
+          voice: null,
+          secrets: null,
+          currentGoal: null,
+          factionId: null,
+          locationId: null,
+          campaignId: null,
+        })
+        resolvedNpcId = npc.id
+      }
       await createEdge.mutateAsync({
         sourceType: 'npc',
-        sourceId: npc.id,
+        sourceId: resolvedNpcId,
         targetType: 'scene',
         targetId: sceneId,
         kind: 'appears_in',
         notes: null,
       })
       setName('')
+      setNpcId('')
     } catch (err) {
       setError((err as Error).message)
     }
@@ -68,14 +86,46 @@ function AddNpcAtSceneForm({ sceneId }: AddNpcAtSceneFormProps) {
 
   return (
     <Stack gap="sm">
-      <Field label="Add NPC to this scene">
-        <Input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="NPC name"
-        />
+      <Field label="Mode">
+        <Select value={mode} onChange={(e) => setMode(e.target.value as 'existing' | 'new')}>
+          <option value="existing">Existing NPC</option>
+          <option value="new">New NPC</option>
+        </Select>
       </Field>
+      {mode === 'existing' ? (
+        <Field
+          label="NPC"
+          helper={
+            npcsQuery.isLoading
+              ? 'Loading NPCs…'
+              : npcs.length === 0
+                ? 'No NPCs yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={npcId}
+            onChange={(e) => setNpcId(e.target.value)}
+            disabled={npcs.length === 0}
+          >
+            <option value="">— Select an NPC —</option>
+            {npcs.map((n) => (
+              <option key={n.id} value={n.id}>
+                {n.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      ) : (
+        <Field label="Add NPC to this scene">
+          <Input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.currentTarget.value)}
+            placeholder="NPC name"
+          />
+        </Field>
+      )}
       <Toolbar align="start">
         <Button type="button" variant="primary" onClick={() => void submit()} disabled={submitting}>
           {submitting ? 'Adding…' : 'Add NPC'}
@@ -88,31 +138,45 @@ function AddNpcAtSceneForm({ sceneId }: AddNpcAtSceneFormProps) {
 
 type AddClueAtSceneFormProps = { sceneId: string; scenarioId: string | null }
 function AddClueAtSceneForm({ sceneId, scenarioId }: AddClueAtSceneFormProps) {
+  const [mode, setMode] = useState<'existing' | 'new'>('existing')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [clueId, setClueId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const createClue = useCreateClue()
   const createEdge = useCreateEdge()
+  const cluesQuery = useClues()
+  const clues = cluesQuery.data ?? []
   const submitting = createClue.isPending || createEdge.isPending
 
   async function submit() {
     setError(null)
-    const trimmedName = name.trim()
-    const trimmedDesc = description.trim()
-    if (trimmedName.length === 0) {
-      setError('Clue name is required.')
-      return
-    }
     try {
-      const clue = await createClue.mutateAsync({
-        name: trimmedName,
-        description: trimmedDesc.length > 0 ? trimmedDesc : null,
-        originScenarioId: scenarioId,
-        campaignId: null,
-      })
+      let resolvedClueId: string
+      if (mode === 'existing') {
+        if (clueId.trim() === '') {
+          setError('Pick an existing clue.')
+          return
+        }
+        resolvedClueId = clueId.trim()
+      } else {
+        const trimmedName = name.trim()
+        const trimmedDesc = description.trim()
+        if (trimmedName.length === 0) {
+          setError('Clue name is required.')
+          return
+        }
+        const clue = await createClue.mutateAsync({
+          name: trimmedName,
+          description: trimmedDesc.length > 0 ? trimmedDesc : null,
+          originScenarioId: scenarioId,
+          campaignId: null,
+        })
+        resolvedClueId = clue.id
+      }
       await createEdge.mutateAsync({
         sourceType: 'clue',
-        sourceId: clue.id,
+        sourceId: resolvedClueId,
         targetType: 'scene',
         targetId: sceneId,
         kind: 'delivered_in',
@@ -120,6 +184,7 @@ function AddClueAtSceneForm({ sceneId, scenarioId }: AddClueAtSceneFormProps) {
       })
       setName('')
       setDescription('')
+      setClueId('')
     } catch (err) {
       setError((err as Error).message)
     }
@@ -127,21 +192,55 @@ function AddClueAtSceneForm({ sceneId, scenarioId }: AddClueAtSceneFormProps) {
 
   return (
     <Stack gap="sm">
-      <Field label="Add clue delivered in this scene">
-        <Input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Clue name"
-        />
+      <Field label="Mode">
+        <Select value={mode} onChange={(e) => setMode(e.target.value as 'existing' | 'new')}>
+          <option value="existing">Existing clue</option>
+          <option value="new">New clue</option>
+        </Select>
       </Field>
-      <Field label="Description">
-        <Textarea
-          rows={3}
-          value={description}
-          onChange={(e) => setDescription(e.currentTarget.value)}
-        />
-      </Field>
+      {mode === 'existing' ? (
+        <Field
+          label="Clue"
+          helper={
+            cluesQuery.isLoading
+              ? 'Loading clues…'
+              : clues.length === 0
+                ? 'No clues yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={clueId}
+            onChange={(e) => setClueId(e.target.value)}
+            disabled={clues.length === 0}
+          >
+            <option value="">— Select a clue —</option>
+            {clues.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      ) : (
+        <>
+          <Field label="Add clue delivered in this scene">
+            <Input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.currentTarget.value)}
+              placeholder="Clue name"
+            />
+          </Field>
+          <Field label="Description">
+            <Textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.currentTarget.value)}
+            />
+          </Field>
+        </>
+      )}
       <Toolbar align="start">
         <Button type="button" variant="primary" onClick={() => void submit()} disabled={submitting}>
           {submitting ? 'Adding…' : 'Add clue'}

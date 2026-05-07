@@ -18,13 +18,17 @@ import Prose from '../../components/ui/Prose'
 import Select from '../../components/ui/Select'
 import Stack from '../../components/ui/Stack'
 import Toolbar from '../../components/ui/Toolbar'
-import { useClue } from '../../hooks/useClues'
+import { useClue, useClues } from '../../hooks/useClues'
 import { useClueDelivery, useCreateClueDeliveryEvent } from '../../hooks/useClueDelivery'
 import { useCreateEdge } from '../../hooks/useCreateEdge'
 import { useDeleteClue } from '../../hooks/useDeleteClue'
 import { useDeleteEdge } from '../../hooks/useDeleteEdge'
 import { useOutgoingEdges } from '../../hooks/useEdges'
 import { useEntityNames } from '../../hooks/useEntityNames'
+import { useFactions } from '../../hooks/useFactions'
+import { useLocations } from '../../hooks/useLocations'
+import { useNpcs } from '../../hooks/useNpcs'
+import { useScenes } from '../../hooks/useScenes'
 import { useSessions } from '../../hooks/useSessions'
 import { usePcs } from '../../hooks/usePcs'
 
@@ -216,14 +220,7 @@ function ClueDetailPage() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="Target ID">
-                  <Input
-                    type="text"
-                    value={targetId}
-                    onChange={(e) => setTargetId(e.target.value)}
-                    placeholder="UUID"
-                  />
-                </Field>
+                <TargetPicker targetType={targetType} value={targetId} onChange={setTargetId} />
                 <Field label="Notes (optional)">
                   <Input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </Field>
@@ -245,6 +242,182 @@ function ClueDetailPage() {
       {id && <EntityRecentActivity entityType="clue" entityId={id} />}
     </Stack>
   )
+}
+
+type TargetPickerProps = {
+  targetType: EntityType
+  value: string
+  onChange: (next: string) => void
+}
+
+/**
+ * Typed picker for the edge target. When `targetType` matches one of the
+ * entities we have a list hook for, render a `<Select>` populated by that
+ * hook. Otherwise (`pc`, `session`, `campaign`, `bond`), fall back to a
+ * raw text input — those entities don't have list hooks yet.
+ */
+function TargetPicker({ targetType, value, onChange }: TargetPickerProps) {
+  const npcsQuery = useNpcs()
+  const factionsQuery = useFactions()
+  const locationsQuery = useLocations()
+  const scenesQuery = useScenes()
+  const cluesQuery = useClues()
+
+  switch (targetType) {
+    case 'npc': {
+      const items = npcsQuery.data ?? []
+      return (
+        <Field
+          label="Target NPC"
+          helper={
+            npcsQuery.isLoading
+              ? 'Loading NPCs…'
+              : items.length === 0
+                ? 'No NPCs yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={items.length === 0}
+          >
+            <option value="">— Select an NPC —</option>
+            {items.map((n) => (
+              <option key={n.id} value={n.id}>
+                {n.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )
+    }
+    case 'faction': {
+      const items = factionsQuery.data ?? []
+      return (
+        <Field
+          label="Target Faction"
+          helper={
+            factionsQuery.isLoading
+              ? 'Loading factions…'
+              : items.length === 0
+                ? 'No factions yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={items.length === 0}
+          >
+            <option value="">— Select a faction —</option>
+            {items.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )
+    }
+    case 'location': {
+      const items = locationsQuery.data ?? []
+      return (
+        <Field
+          label="Target Location"
+          helper={
+            locationsQuery.isLoading
+              ? 'Loading locations…'
+              : items.length === 0
+                ? 'No locations yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={items.length === 0}
+          >
+            <option value="">— Select a location —</option>
+            {items.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )
+    }
+    case 'scene': {
+      const items = scenesQuery.data ?? []
+      return (
+        <Field
+          label="Target Scene"
+          helper={
+            scenesQuery.isLoading
+              ? 'Loading scenes…'
+              : items.length === 0
+                ? 'No scenes yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={items.length === 0}
+          >
+            <option value="">— Select a scene —</option>
+            {items.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )
+    }
+    case 'clue': {
+      const items = cluesQuery.data ?? []
+      return (
+        <Field
+          label="Target Clue"
+          helper={
+            cluesQuery.isLoading
+              ? 'Loading clues…'
+              : items.length === 0
+                ? 'No clues yet — create one first.'
+                : undefined
+          }
+        >
+          <Select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={items.length === 0}
+          >
+            <option value="">— Select a clue —</option>
+            {items.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )
+    }
+    default:
+      // pc / session / campaign / bond / scenario / item — no list hook
+      // wired here yet, fall back to raw UUID entry.
+      return (
+        <Field label="Target ID" helper={`No picker for ${targetType} yet — paste the UUID.`}>
+          <Input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="UUID"
+          />
+        </Field>
+      )
+  }
 }
 
 function DeliverySection({ clueId }: { clueId: string }) {
